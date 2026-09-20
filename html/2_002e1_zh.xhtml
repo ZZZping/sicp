@@ -1,0 +1,883 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：2.1</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 2.1" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 2.1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-2_zh.xhtml#Chapter-2" rel="prev" title="Chapter 2" />
+<link href="2_002e2_zh.xhtml#g_t2_002e2" rel="next" title="2.2" />
+<link href="Chapter-2_zh.xhtml#Chapter-2" rel="prev" title="Chapter 2" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t2_002e1"></a>
+<nav class="header">
+<p>下一节： <a href="2_002e2_zh.xhtml#g_t2_002e2" accesskey="n" rel="next">2.2</a>, 上一节： <a href="Chapter-2_zh.xhtml#Chapter-2" accesskey="p" rel="prev">第2章</a>, 上一级： <a href="Chapter-2_zh.xhtml#Chapter-2" accesskey="u" rel="prev">第2章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Introduction-to-Data-Abstraction"></a>
+<h3 class="section"><span class="secnum">2.1</span><span class="sectitle">数据抽象导论</span></h3>
+
+<p>在<a href="1_002e1_zh.xhtml#g_t1_002e1_002e8">1.1.8</a>中，我们注意到，用作创建更复杂过程的元素的过程，不仅可以被视为一组特定操作的集合，还可以被视为一种过程抽象。也就是说，过程如何实现的细节可以被隐藏，而特定的过程本身可以被任何具有相同整体行为的其他过程所替换。换句话说，我们可以做一个抽象，将过程的使用方式与过程如何用更基本的过程来实现的细节分离开来。复合数据的类似概念称为<a id="index-data-abstraction-1"></a><em>数据抽象</em>。数据抽象是一种方法论，它使我们能够将复合数据对象的使用方式与它如何由更基本的数据对象构造出来的细节隔离开来。</p>
+<p>数据抽象的基本思想是，构造那些将使用复合数据对象的程序，使它们作用于“抽象数据”。也就是说，我们的程序在使用数据时，不应做出任何对于完成手头任务并非严格必需的数据假设。与此同时，一个“具体”的数据表示被独立于使用该数据的程序而定义。我们系统这两部分之间的接口将是一组过程，称为<a id="index-selectors"></a><em>选择函数</em>和<a id="index-constructors"></a><em>构造函数</em>，它们根据具体表示来实现抽象数据。为了说明这一技术，我们将考虑如何设计一组用于操作有理数的过程。</p>
+
+<a id="g_t2_002e1_002e1"></a>
+<a id="Example_003a-Arithmetic-Operations-for-Rational-Numbers"></a>
+<h4 class="subsection"><span class="secnum">2.1.1</span><span class="sectitle">示例：有理数的算术运算</span></h4>
+
+<p>假设我们想对有理数进行算术运算。我们希望能够对它们进行加、减、乘、除，并检验两个有理数是否相等。</p>
+<p>让我们首先假设我们已经有一种从分子和分母构造有理数的方法。我们还假设，给定一个有理数，我们有一种提取（或选择）其分子和分母的方法。让我们进一步假设构造函数和选择函数可作为过程使用：</p>
+<ul>
+<li><code>(make-rat ⟨<var>n</var>⟩ ⟨<var>d</var>⟩)</code>返回分子为整数<code>⟨<var>n</var>⟩</code>且分母为整数<code>⟨<var>d</var>⟩</code>的有理数。</li><li><code>(numer ⟨<var>x</var>⟩)</code>返回有理数<code>⟨<var>x</var>⟩</code>的分子。</li><li><code>(denom ⟨<var>x</var>⟩)</code>返回有理数<code>⟨<var>x</var>⟩</code>的分母。</li></ul>
+
+<p>我们在这里使用了一种强大的综合策略：<a id="index-wishful-thinking"></a><em>一厢情愿式思维</em>。我们还没有说明有理数是如何表示的，或者过程<code>numer</code>、<code>denom</code>和<code>make-rat</code>应如何实现。即便如此，如果我们确实拥有这三个过程，那么我们就可以利用以下关系式进行加、减、乘、除和相等性检验：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right center left" rowspacing="3pt" columnspacing="thickmathspace">
+    <mtr>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <msub>
+              <mi>n</mi>
+              <mn>1</mn>
+            </msub>
+            <msub>
+              <mi>d</mi>
+              <mn>1</mn>
+            </msub>
+          </mfrac>
+        </mrow>
+        <mo>+</mo>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <msub>
+              <mi>n</mi>
+              <mn>2</mn>
+            </msub>
+            <msub>
+              <mi>d</mi>
+              <mn>2</mn>
+            </msub>
+          </mfrac>
+        </mrow>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>n</mi>
+                <mn>1</mn>
+              </msub>
+              <msub>
+                <mi>d</mi>
+                <mn>2</mn>
+              </msub>
+              <mo>+</mo>
+              <msub>
+                <mi>n</mi>
+                <mn>2</mn>
+              </msub>
+              <msub>
+                <mi>d</mi>
+                <mn>1</mn>
+              </msub>
+            </mrow>
+            <mrow>
+              <msub>
+                <mi>d</mi>
+                <mn>1</mn>
+              </msub>
+              <msub>
+                <mi>d</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+          </mfrac>
+        </mrow>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <msub>
+              <mi>n</mi>
+              <mn>1</mn>
+            </msub>
+            <msub>
+              <mi>d</mi>
+              <mn>1</mn>
+            </msub>
+          </mfrac>
+        </mrow>
+        <mo>−<!-- − --></mo>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <msub>
+              <mi>n</mi>
+              <mn>2</mn>
+            </msub>
+            <msub>
+              <mi>d</mi>
+              <mn>2</mn>
+            </msub>
+          </mfrac>
+        </mrow>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>n</mi>
+                <mn>1</mn>
+              </msub>
+              <msub>
+                <mi>d</mi>
+                <mn>2</mn>
+              </msub>
+              <mo>−<!-- − --></mo>
+              <msub>
+                <mi>n</mi>
+                <mn>2</mn>
+              </msub>
+              <msub>
+                <mi>d</mi>
+                <mn>1</mn>
+              </msub>
+            </mrow>
+            <mrow>
+              <msub>
+                <mi>d</mi>
+                <mn>1</mn>
+              </msub>
+              <msub>
+                <mi>d</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+          </mfrac>
+        </mrow>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <msub>
+              <mi>n</mi>
+              <mn>1</mn>
+            </msub>
+            <msub>
+              <mi>d</mi>
+              <mn>1</mn>
+            </msub>
+          </mfrac>
+        </mrow>
+        <mo>×<!-- × --></mo>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <msub>
+              <mi>n</mi>
+              <mn>2</mn>
+            </msub>
+            <msub>
+              <mi>d</mi>
+              <mn>2</mn>
+            </msub>
+          </mfrac>
+        </mrow>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>n</mi>
+                <mn>1</mn>
+              </msub>
+              <msub>
+                <mi>n</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+            <mrow>
+              <msub>
+                <mi>d</mi>
+                <mn>1</mn>
+              </msub>
+              <msub>
+                <mi>d</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+          </mfrac>
+        </mrow>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mfrac>
+          <mrow class="MJX-TeXAtom-ORD">
+            <msub>
+              <mi>n</mi>
+              <mn>1</mn>
+            </msub>
+            <mspace width="thinmathspace"/>
+            <mrow class="MJX-TeXAtom-ORD">
+              <mo>/</mo>
+            </mrow>
+            <mspace width="thinmathspace"/>
+            <msub>
+              <mi>d</mi>
+              <mn>1</mn>
+            </msub>
+          </mrow>
+          <mrow class="MJX-TeXAtom-ORD">
+            <msub>
+              <mi>n</mi>
+              <mn>2</mn>
+            </msub>
+            <mspace width="thinmathspace"/>
+            <mrow class="MJX-TeXAtom-ORD">
+              <mo>/</mo>
+            </mrow>
+            <mspace width="thinmathspace"/>
+            <msub>
+              <mi>d</mi>
+              <mn>2</mn>
+            </msub>
+          </mrow>
+        </mfrac>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <mrow>
+              <msub>
+                <mi>n</mi>
+                <mn>1</mn>
+              </msub>
+              <msub>
+                <mi>d</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+            <mrow>
+              <msub>
+                <mi>d</mi>
+                <mn>1</mn>
+              </msub>
+              <msub>
+                <mi>n</mi>
+                <mn>2</mn>
+              </msub>
+            </mrow>
+          </mfrac>
+        </mrow>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <msub>
+              <mi>n</mi>
+              <mn>1</mn>
+            </msub>
+            <msub>
+              <mi>d</mi>
+              <mn>1</mn>
+            </msub>
+          </mfrac>
+        </mrow>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <msub>
+              <mi>n</mi>
+              <mn>2</mn>
+            </msub>
+            <msub>
+              <mi>d</mi>
+              <mn>2</mn>
+            </msub>
+          </mfrac>
+        </mrow>
+        <mspace width="1em"/>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mtext> </mtext>
+          <mi mathvariant="normal">i</mi>
+          <mi mathvariant="normal">f</mi>
+          <mtext> </mtext>
+          <mi mathvariant="normal">a</mi>
+          <mi mathvariant="normal">n</mi>
+          <mi mathvariant="normal">d</mi>
+          <mtext> </mtext>
+          <mi mathvariant="normal">o</mi>
+          <mi mathvariant="normal">n</mi>
+          <mi mathvariant="normal">l</mi>
+          <mi mathvariant="normal">y</mi>
+          <mtext> </mtext>
+          <mi mathvariant="normal">i</mi>
+          <mi mathvariant="normal">f</mi>
+          <mspace width="1em"/>
+        </mrow>
+        <msub>
+          <mi>n</mi>
+          <mn>1</mn>
+        </msub>
+        <msub>
+          <mi>d</mi>
+          <mn>2</mn>
+        </msub>
+        <mo>=</mo>
+        <msub>
+          <mi>n</mi>
+          <mn>2</mn>
+        </msub>
+        <msub>
+          <mi>d</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>我们可以将这些规则表达为过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-rat x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-rat </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))</span><span class="pln">
+               </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sub-rat x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-rat </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))</span><span class="pln">
+               </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul-rat x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-rat </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer y</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">div-rat x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-rat </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer y</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">equal-rat? x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">))))</span></pre></div>
+
+<p>现在我们已经根据选择函数和构造函数过程<code>numer</code>、<code>denom</code>和<code>make-rat</code>定义了有理数上的运算。但我们还没有定义这些过程。我们需要的是某种将分子和分母粘合在一起以形成有理数的方法。</p>
+<a id="Pairs"></a>
+<h5 class="subsubheading">序对</h5>
+
+<p>为了使我们能够实现数据抽象的具体层次，我们的语言提供了一种称为<a id="index-pair"></a><em>序对</em>的复合结构，它可以用基本过程<code>cons</code>构造。该过程接受两个参数并返回一个复合数据对象，该对象包含这两个参数作为组成部分。给定一个序对，我们可以使用基本过程<code>car</code>和<code>cdr</code>提取其组成部分。<a class="footnote_link" id="DOCF68" href="#FOOT68"><sup>68</sup></a>因此，我们可以如下使用<code>cons</code>、<code>car</code>和<code>cdr</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">1</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">2</span></i>
+</pre></div>
+
+<p>注意，序对是一个数据对象，可以像基本数据对象一样被赋予名称并进行操作。此外，<code>cons</code>可用于形成其元素也是序对的序对，依此类推：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> y </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> z </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">1</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">3</span></i>
+</pre></div>
+
+<p>在<a href="2_002e2_zh.xhtml#g_t2_002e2">2.2</a>中，我们将看到这种组合序对的能力意味着序对可以用作通用构建块来创建各种复杂的数据结构。由过程<code>cons</code>、<code>car</code>和<code>cdr</code>实现的单一复合数据基本结构<a id="index-pair-1"></a><em>序对</em>，是我们所需的唯一粘合剂。由序对构造的数据对象称为<a id="index-list_002dstructured"></a><em>表结构</em>数据。</p>
+<a id="Representing-rational-numbers"></a>
+<h5 class="subsubheading">表示有理数</h5>
+
+<p>序对提供了一种完成有理数系统的自然方式。只需将有理数表示为两个整数的序对：一个分子和一个分母。然后<code>make-rat</code>、<code>numer</code>和<code>denom</code>可以如下轻松实现：<a class="footnote_link" id="DOCF69" href="#FOOT69"><sup>69</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-rat n d</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> n d</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">))</span></pre></div>
+
+<p>此外，为了显示计算结果，我们可以通过打印分子、一个斜杠和分母来打印有理数：<a class="footnote_link" id="DOCF70" href="#FOOT70"><sup>70</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">print-rat x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">newline</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display </span><span class="str">"/"</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)))</span></pre></div>
+
+<p>现在我们可以尝试我们的有理数过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> one-half </span><span class="opn">(</span><span class="pln">make-rat </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">print-rat one-half</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">1/2</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> one-third </span><span class="opn">(</span><span class="pln">make-rat </span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">print-rat
+ </span><span class="opn">(</span><span class="pln">add-rat one-half one-third</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">5/6</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">print-rat
+ </span><span class="opn">(</span><span class="pln">mul-rat one-half one-third</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">1/6</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">print-rat
+ </span><span class="opn">(</span><span class="pln">add-rat one-third one-third</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">6/9</span></i>
+</pre></div>
+
+<p>正如最后一个例子所示，我们的有理数实现没有将有理数约简到最简形式。我们可以通过修改<code>make-rat</code>来弥补这一点。如果我们有一个像<a href="1_002e2_zh.xhtml#g_t1_002e2_002e5">1.2.5</a>中那样的<code>gcd</code>过程，它产生两个整数的最大公约数，我们可以在构造序对之前使用<code>gcd</code>将分子和分母约简到最简形式：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-rat n d</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">g </span><span class="opn">(</span><span class="pln">gcd n d</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> n g</span><span class="clo">)</span><span class="pln"> 
+          </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> d g</span><span class="clo">))))</span></pre></div>
+
+<p>现在我们得到</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">print-rat 
+ </span><span class="opn">(</span><span class="pln">add-rat one-third one-third</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">2/3</span></i>
+</pre></div>
+
+<p>正如所期望的那样。这一修改是通过改变构造函数<code>make-rat</code>而完成的，没有改变任何实现实际运算的过程（例如<code>add-rat</code>和<code>mul-rat</code>）。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e1"></a>习题2.1：</strong>定义<code>make-rat</code>的一个更好版本，它能处理正参数和负参数。<code>Make-rat</code>应规范化符号，使得如果有理数为正，则分子和分母都为正；如果有理数为负，则只有分子为负。</p></blockquote>
+
+<a id="g_t2_002e1_002e2"></a>
+<a id="Abstraction-Barriers"></a>
+<h4 class="subsection"><span class="secnum">2.1.2</span><span class="sectitle">抽象屏障</span></h4>
+
+<p>在继续给出更多关于复合数据和数据抽象的例子之前，让我们考虑一下有理数例子所引发的一些问题。我们根据构造函数<code>make-rat</code>和选择函数<code>numer</code>和<code>denom</code>定义了有理数运算。一般来说，数据抽象的基本思想是为每种数据对象确定一组基本操作，所有对该类型数据对象的操作都将根据这些基本操作来表达，然后只使用这些操作来操作数据。</p>
+<p>我们可以将有理数系统的结构设想为<a href="#Figure-2_002e1">图2.1</a>所示。水平线表示<a id="index-abstraction-barriers-1"></a><em>抽象屏障</em>，它们隔离了系统中不同的“层次”。在每一层，屏障将使用数据抽象的程序（上方）与实现数据抽象的程序（下方）分开。使用有理数的程序仅通过有理数包“供公共使用”所提供的过程来操作它们：<code>add-rat</code>、<code>sub-rat</code>、<code>mul-rat</code>、<code>div-rat</code>和<code>equal-rat?</code>。而这些过程又仅通过构造函数和选择函数<code>make-rat</code>、<code>numer</code>和<code>denom</code>来实现，后者本身又是基于序对实现的。只要序对可以通过<code>cons</code>、<code>car</code>和<code>cdr</code>来操作，序对如何实现的细节对于有理数包的其余部分就是无关紧要的。实际上，每一层的过程都是定义抽象屏障并连接不同层次的接口。</p>
+<figure class="float">
+<a id="Figure-2_002e1"></a>
+<object style="width: 48.87ex; height: 38.08ex;" data="fig/chap2/Fig2.1d.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.1：</strong>有理数包中的数据抽象屏障。</p>
+</figcaption>
+</figure>
+
+<p>这个简单的想法有许多优点。一个优点是它使程序更易于维护和修改。任何复杂的数据结构都可以用编程语言提供的基本数据结构以多种方式表示。当然，表示的选择会影响操作它的程序；因此，如果以后要改变表示，所有这样的程序可能都必须相应地修改。对于大型程序来说，除非在设计上将对于表示的依赖限制在极少数程序模块中，否则这项任务可能既耗时又昂贵。</p>
+<p>例如，解决将有理数约简为最简形式这一问题的另一种方法是在我们访问有理数的各部分时执行约简，而不是在构造它时执行。这导致了不同的构造函数和选择函数过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-rat n d</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> n d</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">g </span><span class="opn">(</span><span class="pln">gcd </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> g</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">g </span><span class="opn">(</span><span class="pln">gcd </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> g</span><span class="clo">)))</span></pre></div>
+
+<p>这个实现与前一个实现之间的区别在于我们何时计算<code>gcd</code>。如果在我们对有理数的典型使用中，我们会多次访问相同有理数的分子和分母，那么最好在构造有理数时计算<code>gcd</code>。如果不是这样，我们可能最好等到访问时再计算<code>gcd</code>。无论如何，当我们从一种表示切换到另一种表示时，过程<code>add-rat</code>、<code>sub-rat</code>等等完全不需要修改。</p>
+<p>将对于表示的依赖限制在少数接口过程中，既有助于我们设计程序，也有助于我们修改程序，因为它使我们能够保持考虑替代实现的灵活性。继续我们简单的例子，假设我们正在设计一个有理数包，并且最初无法决定是在构造时还是在选择时执行<code>gcd</code>。数据抽象方法为我们提供了一种推迟该决定的方式，同时不丧失在系统其余部分取得进展的能力。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e2"></a>习题2.2：</strong>考虑在平面中表示线段的问题。每条线段表示为一对点：一个起点和一个终点。定义一个构造函数<code>make-segment</code>以及选择函数<code>start-segment</code>和<code>end-segment</code>，它们基于点来定义线段的表示。此外，一个点可以表示为一对数字：<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>坐标和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>坐标。相应地，指定一个构造函数<code>make-point</code>以及选择函数<code>x-point</code>和<code>y-point</code>来定义这种表示。最后，使用你的选择函数和构造函数，定义一个过程<code>midpoint-segment</code>，它接受一条线段作为参数并返回其中点（其坐标是端点坐标平均值的点）。为了试验你的过程，你需要一种打印点的方法：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">print-point p</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">newline</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display </span><span class="str">"("</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display </span><span class="opn">(</span><span class="pln">x-point p</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display </span><span class="str">","</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display </span><span class="opn">(</span><span class="pln">y-point p</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display </span><span class="str">")"</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e3"></a>习题2.3：</strong>实现平面中矩形的一种表示。（提示：你可能想利用<a href="#Exercise-2_002e2">习题2.2</a>。）基于你的构造函数和选择函数，创建计算给定矩形的周长和面积的过程。现在实现矩形的另一种表示。你能用合适的抽象屏障来设计你的系统，使得相同的周长和面积过程在两种表示下都能工作吗？</p></blockquote>
+
+<a id="g_t2_002e1_002e3"></a>
+<a id="What-Is-Meant-by-Data_003f"></a>
+<h4 class="subsection"><span class="secnum">2.1.3</span><span class="sectitle">数据意味着什么？</span></h4>
+
+<p>我们在<a href="#g_t2_002e1_002e1">2.1.1</a>中开始有理数实现时，是基于三个未指定的过程：<code>make-rat</code>、<code>numer</code>和<code>denom</code>来实现有理数运算<code>add-rat</code>、<code>sub-rat</code>等等的。在那个时候，我们可以认为这些运算是基于数据对象——分子、分母和有理数——来定义的，而这些数据对象的行为由后三个过程指定。</p>
+<p>但<a id="index-data-1"></a><em>数据</em>究竟是什么意思呢？仅仅说“由给定的选择函数和构造函数所实现的任何东西”是不够的。显然，并非任意三个过程的集合都能作为有理数实现的合适基础。我们需要保证，如果我们从一对整数<code>n</code>和<code>d</code>构造出一个有理数<code>x</code>，那么提取<code>x</code>的<code>numer</code>和<code>denom</code>并将它们相除，应该得到与<code>n</code>除以<code>d</code>相同的结果。换句话说，<code>make-rat</code>、<code>numer</code>和<code>denom</code>必须满足这样的条件：对于任意整数<code>n</code>和任意非零整数<code>d</code>，如果<code>x</code>是<code>(make-rat n d)</code>，那么<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mtext>(numer x)</mtext>
+      <mtext>(denom x)</mtext>
+    </mfrac>
+  </mrow>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mtext>n</mtext>
+        <mtext>d</mtext>
+      </mfrac>
+    </mrow>
+    <mo>.</mo>
+  </mrow>
+</math>。事实上，这就是<code>make-rat</code>、<code>numer</code>和<code>denom</code>为了构成有理数表示的合适基础所必须满足的唯一条件。一般来说，我们可以把数据看作是由某个选择函数和构造函数的集合，连同这些过程为了成为有效表示所必须满足的指定条件一起定义的。<a class="footnote_link" id="DOCF71" href="#FOOT71"><sup>71</sup></a></p>
+<p>这种观点不仅可以用来定义“高层”数据对象，如有理数，也可以定义更低层的对象。考虑我们在定义有理数时所用的序对概念。我们从未真正说过序对是什么，只是说语言提供了用于操作序对的过程<code>cons</code>、<code>car</code>和<code>cdr</code>。但关于这三个操作，我们唯一需要知道的是，如果我们用<code>cons</code>把两个对象粘在一起，就可以用<code>car</code>和<code>cdr</code>取回这些对象。也就是说，这些操作满足这样的条件：对于任意对象<code>x</code>和<code>y</code>，如果<code>z</code>是<code>(cons x y)</code>，那么<code>(car
+z)</code>是<code>x</code>，且<code>(cdr z)</code>是<code>y</code>。确实，我们提到过这三个过程是作为基本过程包含在我们的语言中的。然而，任何满足上述条件的三元过程组都可以用作实现序对的基础。这一点被一个引人注目的事实所说明：我们可以完全不使用任何数据结构，而只使用过程来实现<code>cons</code>、<code>car</code>和<code>cdr</code>。以下是定义：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> m </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> m </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> y</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> 
+           </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Argument not 0 or 1:
+                   CONS"</span><span class="pln"> m</span><span class="clo">))))</span><span class="pln">
+  dispatch</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z </span><span class="lit">1</span><span class="clo">))</span></pre></div>
+
+<p>这种对过程的使用与我们关于数据应该是什么的直觉概念毫无相似之处。尽管如此，要表明这是一种表示序对的有效方式，我们只需要验证这些过程满足上面给出的条件。</p>
+<p>需要注意的微妙之处在于，<code>(cons x y)</code>返回的值是一个过程——即内部定义的<code>dispatch</code>过程，它接受一个参数，并根据该参数是0还是1而返回<code>x</code>或<code>y</code>。相应地，<code>(car z)</code>被定义为将<code>z</code>应用于0。因此，如果<code>z</code>是由<code>(cons x
+y)</code>形成的过程，那么将<code>z</code>应用于0将产生<code>x</code>。这样，我们就证明了<code>(car (cons x y))</code>产生<code>x</code>，正如所期望的那样。类似地，<code>(cdr
+(cons x y))</code>将<code>(cons x y)</code>返回的过程应用于1，这返回<code>y</code>。因此，这种序对的过程式实现是一种有效的实现，如果我们只使用<code>cons</code>、<code>car</code>和<code>cdr</code>来访问序对，我们就无法将这种实现与使用“真正”数据结构的实现区分开来。</p>
+<p>展示序对的过程式表示，重点不在于我们的语言就是这样工作的（Scheme 以及一般的 Lisp 系统出于效率原因直接实现序对），而在于它可以这样工作。过程式表示虽然晦涩，却是一种完全合适的表示序对的方式，因为它满足了序对需要满足的唯一条件。这个例子还表明，将过程作为对象来操作的能力自动提供了表示复合数据的能力。这在现在看来可能有些奇特，但数据的过程式表示将在我们的编程技能库中扮演核心角色。这种编程风格通常被称为<a id="index-message-passing"></a><em>消息传递</em>，我们将在<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>中处理建模和模拟问题时把它用作基本工具。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e4"></a>习题2.4：</strong>下面是序对的另一种过程式表示。对于这种表示，验证对于任意对象<code>x</code>和<code>y</code>，<code>(car (cons
+x y))</code>产生<code>x</code>。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">m</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">m x y</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">z </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p q</span><span class="clo">)</span><span class="pln"> p</span><span class="clo">)))</span></pre></div>
+
+<p><code>cdr</code>的相应定义是什么？（提示：为了验证这可行，请利用<a href="1_002e1_zh.xhtml#g_t1_002e1_002e5">1.1.5</a>的代换模型。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e5"></a>习题2.5：</strong>证明：如果我们把序对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>表示为整数乘积<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mn>2</mn>
+      <mi>a</mi>
+    </msup>
+    <msup>
+      <mn>3</mn>
+      <mi>b</mi>
+    </msup>
+  </mrow>
+</math>，那么仅使用数字和算术运算就可以表示非负整数序对。给出过程<code>cons</code>、<code>car</code>和<code>cdr</code>的相应定义。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e6"></a>习题2.6：</strong>如果觉得把序对表示为过程还不够令人费解，那么考虑一下，在一种能够操作过程的语言中，我们可以通过如下实现0和加1的运算来摆脱数字（至少就非负整数而言）：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> zero </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-1 n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f </span><span class="opn">((</span><span class="pln">n f</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)))))</span></pre></div>
+
+<p>这种表示被称为<a id="index-Church-numerals"></a><em>丘奇数</em>，以其发明者阿隆佐·丘奇命名，他是发明了 λ 演算的逻辑学家。</p>
+<p>直接定义<code>one</code>和<code>two</code>（不要用<code>zero</code>和<code>add-1</code>来定义）。（提示：使用代换法求值<code>(add-1 zero)</code>。）给出加法过程<code>+</code>的直接定义（不要用<code>add-1</code>的重复应用来定义）。</p></blockquote>
+
+<a id="g_t2_002e1_002e4"></a>
+<a id="Extended-Exercise_003a-Interval-Arithmetic"></a>
+<h4 class="subsection"><span class="secnum">2.1.4</span><span class="sectitle">扩展练习：区间算术</span></h4>
+
+<p>Alyssa P. Hacker 正在设计一个帮助人们解决工程问题的系统。她想在她的系统中提供的一个功能是，能够以已知精度操作不精确的量（例如物理设备的测量参数），这样当用这些近似量进行计算时，结果将是具有已知精度的数。</p>
+<p>电气工程师将使用 Alyssa 的系统来计算电气量。他们有时需要计算两个电阻 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>R</mi>
+    <mn>1</mn>
+  </msub>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>R</mi>
+    <mn>2</mn>
+  </msub>
+</math> 的并联等效电阻 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>R</mi>
+    <mi>p</mi>
+  </msub>
+</math> 的值，使用公式 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>R</mi>
+    <mi>p</mi>
+  </msub>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mn>1</mn>
+        <mrow>
+          <mn>1</mn>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mo>/</mo>
+          </mrow>
+          <msub>
+            <mi>R</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mo>/</mo>
+          </mrow>
+          <msub>
+            <mi>R</mi>
+            <mn>2</mn>
+          </msub>
+        </mrow>
+      </mfrac>
+    </mrow>
+    <mo>.</mo>
+  </mrow>
+</math> 电阻值通常只知道在电阻制造商保证的某个容差范围内。例如，如果你买了一个标有“6.8 欧姆，容差 10%”的电阻，你只能确定该电阻的阻值在 6.8 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>−<!-- − --></mo>
+</math> 0.68 = 6.12 和 6.8 + 0.68 = 7.48 欧姆之间。因此，如果你有一个 6.8 欧姆 10% 的电阻与一个 4.7 欧姆 5% 的电阻并联，组合的电阻范围大约从 2.58 欧姆（如果两个电阻都处于下界）到大约 2.97 欧姆（如果两个电阻都处于上界）。</p>
+<p>Alyssa 的想法是实现“区间算术”，作为一组用于组合“区间”（表示不精确量可能值范围的对象）的算术运算。两个区间相加、相减、相乘或相除的结果本身也是一个区间，表示结果的范围。</p>
+<p>Alyssa 假设存在一个称为“区间”的抽象对象，它有两个端点：下界和上界。她还假定，给定区间的端点，她可以使用数据构造函数 <code>make-interval</code> 来构造该区间。Alyssa 首先编写了一个将两个区间相加的过程。她推断，和可能的最小值是两个下界之和，可能的最大值是两个上界之和：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-interval x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-interval </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">lower-bound x</span><span class="clo">)</span><span class="pln"> 
+                    </span><span class="opn">(</span><span class="pln">lower-bound y</span><span class="clo">))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">upper-bound x</span><span class="clo">)</span><span class="pln"> 
+                    </span><span class="opn">(</span><span class="pln">upper-bound y</span><span class="clo">))))</span></pre></div>
+
+<p>Alyssa 还通过找出边界乘积的最小值和最大值，并将它们用作结果区间的边界，来计算两个区间的乘积。（<code>Min</code> 和 <code>max</code> 是基本过程，用于找出任意数量参数的最小值或最大值。）</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul-interval x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">p1 </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">lower-bound x</span><span class="clo">)</span><span class="pln"> 
+               </span><span class="opn">(</span><span class="pln">lower-bound y</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">p2 </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">lower-bound x</span><span class="clo">)</span><span class="pln"> 
+               </span><span class="opn">(</span><span class="pln">upper-bound y</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">p3 </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">upper-bound x</span><span class="clo">)</span><span class="pln"> 
+               </span><span class="opn">(</span><span class="pln">lower-bound y</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">p4 </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">upper-bound x</span><span class="clo">)</span><span class="pln"> 
+               </span><span class="opn">(</span><span class="pln">upper-bound y</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">make-interval </span><span class="opn">(</span><span class="pln">min p1 p2 p3 p4</span><span class="clo">)</span><span class="pln">
+                   </span><span class="opn">(</span><span class="pln">max p1 p2 p3 p4</span><span class="clo">))))</span></pre></div>
+
+<p>为了将两个区间相除，Alyssa 将第一个区间乘以第二个区间的倒数。注意，倒数区间的边界是上界的倒数和下界的倒数，按此顺序。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">div-interval x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">mul-interval x 
+                </span><span class="opn">(</span><span class="pln">make-interval 
+                 </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="lit">1.0</span><span class="pln"> </span><span class="opn">(</span><span class="pln">upper-bound y</span><span class="clo">))</span><span class="pln"> 
+                 </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="lit">1.0</span><span class="pln"> </span><span class="opn">(</span><span class="pln">lower-bound y</span><span class="clo">)))))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e7"></a>习题 2.7：</strong> Alyssa 的程序不完整，因为她没有指定区间抽象的实现。下面是区间构造函数的一个定义：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-interval a b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> a b</span><span class="clo">))</span></pre></div>
+
+<p>定义选择函数 <code>upper-bound</code> 和 <code>lower-bound</code> 以完成该实现。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e8"></a>习题 2.8：</strong> 使用与 Alyssa 类似的推理，描述如何计算两个区间的差。定义一个相应的减法过程，称为 <code>sub-interval</code>。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e9"></a>习题 2.9：</strong> 一个区间的 <a id="index-width"></a><em>宽度</em> 是其上界与下界之差的一半。宽度是区间所指定数值不确定性的度量。对于某些算术运算，组合两个区间所得结果的宽度仅是参数区间宽度的函数，而对于另一些运算，组合结果的宽度不是参数区间宽度的函数。证明两个区间之和（或差）的宽度仅是所相加（或相减）区间宽度的函数。举例说明对于乘法或除法，这一点不成立。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e10"></a>习题 2.10：</strong> Ben Bitdiddle 是一位专家级系统程序员，他从 Alyssa 身后看了看，评论说除以一个跨越零的区间意味着什么并不清楚。修改 Alyssa 的代码以检查这种情况，并在出现时发出错误信号。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e11"></a>习题 2.11：</strong> 顺便提一下，Ben 还神秘地评论道：“通过测试区间端点的符号，可以将 <code>mul-interval</code> 分解为九种情况，其中只有一种需要超过两次乘法。”使用 Ben 的建议重写这个过程。</p>
+<p>在调试完她的程序后，Alyssa 将其展示给一位潜在用户，该用户抱怨她的程序解决的是错误的问题。他想要一个能够处理以中心值和加法容差表示的数的程序；例如，他想要处理诸如 3.5 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo>±<!-- ± --></mo>
+</math> 0.15 这样的区间，而不是 [3.35, 3.65]。Alyssa 回到她的办公桌，通过提供另一个构造函数和另一组选择函数来修复这个问题：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-center-width c w</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-interval </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> c w</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> c w</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">center i</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">lower-bound i</span><span class="clo">)</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pln">upper-bound i</span><span class="clo">))</span><span class="pln"> 
+     </span><span class="lit">2</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">width i</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">upper-bound i</span><span class="clo">)</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pln">lower-bound i</span><span class="clo">))</span><span class="pln"> 
+     </span><span class="lit">2</span><span class="clo">))</span></pre></div>
+
+<p>不幸的是，Alyssa 的大多数用户都是工程师。真实的工程场景通常涉及只有很小不确定性的测量，其度量方式是区间宽度与区间中点之比。工程师通常指定设备参数的百分比容差，如前面给出的电阻规格。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e12"></a>习题 2.12：</strong> 定义一个构造函数 <code>make-center-percent</code>，它接受一个中心值和一个百分比容差，并产生所需的区间。你还必须定义一个选择函数 <code>percent</code>，它产生给定区间的百分比容差。<code>center</code> 选择函数与上面所示相同。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e13"></a>习题 2.13：</strong> 证明在小百分比容差的假设下，两个区间乘积的近似百分比容差有一个简单公式，用因子的容差表示。你可以通过假设所有数都是正数来简化问题。</p>
+<p>经过大量工作，Alyssa P. Hacker 交付了她完成的系统。几年后，当她早已将其忘得一干二净时，她接到了愤怒的用户 Lem E. Tweakit 疯狂打来的电话。看来 Lem 注意到并联电阻的公式可以用两种代数上等价的方式写出：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mrow>
+        <msub>
+          <mi>R</mi>
+          <mn>1</mn>
+        </msub>
+        <msub>
+          <mi>R</mi>
+          <mn>2</mn>
+        </msub>
+      </mrow>
+      <mrow>
+        <msub>
+          <mi>R</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>+</mo>
+        <msub>
+          <mi>R</mi>
+          <mn>2</mn>
+        </msub>
+      </mrow>
+    </mfrac>
+  </mrow>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mn>1</mn>
+        <mrow>
+          <mn>1</mn>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mo>/</mo>
+          </mrow>
+          <msub>
+            <mi>R</mi>
+            <mn>1</mn>
+          </msub>
+          <mo>+</mo>
+          <mn>1</mn>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mo>/</mo>
+          </mrow>
+          <msub>
+            <mi>R</mi>
+            <mn>2</mn>
+          </msub>
+        </mrow>
+      </mfrac>
+    </mrow>
+    <mo>.</mo>
+  </mrow>
+</math> 他编写了以下两个程序，每个程序以不同方式计算并联电阻公式：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">par1 r1 r2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">div-interval 
+   </span><span class="opn">(</span><span class="pln">mul-interval r1 r2</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">add-interval r1 r2</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">par2 r1 r2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">one </span><span class="opn">(</span><span class="pln">make-interval </span><span class="lit">1</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">div-interval 
+     one
+     </span><span class="opn">(</span><span class="pln">add-interval 
+      </span><span class="opn">(</span><span class="pln">div-interval one r1</span><span class="clo">)</span><span class="pln"> 
+      </span><span class="opn">(</span><span class="pln">div-interval one r2</span><span class="clo">)))))</span></pre></div>
+
+<p>Lem 抱怨说，Alyssa 的程序对这两种计算方式给出了不同的答案。这是一个严重的抱怨。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e14"></a>习题 2.14：</strong> 证明 Lem 是对的。研究系统在各种算术表达式上的行为。构造一些区间 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math>，并用它们来计算表达式 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>A</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>A</mi>
+  </mrow>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>A</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>B</mi>
+  </mrow>
+</math>。使用宽度为中心值很小百分比的区间将获得最多的洞见。以中心-百分比形式检查计算结果（见 <a href="#Exercise-2_002e12">习题 2.12</a>）。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e15"></a>习题 2.15：</strong> 另一位用户 Eva Lu Ator 也注意到，由不同但代数等价的表达式计算出的区间不同。她说，如果使用 Alyssa 的系统计算区间的公式能够写成这样一种形式，即表示不确定数的变量不重复出现，那么它将产生更紧的误差界。因此，她说，<code>par2</code> 是比 <code>par1</code> 更“好”的并联电阻程序。她对吗？为什么？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e16"></a>习题 2.16：</strong> 一般性地解释为什么等价的代数表达式可能导致不同的答案。你能设计一个没有这个缺点的区间算术包吗，还是这个任务不可能完成？（警告：这个问题非常困难。）</p></blockquote>
+
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT68"><p><a class="footnote_backlink" href="#DOCF68"><sup>68</sup></a> 名称 <code>cons</code> 代表“construct”（构造）。名称 <code>car</code> 和 <code>cdr</code> 源自 Lisp 在 IBM 704 上的最初实现。那台机器有一种寻址方案，允许人们引用内存位置的“地址”和“减量”部分。<code>Car</code> 代表“Contents of Address part of Register”（寄存器地址部分的内容），而 <code>cdr</code>（读作“could-er”）代表“Contents of Decrement part of Register”（寄存器减量部分的内容）。</p>
+</div>
+<div id="FOOT69"><p><a class="footnote_backlink" href="#DOCF69"><sup>69</sup></a> 定义选择函数和构造函数的另一种方式是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> make-rat </span><span class="kwd">cons</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> numer </span><span class="kwd">car</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> denom </span><span class="kwd">cdr</span><span class="clo">)</span></pre></div>
+
+<p>第一个定义将名称 <code>make-rat</code> 与表达式 <code>cons</code> 的值关联起来，该值是构造序对的基本过程。因此 <code>make-rat</code> 和 <code>cons</code> 是同一个基本构造函数的名称。</p>
+<p>以这种方式定义选择函数和构造函数是高效的：不是 <code>make-rat</code> <em>调用</em> <code>cons</code>，而是 <code>make-rat</code> <em>就是</em> <code>cons</code>，因此当调用 <code>make-rat</code> 时只调用一个过程，而不是两个。另一方面，这样做会破坏跟踪过程调用或在过程调用上设置断点的调试辅助工具：你可能想观察 <code>make-rat</code> 被调用，但你肯定不想观察每一次对 <code>cons</code> 的调用。</p>
+<p>我们选择在本书中不使用这种定义风格。</p>
+</div>
+<div id="FOOT70"><p><a class="footnote_backlink" href="#DOCF70"><sup>70</sup></a> <code>Display</code> 是 Scheme 中用于打印数据的基本过程。Scheme 基本过程 <code>newline</code> 开始新的一行进行打印。这两个过程都不返回有用的值，因此在下面使用 <code>print-rat</code> 时，我们只展示 <code>print-rat</code> 打印的内容，而不展示解释器作为 <code>print-rat</code> 返回值所打印的内容。</p>
+</div>
+<div id="FOOT71"><p><a class="footnote_backlink" href="#DOCF71"><sup>71</sup></a> 令人惊讶的是，这个想法很难严格地表述。给出这种表述有两种方法。一种由 C. A. R. <a href="References_zh.xhtml#Hoare-_00281972_0029">Hoare（1972）</a> 开创，被称为 <a id="index-abstract-models"></a> <em>抽象模型</em> 方法。它将上面有理数例子中概述的“过程加条件”规范形式化。注意，有理数表示上的条件是用关于整数的事实（相等和除法）来陈述的。一般来说，抽象模型用先前定义的数据对象类型来定义新类型的数据对象。因此，关于数据对象的断言可以通过将它们归约为关于先前定义的数据对象的断言来检查。另一种方法由 <abbr>MIT</abbr> 的 Zilles、IBM 的 Goguen、Thatcher、Wagner 和 Wright（见 <a href="References_zh.xhtml#Thatcher-et-al_002e-1978">Thatcher 等人 1978</a>）以及多伦多的 Guttag（见 <a href="References_zh.xhtml#Guttag-1977">Guttag 1977</a>）引入，被称为 <a id="index-algebraic-specification"></a> <em>代数规范</em>。它将“过程”视为抽象代数系统的元素，其行为由对应于我们“条件”的公理指定，并使用抽象代数的技术来检查关于数据对象的断言。这两种方法都在 <a href="References_zh.xhtml#Liskov-and-Zilles-_00281975_0029">Liskov 和 Zilles（1975）</a> 的论文中进行了综述。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="2_002e2_zh.xhtml#g_t2_002e2" accesskey="n" rel="next">2.2</a>, 上一节： <a href="Chapter-2_zh.xhtml#Chapter-2" accesskey="p" rel="prev">第2章</a>, 上一级： <a href="#g_t2_002e1" accesskey="u" rel="prev">2.1</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

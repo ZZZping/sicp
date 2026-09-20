@@ -1,0 +1,960 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：1.1</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 1.1" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 1.1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-1_zh.xhtml#Chapter-1" rel="prev" title="Chapter 1" />
+<link href="1_002e2_zh.xhtml#g_t1_002e2" rel="next" title="1.2" />
+<link href="Chapter-1_zh.xhtml#Chapter-1" rel="prev" title="Chapter 1" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t1_002e1"></a>
+<nav class="header">
+<p>下一节： <a href="1_002e2_zh.xhtml#g_t1_002e2" accesskey="n" rel="next">1.2</a>, 上一节： <a href="Chapter-1_zh.xhtml#Chapter-1" accesskey="p" rel="prev">第1章</a>, 上一级： <a href="Chapter-1_zh.xhtml#Chapter-1" accesskey="u" rel="prev">第1章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="The-Elements-of-Programming"></a>
+<h3 class="section"><span class="secnum">1.1</span><span class="sectitle">程序设计的基本元素</span></h3>
+
+<p>一种强大的程序设计语言不仅仅是指挥计算机执行任务的手段。这种语言还充当一种框架，我们可以在其中组织关于计算过程的思想。因此，当我们描述一种语言时，应当特别注意该语言所提供的、将简单思想组合成更复杂思想的手段。每一种强大的语言都有三种实现这一目标的机制：</p>
+<ul>
+<li><b>基本表达式</b>，表示该语言所关注的最简单的实体，</li><li><b>组合手段</b>，通过它由较简单的元素构造出复合元素，以及</li><li><b>抽象手段</b>，通过它复合元素可以被命名并作为单元来操作。</li></ul>
+
+<p>在程序设计中，我们处理两类元素：过程和数据。（稍后我们会发现它们其实并没有那么截然不同。）非正式地说，数据是我们想要操作的“东西”，而过程是操作数据的规则的描述。因此，任何强大的程序设计语言都应该能够描述基本数据和基本过程，并且应该具有组合和抽象过程与数据的方法。</p>
+<p>在本章中，我们只处理简单的数值数据，以便将注意力集中在构造过程的规则上。<a class="footnote_link" id="DOCF4" href="#FOOT4"><sup>4</sup></a>在后面的章节中，我们将看到这些相同的规则也允许我们构造操作复合数据的过程。</p>
+
+<a id="g_t1_002e1_002e1"></a>
+<a id="Expressions"></a>
+<h4 class="subsection"><span class="secnum">1.1.1</span><span class="sectitle">表达式</span></h4>
+
+<p>开始学习程序设计的一种简单方法，是考察与 Lisp 的 Scheme 方言解释器进行的一些典型交互。设想你正坐在计算机终端前。你输入一个<a id="index-expression"></a><em>表达式</em>，解释器则显示对该表达式<a id="index-evaluating"></a><em>求值</em>所得的结果，作为响应。</p>
+<p>你可能输入的一种基本表达式是一个数。（更确切地说，你输入的表达式由以10为基数表示这个数的数码组成。）如果你向 Lisp 提供一个数</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="lit">486</span></pre></div>
+
+<p>解释器将通过打印<a class="footnote_link" id="DOCF5" href="#FOOT5"><sup>5</sup></a>来作出响应</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><i><span class="lit">486</span></i>
+</pre></div>
+
+<p>表示数字的表达式可以与表示基本过程（例如<code>+</code>或<code>*</code>）的表达式组合，形成表示将该过程应用于这些数的复合表达式。例如<!-- /@w -->：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">137</span><span class="pln"> </span><span class="lit">349</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">486</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="lit">1000</span><span class="pln"> </span><span class="lit">334</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">666</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">99</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">495</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="lit">10</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">2</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">2.7</span><span class="pln"> </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">12.7</span></i>
+</pre></div>
+
+<p>像这样通过在括号内界定一个表达式表来表示过程应用的表达式，称为<a id="index-combinations"></a> <em>组合式</em>。表中位于最左边的元素称为<a id="index-operator"></a> <em>运算符</em>，其他元素称为<a id="index-operands"></a> <em>运算对象</em>。组合式的值是通过将运算符所指定的过程应用于作为运算对象值的<a id="index-arguments"></a> <em>参数</em>而得到的。</p>
+<p>将运算符放在运算对象左边的约定称为<a id="index-prefix-notation"></a> <em>前缀表示</em>，它起初可能有些令人困惑，因为它与习惯的数学约定有很大不同。然而，前缀表示有几个优点。其中之一是它可以容纳可能接受任意数量参数的过程，如下面的例子所示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">21</span><span class="pln"> </span><span class="lit">35</span><span class="pln"> </span><span class="lit">12</span><span class="pln"> </span><span class="lit">7</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">75</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">25</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">12</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">1200</span></i>
+</pre></div>
+
+<p>不会产生任何歧义，因为运算符始终是最左边的元素，而整个组合式由括号界定。</p>
+<p>前缀表示的第二个优点是，它以一种直接的方式扩展，允许组合式<i>嵌套</i>，也就是说，允许组合式的元素本身也是组合式：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="lit">10</span><span class="pln"> </span><span class="lit">6</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">19</span></i>
+</pre></div>
+
+<p>这种嵌套的深度以及 Lisp 解释器所能求值的表达式的总体复杂度（原则上）是没有限制的。是我们人类会被像下面这样相对简单的表达式弄糊涂</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)))</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="lit">10</span><span class="pln"> </span><span class="lit">7</span><span class="clo">)</span><span class="pln"> </span><span class="lit">6</span><span class="clo">))</span></pre></div>
+
+<p>而解释器会毫不费力地将其求值为57。我们可以按照下面的形式书写这样的表达式来帮助自己</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">3</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="lit">10</span><span class="pln"> </span><span class="lit">7</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">6</span><span class="clo">))</span></pre></div>
+
+<p>遵循一种称为<a id="index-pretty_002dprinting"></a> <em>美观打印</em>的格式约定，其中每个长组合式都写成使运算对象垂直对齐的形式。由此产生的缩进清晰地展示了表达式的结构。<a class="footnote_link" id="DOCF6" href="#FOOT6"><sup>6</sup></a></p>
+<p>即使对于复杂的表达式，解释器也总是以相同的基本循环运行：它从终端读入一个表达式，对该表达式求值，并打印结果。这种操作模式通常被表述为解释器运行在一个<a id="index-read_002deval_002dprint-loop"></a> <em>读-求值-打印循环</em>中。特别要注意的是，没有必要显式地指示解释器打印表达式的值。<a class="footnote_link" id="DOCF7" href="#FOOT7"><sup>7</sup></a></p>
+<a id="g_t1_002e1_002e2"></a>
+<a id="Naming-and-the-Environment"></a>
+<h4 class="subsection"><span class="secnum">1.1.2</span><span class="sectitle">命名与环境</span></h4>
+
+<p>程序设计语言的一个关键方面是它提供的、使用名字来指称计算对象的手段。我们说该名字标识了一个<a id="index-variable"></a> <em>变量</em>，其<a id="index-value"></a> <em>值</em>是该对象。</p>
+<p>在 Lisp 的 Scheme 方言中，我们用<code>define</code>来命名事物。输入</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> size </span><span class="lit">2</span><span class="clo">)</span></pre></div>
+
+<p>会使解释器将值2与名字<code>size</code>关联起来。<a class="footnote_link" id="DOCF8" href="#FOOT8"><sup>8</sup></a>一旦名字<code>size</code>与数字2关联起来，我们就可以通过名字来指称值2：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">size
+</span><i><span class="lit">2</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> size</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">10</span></i>
+</pre></div>
+
+<p>下面是使用<code>define</code>的更多例子：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> pi </span><span class="lit">3.14159</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> radius </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pun">*</span><span class="pln"> pi </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> radius radius</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">314.159</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> circumference </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> pi radius</span><span class="clo">))</span><span class="pln">
+
+circumference
+</span><i><span class="lit">62.8318</span></i>
+</pre></div>
+
+<p><code>Define</code> 是我们语言中最简单的抽象手段，因为它允许我们使用简单的名字来指代复合运算的结果，例如上面计算出的 <code>circumference</code>。一般来说，计算对象可能具有非常复杂的结构，如果每次想要使用它们时都必须记住并重复它们的细节，那将极其不便。事实上，复杂的程序正是通过逐步构建越来越复杂的计算对象而构造出来的。解释器使得这种逐步构建程序的方式特别方便，因为名字-对象关联可以在连续的交互中逐步创建。这一特性鼓励了程序的增量开发和测试，并且在很大程度上解释了为什么一个 Lisp 程序通常由大量相对简单的过程组成。</p>
+<p>显然，将值与符号关联起来并随后检索它们的可能性意味着解释器必须维护某种记忆，以跟踪名字-对象对。这种记忆被称为 <a id="index-environment"></a><em>环境</em>（更准确地说，是 <a id="index-global-environment"></a><em>全局环境</em>，因为我们稍后会看到，一个计算可能涉及多个不同的环境）。<a class="footnote_link" id="DOCF9" href="#FOOT9"><sup>9</sup></a></p>
+<a id="g_t1_002e1_002e3"></a>
+<a id="Evaluating-Combinations"></a>
+<h4 class="subsection"><span class="secnum">1.1.3</span><span class="sectitle">求值组合式</span></h4>
+
+<p>本章的目标之一，是单独考察按过程思考所涉及的问题。举例来说，在对组合式求值时，解释器本身也在遵循一个过程。</p>
+<blockquote>
+<p>要求值一个组合式，请执行以下操作：</p>
+<ol>
+<li>求值该组合式的各个子表达式。</li><li>将最左侧子表达式（运算符）的值所代表的过程应用于其他子表达式（运算对象）的值所代表的参数。</li></ol>
+</blockquote>
+
+<p>即使这条简单的规则也说明了一些关于一般意义上的计算过程的重要观点。首先，注意第一步要求，为了完成一个组合式的求值过程，我们必须首先对组合式的每个元素执行求值过程。因此，求值规则本质上是<a id="index-recursive"></a><em>递归</em>的；也就是说，它把调用规则本身的需要作为其步骤之一。<a class="footnote_link" id="DOCF10" href="#FOOT10"><sup>10</sup></a></p>
+<p>请注意，对于深度嵌套的组合式，本来会被视为相当复杂的计算过程，利用递归的思想却可以表达得十分简洁。例如，对</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">6</span><span class="clo">))</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">7</span><span class="clo">))</span></pre></div>
+
+<p>要求将求值规则应用于四个不同的组合式。我们可以通过将组合式表示为树的形式来获得这一过程的图景，如<a href="#Figure-1_002e1">图 1.1</a>所示。每个组合式由一个节点表示，从该节点伸出对应于该组合式的运算符和运算对象的分支。终端节点（即没有分支从它们伸出的节点）表示运算符或数字。从树的角度来看求值，我们可以想象运算对象的值从终端节点开始向上渗透，然后在越来越高的层次上组合。一般来说，我们将看到递归是处理层次化、树状对象的非常强大的技术。事实上，求值规则的“值向上渗透”形式是一种被称为<a id="index-tree-accumulation"></a><em>树累积</em>的一般过程的例子。</p>
+<figure class="float">
+<a id="Figure-1_002e1"></a>
+<object style="width: 20.38ex; height: 20.46ex;" data="fig/chap1/Fig1.1g.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 1.1：</strong> 树表示，显示了每个子组合式的值。</p>
+</figcaption>
+</figure>
+
+<p>接下来，注意第一步的重复应用将我们带到这样一个点：我们需要求值的不是组合式，而是基本表达式，例如数码、内置运算符或其他名字。我们通过规定以下内容来处理这些基本情形：</p>
+<ul>
+<li>数码的值就是它们所表示的数，</li><li>内置运算符的值就是执行相应操作的机器指令序列，以及</li><li>其他名字的值就是在环境中与这些名字关联的对象。</li></ul>
+
+<p>我们可以把第二条规则视为第三条规则的特例，方法是规定诸如 <code>+</code> 和 <code>*</code> 这样的符号也包含在全局环境中，并且与作为它们“值”的机器指令序列相关联。需要注意的关键点是环境在确定表达式中符号的含义时所起的作用。在像 Lisp 这样的交互式语言中，如果不指定任何关于环境的信息来为符号 <code>x</code>（甚至符号 <code>+</code>）提供含义，那么谈论诸如 <code>(+ x 1)</code> 这样的表达式的值就是没有意义的。正如我们将在<a href="Chapter-3_zh.xhtml#Chapter-3">第 3 章</a>中看到的，环境作为提供求值发生背景的一般概念，将在我们理解程序执行方面发挥重要作用。</p>
+<p>注意上面给出的求值规则并不处理定义。例如，求值 <code>(define x 3)</code> 并不会将 <code>define</code> 应用于两个参数，其中一个参数是符号 <code>x</code> 的值，另一个参数是 3，因为 <code>define</code> 的目的正是将 <code>x</code> 与一个值关联起来。（也就是说，<code>(define x 3)</code> 不是一个组合式。）</p>
+<p>这种对一般求值规则的例外称为<a id="index-special-forms"></a><em>特殊形式</em>。<code>Define</code>是我们目前见过的唯一一个特殊形式的例子，但我们很快就会遇到其他特殊形式。每个特殊形式都有自己的求值规则。各种类型的表达式（每种都带有其相关的求值规则）构成了编程语言的语法。与大多数其他编程语言相比，Lisp 的语法非常简单；也就是说，表达式的求值规则可以用一条简单的通用规则加上少量特殊形式的专门规则来描述。<a class="footnote_link" id="DOCF11" href="#FOOT11"><sup>11</sup></a></p>
+<a id="g_t1_002e1_002e4"></a>
+<a id="Compound-Procedures"></a>
+<h4 class="subsection"><span class="secnum">1.1.4</span><span class="sectitle">复合过程</span></h4>
+
+<p>我们已经在 Lisp 中识别出了一些在任何强大的编程语言中都必然出现的元素：</p>
+<ul>
+<li>数和算术运算是基本数据和基本过程。</li><li>组合式的嵌套提供了一种组合运算的手段。</li><li>将名字与值关联起来的定义提供了一种有限的抽象手段。</li></ul>
+
+<p>现在我们将学习<a id="index-procedure-definitions"></a><em>过程定义</em>，这是一种强大得多的抽象技术，通过它，一个复合运算可以被赋予一个名字，然后作为一个单元来引用。</p>
+<p>我们从考察如何表达“平方”这一概念开始。我们可以说：“要对某物求平方，就把它乘以它自己。”用我们的语言可以表达为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">))</span></pre></div>
+
+<p>我们可以按以下方式来理解这一点：</p>
+<div class="example">
+<pre class="example">(define (square x)    (*       x       x))
+  |      |      |      |       |       |
+ To square something, multiply it by itself.
+</pre></div>
+
+<p>这里我们有一个<a id="index-compound-procedure"></a><em>复合过程</em>，它被赋予了名字<code>square</code>。该过程表示将某物乘以它自身的运算。被乘的那个东西被赋予一个局部名字<code>x</code>，它所起的作用与自然语言中的代词相同。对这个定义求值会创建这个复合过程，并将它与名字<code>square</code>关联起来。<a class="footnote_link" id="DOCF12" href="#FOOT12"><sup>12</sup></a></p>
+<p>过程定义的一般形式是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">name</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">formal parameters</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln"> ⟨</span><var><span class="pln">body</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p><code>⟨</code><var>name</var><code>⟩</code>是一个符号，将在环境中与过程定义相关联。<a class="footnote_link" id="DOCF13" href="#FOOT13"><sup>13</sup></a><code>⟨</code><var>formal<!-- /@w --> parameters<!-- /@w --></var><code>⟩</code>是过程体内部用来指代过程相应参数的名字。<code>⟨</code><var>body</var><code>⟩</code>是一个表达式，当形式参数被替换为过程所应用的实际参数时，它将产生过程应用的值。<a class="footnote_link" id="DOCF14" href="#FOOT14"><sup>14</sup></a><code>⟨</code><var>name</var><code>⟩</code>和<code>⟨</code><var>formal parameters</var><code>⟩</code>被分组在圆括号内，就像在实际调用所定义的过程时那样。</p>
+<p>定义了<code>square</code>之后，我们现在就可以使用它了：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">square </span><span class="lit">21</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">441</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">49</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">square </span><span class="lit">3</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">81</span></i>
+</pre></div>
+
+<p>我们还可以把<code>square</code>用作定义其他过程的构件。例如，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <msup>
+    <mi>y</mi>
+    <mn>2</mn>
+  </msup>
+</math>可以表达为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">))</span></pre></div>
+
+<p>我们可以很容易地定义一个过程<code>sum-of-squares</code>，它以任意两个数为参数，产生它们平方的和：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum-of-squares x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">sum-of-squares </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">25</span></i>
+</pre></div>
+
+<p>现在我们可以把<code>sum-of-squares</code>用作构造进一步过程的构件：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f a</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sum-of-squares </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a </span><span class="lit">2</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">f </span><span class="lit">5</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">136</span></i>
+</pre></div>
+
+<p>复合过程的使用方式与基本过程完全相同。事实上，仅从上面给出的<code>sum-of-squares</code>的定义来看，人们无法分辨<code>square</code>是像<code>+</code>和<code>*</code>那样内建于解释器中，还是被定义为一个复合过程。</p>
+<a id="g_t1_002e1_002e5"></a>
+<a id="The-Substitution-Model-for-Procedure-Application"></a>
+<h4 class="subsection"><span class="secnum">1.1.5</span><span class="sectitle">过程应用的代换模型</span></h4>
+
+<p>要对一个运算符命名复合过程的组合式求值，解释器遵循的过程与对运算符命名基本过程的组合式（我们在<a href="#g_t1_002e1_002e3">1.1.3</a>中描述过）大致相同。也就是说，解释器对组合式的元素求值，并将过程（即组合式运算符的值）应用于参数（即组合式运算对象的值）。</p>
+<p>我们可以假定，将基本过程应用于参数的机制是内建于解释器中的。对于复合过程，应用过程如下：</p>
+<blockquote>
+<p>要将复合过程应用于参数，就用相应的参数替换过程体中的每个形式参数，然后对过程体求值。</p></blockquote>
+
+<p>为了说明这一过程，让我们对组合式求值</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">f </span><span class="lit">5</span><span class="clo">)</span></pre></div>
+
+<p>其中<code>f</code>是在<a href="#g_t1_002e1_002e4">1.1.4</a>中定义的过程。我们首先取出<code>f</code>的过程体：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">sum-of-squares </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a </span><span class="lit">2</span><span class="clo">))</span></pre></div>
+
+<p>然后我们用参数5替换形式参数<code>a</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">sum-of-squares </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">2</span><span class="clo">))</span></pre></div>
+
+<p>于是问题归结为对一个具有两个运算对象和一个运算符<code>sum-of-squares</code>的组合式求值。对这个组合式求值涉及三个子问题。我们必须对运算符求值以得到要应用的过程，还必须对运算对象求值以得到参数。现在<code>(+
+5 1)</code>产生6，而<code>(* 5 2)</code>产生10，所以我们必须将<code>sum-of-squares</code>过程应用于6和10。这些值被替换到<code>sum-of-squares</code>的过程体中形式参数<code>x</code>和<code>y</code>的位置，从而将表达式归约为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square </span><span class="lit">6</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square </span><span class="lit">10</span><span class="clo">))</span></pre></div>
+
+<p>如果我们使用<code>square</code>的定义，这就归约为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">6</span><span class="pln"> </span><span class="lit">6</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">10</span><span class="pln"> </span><span class="lit">10</span><span class="clo">))</span></pre></div>
+
+<p>再通过乘法归约为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">36</span><span class="pln"> </span><span class="lit">100</span><span class="clo">)</span></pre></div>
+
+<p>最后归约为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="lit">136</span></pre></div>
+
+<p>我们刚才描述的过程称为过程应用的<a id="index-substitution-model"></a><em>代换模型</em>。就本章所涉及的过程而言，它可以被视为一个确定过程应用“含义”的模型。然而，有两点应当强调：</p>
+<ul>
+<li>代换的目的是帮助我们思考过程应用，而不是描述解释器实际如何工作。典型的解释器并不通过操纵过程的文本、用值代换形式参数来对过程应用求值。在实践中，“代换”是通过为形式参数使用局部环境来完成的。我们将在<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>和<a href="Chapter-4_zh.xhtml#Chapter-4">第4章</a>中详细考察解释器的实现时更充分地讨论这一点。</li><li>在本书中，我们将展示一系列越来越精细的解释器工作模型，最终在<a href="Chapter-5_zh.xhtml#Chapter-5">第5章</a>中给出一个完整的解释器和编译器实现。代换模型只是这些模型中的第一个——一种开始形式化思考求值过程的方式。一般来说，在科学和工程中对现象建模时，我们从简化的、不完整的模型开始。随着我们更详细地考察事物，这些简单模型变得不够用，必须被更精细的模型所取代。代换模型也不例外。特别是，当我们在<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>中讨论带有“可变数据”的过程的使用时，我们将看到代换模型失效，必须被一个更复杂的过程应用模型所取代。<a class="footnote_link" id="DOCF15" href="#FOOT15"><sup>15</sup></a></li></ul>
+
+<a id="Applicative-order-versus-normal-order"></a>
+<h5 class="subsubheading">应用序与正则序</h5>
+
+<p>根据<a href="#g_t1_002e1_002e3">1.1.3</a>中给出的求值描述，解释器首先求值运算符和运算对象，然后将得到的过程应用于得到的参数。这并不是执行求值的唯一方式。另一种求值模型不会求值运算对象，直到需要它们的值时才求值。相反，它首先用运算对象表达式代换参数，直到得到一个只涉及基本运算符的表达式，然后执行求值。如果我们使用这种方法，<code>(f 5)</code>的求值将按照展开序列进行</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">sum-of-squares </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">2</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))</span><span class="pln"> 
+   </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))</span><span class="pln"> 
+   </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)))</span></pre></div>
+
+<p>接着是归约</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">6</span><span class="pln"> </span><span class="lit">6</span><span class="clo">)</span><span class="pln"> 
+   </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">10</span><span class="pln"> </span><span class="lit">10</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">36</span><span class="pln"> </span><span class="lit">100</span><span class="clo">)</span><span class="pln">
+
+</span><span class="lit">136</span></pre></div>
+
+<p>这给出了与我们之前的求值模型相同的答案，但计算过程不同。特别是，<code>(+ 5 1)</code>和<code>(* 5 2)</code>的求值在这里各执行了两次，对应于将表达式<code>(* x x)</code>中的<code>x</code>分别替换为<code>(+ 5 1)</code>和<code>(* 5 2)</code>后的归约。</p>
+<p>这种替代的“完全展开然后归约”的求值方法被称为<a id="index-normal_002dorder-evaluation"></a><em>正则序求值</em>，与解释器实际使用的“先求值参数然后应用”的方法相对，后者被称为<a id="index-applicative_002dorder-evaluation"></a><em>应用序求值</em>。可以证明，对于可以用代换建模的过程应用（包括本书前两章中的所有过程）并且产生合法值的情况，正则序和应用序求值产生相同的值。（关于正则序和应用序求值给出不同结果的“不合法”值的例子，见<a href="#Exercise-1_002e5">习题1.5</a>。）</p>
+<p>Lisp使用应用序求值，部分原因在于，对像上面用<code>(+ 5 1)</code>和<code>(* 5 2)</code>说明的那类表达式避免多次求值，可以提高效率；更重要的是，因为当我们离开可以用代换建模的过程领域时，正则序求值变得复杂得多。另一方面，正则序求值可以是一个极其有价值的工具，我们将在<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>和<a href="Chapter-4_zh.xhtml#Chapter-4">第4章</a>中研究它的一些含义。<a class="footnote_link" id="DOCF16" href="#FOOT16"><sup>16</sup></a></p>
+<a id="g_t1_002e1_002e6"></a>
+<a id="Conditional-Expressions-and-Predicates"></a>
+<h4 class="subsection"><span class="secnum">1.1.6</span><span class="sectitle">条件表达式和谓词</span></h4>
+
+<p>此时我们能定义的过程类的表达能力非常有限，因为我们无法进行测试并根据测试结果执行不同的操作。例如，我们无法定义一个过程，通过测试一个数是正数、负数还是零，并根据规则在不同情况下采取不同操作来计算该数的绝对值<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow>
+    <mo>|</mo>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>x</mi>
+    </mrow>
+    <mo>|</mo>
+  </mrow>
+  <mspace width="thickmathspace"/>
+  <mo>=</mo>
+  <mspace width="thickmathspace"/>
+  <mrow>
+    <mo>{</mo>
+    <mtable columnalign="right left left" rowspacing="4pt" columnspacing="1em">
+      <mtr>
+        <mtd>
+          <mi>x</mi>
+        </mtd>
+        <mtd>
+          <mspace width="thickmathspace"/>
+          <mtext>if</mtext>
+        </mtd>
+        <mtd>
+          <mi>x</mi>
+          <mo>&gt;<!-- > --></mo>
+          <mn>0</mn>
+          <mo>,</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mspace width="thickmathspace"/>
+          <mtext>if</mtext>
+        </mtd>
+        <mtd>
+          <mi>x</mi>
+          <mo>=</mo>
+          <mn>0</mn>
+          <mo>,</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mo>−<!-- − --></mo>
+          <mi>x</mi>
+        </mtd>
+        <mtd>
+          <mspace width="thickmathspace"/>
+          <mtext>if</mtext>
+        </mtd>
+        <mtd>
+          <mi>x</mi>
+          <mo>&lt;<!-- < --></mo>
+          <mn>0.</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+  </mrow>
+</math>这种构造称为<a id="index-case-analysis"></a><em>分情况分析</em>，Lisp中有一个特殊形式用于表示这种分情况分析。它称为<code>cond</code>（代表“conditional”），用法如下：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">&gt;</span><span class="pln"> x </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> x </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pun">&lt;</span><span class="pln"> x </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> x</span><span class="clo">))))</span></pre></div>
+
+<p>条件表达式的一般形式是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">p</span><span class="pun">₁</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">e</span><span class="pun">₁</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">p</span><span class="pun">₂</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">e</span><span class="pun">₂</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+      </span><span class="roman"><span class="pun">…</span></span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">p</span><span class="pun">ₙ</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">e</span><span class="pun">ₙ</span></var><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+
+<p>由符号<code>cond</code>后跟带括号的表达式对组成</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">p</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">e</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>称为<a id="index-clauses"></a><em>子句</em>。每对中的第一个表达式是一个<a id="index-predicate"></a><em>谓词</em>——即一个其值被解释为真或假的表达式。<a class="footnote_link" id="DOCF17" href="#FOOT17"><sup>17</sup></a></p>
+<p>条件表达式的求值如下。首先求值谓词<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">⟨</mo>
+    <msub>
+      <mi>p</mi>
+      <mn>1</mn>
+    </msub>
+    <mo stretchy="false">⟩</mo>
+  </mrow>
+</math>。如果其值为假，则求值<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">⟨</mo>
+    <msub>
+      <mi>p</mi>
+      <mn>2</mn>
+    </msub>
+    <mo stretchy="false">⟩</mo>
+  </mrow>
+</math>。如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">⟨</mo>
+    <msub>
+      <mi>p</mi>
+      <mn>2</mn>
+    </msub>
+    <mo stretchy="false">⟩</mo>
+  </mrow>
+</math>的值也为假，则求值<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">⟨</mo>
+    <msub>
+      <mi>p</mi>
+      <mn>3</mn>
+    </msub>
+    <mo stretchy="false">⟩</mo>
+  </mrow>
+</math>。这个过程持续进行，直到找到一个值为真的谓词，此时解释器返回该子句对应的<a id="index-consequent-expression"></a><em>结果表达式</em><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">⟨</mo>
+    <mi>e</mi>
+    <mo stretchy="false">⟩</mo>
+  </mrow>
+</math>的值作为条件表达式的值。如果没有找到任何<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">⟨</mo>
+    <mi>p</mi>
+    <mo stretchy="false">⟩</mo>
+  </mrow>
+</math>为真，则<code>cond</code>的值未定义。</p>
+<p><a id="index-predicate-1"></a><em>谓词</em>一词用于返回真或假的过程，也用于求值为真或假的表达式。绝对值过程<code>abs</code>使用了基本谓词<code>&gt;</code>、<code>&lt;</code>和<code>=</code>。<a class="footnote_link" id="DOCF18" href="#FOOT18"><sup>18</sup></a>这些谓词接受两个数作为参数，并分别测试第一个数是否大于、小于或等于第二个数，相应地返回真或假。</p>
+<p>编写绝对值过程的另一种方式是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">&lt;</span><span class="pln"> x </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> x</span><span class="clo">)))</span></pre></div>
+
+<p>用英语可以表达为“如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>小于零则返回<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo>−<!-- − --></mo>
+    <mi>x</mi>
+  </mrow>
+</math>；否则返回<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>。”<code>Else</code>是一个特殊符号，可用于代替<code>cond</code>的最后一个子句中的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">⟨</mo>
+    <mi>p</mi>
+    <mo stretchy="false">⟩</mo>
+  </mrow>
+</math>。当所有前面的子句都被跳过时，这会使<code>cond</code>返回对应<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">⟨</mo>
+    <mi>e</mi>
+    <mo stretchy="false">⟩</mo>
+  </mrow>
+</math>的值作为其值。事实上，任何总是求值为真的表达式都可以在这里用作<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">⟨</mo>
+    <mi>p</mi>
+    <mo stretchy="false">⟩</mo>
+  </mrow>
+</math>。</p>
+<p>还有另一种编写绝对值过程的方式：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> x </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+      x</span><span class="clo">))</span></pre></div>
+
+<p>这里使用了特殊形式<code>if</code>，这是一种受限的条件表达式，当情况分析中恰好有两种情况时可以使用。<code>if</code>表达式的一般形式是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">if</span><span class="pln"> ⟨</span><var><span class="pln">predicate</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">consequent</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">alternative</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>为了求值一个<code>if</code>表达式，解释器首先求值该表达式的<code>⟨</code><var>predicate</var><code>⟩</code>部分。如果<code>⟨</code><var>predicate</var><code>⟩</code>求值为真值，解释器接着求值<code>⟨</code><var>consequent</var><code>⟩</code>并返回其值。否则它求值<code>⟨</code><var>alternative</var><code>⟩</code>并返回其值。<a class="footnote_link" id="DOCF19" href="#FOOT19"><sup>19</sup></a></p>
+<p>除了诸如<code>&lt;</code>、<code>=</code>和<code>&gt;</code>这样的基本谓词之外，还有逻辑复合运算，它们使我们能够构造复合谓词。最常用的三个如下：</p>
+<ul>
+<li> <code>(and ⟨<var>e₁</var>⟩ <span class="roman">…</span> ⟨<var>eₙ</var>⟩)</code>
+
+<p>解释器按从左到右的顺序逐个求值表达式<code>⟨</code><var>e</var><code>⟩</code>。如果任何<code>⟨</code><var>e</var><code>⟩</code>求值为假，则<code>and</code>表达式的值为假，并且其余的<code>⟨</code><var>e</var><code>⟩</code>不会被求值。如果所有<code>⟨</code><var>e</var><code>⟩</code>都求值为真值，则<code>and</code>表达式的值为最后一个的值。</p>
+</li><li> <code>(or ⟨<var>e₁</var>⟩ <span class="roman">…</span> ⟨<var>eₙ</var>⟩)</code>
+
+<p>解释器按从左到右的顺序逐个求值表达式<code>⟨</code><var>e</var><code>⟩</code>。如果任何<code>⟨</code><var>e</var><code>⟩</code>求值为真值，则返回该值作为<code>or</code>表达式的值，并且其余的<code>⟨</code><var>e</var><code>⟩</code>不会被求值。如果所有<code>⟨</code><var>e</var><code>⟩</code>都求值为假，则<code>or</code>表达式的值为假。</p>
+</li><li> <code>(not ⟨<var>e</var>⟩)</code>
+
+<p>当表达式<code>⟨</code><var>e</var><code>⟩</code>求值为假时，<code>not</code>表达式的值为真，否则为假。</p>
+</li></ul>
+
+<p>注意<code>and</code>和<code>or</code>是特殊形式，而不是过程，因为其子表达式不一定全部被求值。<code>Not</code>是一个普通过程。</p>
+<p>作为如何使用这些的一个例子，数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>在范围<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>5</mn>
+  <mo>&lt;</mo>
+  <mi>x</mi>
+  <mo>&lt;</mo>
+  <mn>10</mn>
+</math>内的条件可以表示为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> x </span><span class="lit">5</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> x </span><span class="lit">10</span><span class="clo">))</span></pre></div>
+
+<p>作为另一个例子，我们可以定义一个谓词来测试一个数是否大于或等于另一个数，如下</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="kwd">or</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> x y</span><span class="clo">)))</span></pre></div>
+
+<p>或者另一种写法是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> x y</span><span class="clo">)))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e1"></a>习题1.1：</strong> 下面是一系列表达式。解释器对每个表达式打印的结果是什么？假设该序列按给出的顺序求值。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="lit">10</span><span class="pln">
+</span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="lit">9</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="lit">6</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">6</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> a </span><span class="lit">3</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> b </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="lit">1</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a b </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a b</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pun">=</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> b a</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> b </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a b</span><span class="clo">)))</span><span class="pln">
+    b
+    a</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> a </span><span class="lit">4</span><span class="clo">)</span><span class="pln"> </span><span class="lit">6</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> b </span><span class="lit">4</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">6</span><span class="pln"> </span><span class="lit">7</span><span class="pln"> a</span><span class="clo">))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="lit">25</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> b a</span><span class="clo">)</span><span class="pln"> b a</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">&gt;</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln"> a</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">((</span><span class="pun">&lt;</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln"> b</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="lit">-1</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="lit">1</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e2"></a>习题1.2：</strong> 将以下表达式翻译成前缀形式：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mrow>
+        <mn>5</mn>
+        <mo>+</mo>
+        <mn>4</mn>
+        <mo>+</mo>
+        <mo stretchy="false">(</mo>
+        <mn>2</mn>
+        <mo>−<!-- − --></mo>
+        <mo stretchy="false">(</mo>
+        <mn>3</mn>
+        <mo>−<!-- − --></mo>
+        <mo stretchy="false">(</mo>
+        <mn>6</mn>
+        <mo>+</mo>
+        <mfrac>
+          <mn>4</mn>
+          <mn>5</mn>
+        </mfrac>
+        <mo stretchy="false">)</mo>
+        <mo stretchy="false">)</mo>
+        <mo stretchy="false">)</mo>
+      </mrow>
+      <mrow>
+        <mn>3</mn>
+        <mo stretchy="false">(</mo>
+        <mn>6</mn>
+        <mo>−<!-- − --></mo>
+        <mn>2</mn>
+        <mo stretchy="false">)</mo>
+        <mo stretchy="false">(</mo>
+        <mn>2</mn>
+        <mo>−<!-- − --></mo>
+        <mn>7</mn>
+        <mo stretchy="false">)</mo>
+      </mrow>
+    </mfrac>
+    <mo>.</mo>
+  </mrow>
+</math></p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e3"></a>习题1.3：</strong> 定义一个过程，它接受三个数作为参数，并返回其中较大的两个数的平方和。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e4"></a>习题1.4：</strong> 注意我们的求值模型允许组合式的运算符是复合表达式。利用这一观察来描述以下过程的行为：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">a-plus-abs-b a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> b </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> </span><span class="pun">-</span><span class="clo">)</span><span class="pln"> a b</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e5"></a>习题1.5：</strong> Ben Bitdiddle 发明了一种测试，用来确定他所面对的解释器使用的是应用序求值还是正则序求值。他定义了以下两个过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">test x y</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> x </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+      </span><span class="lit">0</span><span class="pln"> 
+      y</span><span class="clo">))</span></pre></div>
+
+<p>然后他求值表达式</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">test </span><span class="lit">0</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p</span><span class="clo">))</span></pre></div>
+
+<p>对于使用应用序求值的解释器，Ben 会观察到什么行为？对于使用正则序求值的解释器，他会观察到什么行为？解释你的答案。（假设特殊形式<code>if</code>的求值规则无论解释器使用正则序还是应用序都是相同的：谓词表达式首先被求值，其结果决定是求值结果表达式还是替代表达式。）</p></blockquote>
+
+<a id="Sec_002e1_002e1_002e7"></a><a id="g_t1_002e1_002e7"></a>
+<a id="Example_003a-Square-Roots-by-Newton_0027s-Method"></a>
+<h4 class="subsection"><span class="secnum">1.1.7</span><span class="sectitle">示例：用牛顿法求平方根</span></h4>
+
+<p>如上所述，过程很像普通的数学函数。它们指定一个由一个或多个参数确定的值。但数学函数和计算机过程之间有一个重要区别。过程必须是可实际执行的。</p>
+<p>作为一个例子，考虑计算平方根的问题。我们可以将平方根函数定义为<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msqrt>
+    <mi>x</mi>
+  </msqrt>
+  <mspace width="thickmathspace"/>
+  <mspace width="thickmathspace"/>
+  <mo>=</mo>
+  <mspace width="thickmathspace"/>
+  <mspace width="thickmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>the</mtext>
+    <mspace width="thickmathspace"/>
+    <mspace width="thickmathspace"/>
+    <mi>y</mi>
+  </mrow>
+  <mspace width="thickmathspace"/>
+  <mspace width="thickmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>such that</mtext>
+  </mrow>
+  <mspace width="thickmathspace"/>
+  <mspace width="thickmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo>≥<!-- ≥ --></mo>
+    <mn>0</mn>
+  </mrow>
+  <mspace width="thickmathspace"/>
+  <mspace width="thickmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>and</mtext>
+    <mspace width="thickmathspace"/>
+    <mspace width="thickmathspace"/>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>=</mo>
+    <mi>x</mi>
+    <mo>.</mo>
+  </mrow>
+</math>这描述了一个完全合法的数学函数。我们可以用它来识别一个数是否是另一个数的平方根，或者推导关于平方根的一般事实。另一方面，这个定义并没有描述一个过程。事实上，它几乎没有告诉我们如何实际求出一个给定数的平方根。用伪 Lisp 重述这个定义也无济于事：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">the y </span><span class="opn">(</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> y </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+              </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))))</span></pre></div>
+
+<p>这只是在回避问题。</p>
+<p>函数与过程之间的对比反映了描述事物性质与描述如何做事情之间的一般区别，或者有时被称为陈述性知识与命令式知识之间的区别。在数学中，我们通常关心陈述性（是什么）描述，而在计算机科学中，我们通常关心命令式（如何做）描述。<a class="footnote_link" id="DOCF20" href="#FOOT20"><sup>20</sup></a></p>
+<p>如何计算平方根？最常见的方法是使用牛顿的逐次逼近法，它说每当我们有一个关于数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>的平方根的猜测值<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>时，我们可以通过将<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>与<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math>取平均来进行一个简单的操作，从而得到一个更好的猜测值（更接近实际平方根）。<a class="footnote_link" id="DOCF21" href="#FOOT21"><sup>21</sup></a>例如，我们可以如下计算2的平方根。假设我们的初始猜测值是1：</p>
+<div class="example">
+<pre class="example">Guess     Quotient      Average
+
+1         (2/1)  = 2    ((2 + 1)/2)  = 1.5
+
+1.5       (2/1.5)       ((1.3333 + 1.5)/2)
+            = 1.3333      = 1.4167
+
+1.4167    (2/1.4167)    ((1.4167 + 1.4118)/2) 
+            = 1.4118      = 1.4142  
+
+1.4142    ...           ...
+</pre></div>
+
+<p>继续这个过程，我们得到越来越好的平方根近似值。</p>
+<p>现在让我们用过程来形式化地描述这一计算过程。我们从一个被开方数（我们试图计算其平方根的数）的值和一个猜测值开始。如果猜测值对我们的目的来说足够好，我们就完成了；如果不是，我们必须用改进后的猜测值重复这个过程。我们将这个基本策略写成一个过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt-iter guess x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess x</span><span class="clo">)</span><span class="pln">
+      guess
+      </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="opn">(</span><span class="pln">improve guess x</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)))</span></pre></div>
+
+<p>通过将猜测值与被开方数除以旧猜测值所得的商取平均，可以改进猜测值：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">improve guess x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">average guess </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x guess</span><span class="clo">)))</span></pre></div>
+
+<p>其中</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">average x y</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln"> </span><span class="lit">2</span><span class="clo">))</span></pre></div>
+
+<p>我们还必须说明“足够好”是什么意思。下面这个例子可以说明问题，但它并不是一个很好的测试。（见<a href="#Exercise-1_002e7">习题1.7</a>。）其思想是不断改进答案，直到它足够接近，使得其平方与被开方数之差小于一个预先确定的容差（这里是0.001）：<a class="footnote_link" id="DOCF22" href="#FOOT22"><sup>22</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square guess</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">))</span></pre></div>
+
+<p>最后，我们需要一种开始的方式。例如，我们总是可以猜测任何数的平方根是1：<a class="footnote_link" id="DOCF23" href="#FOOT23"><sup>23</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="lit">1.0</span><span class="pln"> x</span><span class="clo">))</span></pre></div>
+
+<p>如果我们把这些定义输入解释器，我们就可以像使用任何过程一样使用<code>sqrt</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">sqrt </span><span class="lit">9</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">3.00009155413138</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">sqrt </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">100</span><span class="pln"> </span><span class="lit">37</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">11.704699917758145</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">sqrt </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt </span><span class="lit">3</span><span class="clo">)))</span><span class="pln">
+</span><i><span class="lit">1.7739279023207892</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">sqrt </span><span class="lit">1000</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">1000.000369924366</span></i>
+</pre></div>
+
+<p><code>sqrt</code>程序还说明了，我们目前引入的简单过程式语言足以编写任何纯数值程序，就像用C或Pascal能编写的那样。这似乎令人惊讶，因为我们的语言中还没有包含任何迭代（循环）构造来指示计算机反复做某事。另一方面，<code>Sqrt-iter</code>展示了如何仅使用调用过程的普通能力，而不需要任何特殊构造，就能实现迭代。<a class="footnote_link" id="DOCF24" href="#FOOT24"><sup>24</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-1_002e6"></a>习题1.6：</strong>Alyssa P. Hacker不明白为什么<code>if</code>需要作为特殊形式提供。“为什么我不能直接用<code>cond</code>把它定义为一个普通过程呢？”她问道。Alyssa的朋友Eva Lu Ator声称这确实可以做到，她定义了一个新版本的<code>if</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">new-if predicate 
+                then-clause 
+                else-clause</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">(</span><span class="pln">predicate then-clause</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> else-clause</span><span class="clo">)))</span></pre></div>
+
+<p>Eva向Alyssa演示了这个程序：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">new-if </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">5</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">new-if </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">0</span></i>
+</pre></div>
+
+<p>Alyssa很高兴，她用<code>new-if</code>重写了求平方根的程序：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt-iter guess x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">new-if </span><span class="opn">(</span><span class="pln">good-enough? guess x</span><span class="clo">)</span><span class="pln">
+          guess
+          </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="opn">(</span><span class="pln">improve guess x</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)))</span></pre></div>
+
+<p>当Alyssa试图用它来计算平方根时会发生什么？请解释。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e7"></a>习题1.7：</strong>用于计算平方根的<code>good-enough?</code>测试对于求非常小的数的平方根不会很有效。此外，在真实的计算机中，算术运算几乎总是以有限的精度进行的。这使得我们的测试对于非常大的数也不够用。请解释这些说法，并举例说明该测试在小的数和大的数情况下如何失效。实现<code>good-enough?</code>的另一种策略是观察<code>guess</code>在相邻两次迭代中如何变化，并在变化量是猜测值的极小一部分时停止。设计一个使用这种结束测试的求平方根过程。对于小的数和大的数，它是否工作得更好？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e8"></a>习题1.8：</strong>牛顿法求立方根基于这样一个事实：如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>的立方根的一个近似值，那么一个更好的近似值由下式给出：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mrow>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mi>x</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mo>/</mo>
+          </mrow>
+          <msup>
+            <mi>y</mi>
+            <mn>2</mn>
+          </msup>
+        </mrow>
+        <mo>+</mo>
+        <mn>2</mn>
+        <mi>y</mi>
+      </mrow>
+      <mn>3</mn>
+    </mfrac>
+    <mo>.</mo>
+  </mrow>
+</math> 使用这个公式实现一个类似于求平方根过程的求立方根过程。（在<a href="1_002e3_zh.xhtml#g_t1_002e3_002e4">1.3.4</a>中，我们将看到如何将牛顿法一般化，作为这些求平方根和求立方根过程的抽象。）</p></blockquote>
+
+<a id="g_t1_002e1_002e8"></a>
+<a id="Procedures-as-Black_002dBox-Abstractions"></a>
+<h4 class="subsection"><span class="secnum">1.1.8</span><span class="sectitle">过程作为黑箱抽象</span></h4>
+
+<p><code>Sqrt</code>是我们遇到的第一个由一组相互定义的过程所定义的计算过程的例子。注意，<code>sqrt-iter</code>的定义是<a id="index-recursive-1"></a><em>递归</em>的；也就是说，该过程是用自身来定义的。能够用自身来定义一个过程的想法可能会令人不安；这样的“循环”定义如何能说得通，更不用说指定一个由计算机执行的良定义的计算过程了，这似乎并不清楚。这将在<a href="1_002e2_zh.xhtml#g_t1_002e2">1.2</a>中更仔细地讨论。但首先让我们考虑<code>sqrt</code>例子所说明的其他一些要点。</p>
+<p>注意，计算平方根的问题自然地分解为若干子问题：如何判断一个猜测是否足够好，如何改进一个猜测，等等。每个任务都由一个单独的过程来完成。整个<code>sqrt</code>程序可以看作是一组过程（如<a href="#Figure-1_002e2">图1.2</a>所示），它反映了将问题分解为子问题的过程。</p>
+<figure class="float">
+<a id="Figure-1_002e2"></a>
+<object style="width: 34.97ex; height: 15.63ex;" data="fig/chap1/Fig1.2.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图1.2：</strong><code>sqrt</code>程序的过程分解。</p>
+</figcaption>
+</figure>
+
+<p>这种分解策略的重要性，并不仅仅在于把程序划分成若干部分。毕竟，我们可以把任何一个大程序分成若干部分——前十行、接下来的十行、再接下来的十行，依此类推。关键在于，每个过程都要完成一项可以明确识别的任务，从而能够作为模块用于定义其他过程。例如，当我们用<code>square</code>来定义<code>good-enough?</code>过程时，可以把<code>square</code>过程看作一个“黑箱”。此时，我们不关心这个过程<em>如何</em>计算出结果，只关心它计算的是平方。计算平方的细节可以暂时隐藏起来，留待以后考虑。事实上，对于<code>good-enough?</code>过程而言，<code>square</code>与其说是一个过程，不如说是对一个过程的抽象，即所谓的<a id="index-procedural-abstraction"></a><em>过程抽象</em>。在这一抽象层次上，任何能够计算平方的过程都同样适用。</p>
+<p>因此，仅考虑它们返回的值，下面两个求一个数的平方的过程应该是无法区分的。每个过程都接受一个数值参数，并产生该数的平方作为值。<a class="footnote_link" id="DOCF25" href="#FOOT25"><sup>25</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">exp </span><span class="opn">(</span><span class="pln">double </span><span class="opn">(</span><span class="pln">log x</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">double x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x x</span><span class="clo">))</span></pre></div>
+
+<p>所以，过程定义应该能够隐藏细节。过程的使用者可能并没有自己编写该过程，而是从另一位程序员那里作为黑箱获得的。使用者不需要知道过程是如何实现的就能使用它。</p>
+<a id="Local-names"></a>
+<h5 class="subsubheading">局部名</h5>
+
+<p>过程实现中不应影响过程使用者的一个细节，是实现者为过程的形式参数选择的名字。因此，下面这些过程应该是无法区分的：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> y y</span><span class="clo">))</span></pre></div>
+
+<p>这个原则——过程的意义应当独立于其作者所使用的形参名——表面上看来是不言自明的，但其后果却很深远。最简单的后果是，过程的形参名必须是该过程体局部的。例如，我们在求平方根过程中，在 <code>good-enough?</code> 的定义里使用了 <code>square</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square guess</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">))</span></pre></div>
+
+<p><code>good-enough?</code> 的作者的意图是判断第一个参数的平方是否在给定的容差范围内接近第二个参数。我们看到 <code>good-enough?</code> 的作者用名字 <code>guess</code> 来指代第一个参数，用 <code>x</code> 来指代第二个参数。<code>square</code> 的参数是 <code>guess</code>。如果 <code>square</code> 的作者用 <code>x</code>（如上）来指代那个参数，我们看到 <code>good-enough?</code> 中的 <code>x</code> 必定是不同于 <code>square</code> 中的 <code>x</code>。运行过程 <code>square</code> 绝不能影响 <code>good-enough?</code> 所使用的 <code>x</code> 的值，因为 <code>good-enough?</code> 在 <code>square</code> 完成计算之后可能需要 <code>x</code> 的那个值。</p>
+<p>如果参数不是各自过程体的局部变量，那么 <code>square</code> 中的参数 <code>x</code> 就可能与 <code>good-enough?</code> 中的参数 <code>x</code> 混淆，而 <code>good-enough?</code> 的行为将取决于我们使用的是哪个版本的 <code>square</code>。这样，<code>square</code> 就不会是我们所期望的黑箱了。</p>
+<p>过程的形参在过程定义中扮演着非常特殊的角色，因为形参叫什么名字并不重要。这样的名字称为 <a id="index-bound-variable"></a><em>约束变量</em>，我们说过程定义 <a id="index-binds"></a><em>约束</em>了它的形参。如果在整个定义中一致地重命名一个约束变量，过程定义的意义保持不变。<a class="footnote_link" id="DOCF26" href="#FOOT26"><sup>26</sup></a>如果一个变量未被约束，我们说它是<a id="index-free"></a><em>自由</em>的。某个名字的绑定在其中有效的表达式集合称为该名字的<a id="index-scope"></a><em>作用域</em>。在过程定义中，声明为过程形参的约束变量以过程体作为它们的作用域。</p>
+<p>在上面 <code>good-enough?</code> 的定义中，<code>guess</code> 和 <code>x</code> 是约束变量，但 <code>&lt;</code>、<code>-</code>、<code>abs</code> 和 <code>square</code> 是自由的。<code>good-enough?</code> 的意义应当独立于我们为 <code>guess</code> 和 <code>x</code> 选择的名字，只要它们互不相同且不同于 <code>&lt;</code>、<code>-</code>、<code>abs</code> 和 <code>square</code>。（如果我们把 <code>guess</code> 重命名为 <code>abs</code>，我们就会通过<a id="index-capturing"></a><em>捕获</em>变量 <code>abs</code> 而引入一个错误。它就会从自由变为约束。）然而，<code>good-enough?</code> 的意义并不独立于其自由变量的名字。它当然依赖于这样一个事实（该定义之外的）：符号 <code>abs</code> 命名了一个计算数的绝对值的过程。如果我们在其定义中用 <code>cos</code> 替换 <code>abs</code>，<code>Good-enough?</code> 将计算一个不同的函数。</p>
+<a id="Internal-definitions-and-block-structure"></a>
+<h5 class="subsubheading">内部定义和块结构</h5>
+
+<p>到目前为止，我们有一种可用的名称隔离方式：过程的形参是过程体的局部变量。求平方根程序说明了我们希望控制名称使用的另一种方式。现有的程序由几个独立的过程组成：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="lit">1.0</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt-iter guess x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess x</span><span class="clo">)</span><span class="pln">
+      guess
+      </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="opn">(</span><span class="pln">improve guess x</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square guess</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">improve guess x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">average guess </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x guess</span><span class="clo">)))</span></pre></div>
+
+<p>这个程序的问题在于，对 <code>sqrt</code> 的用户来说唯一重要的过程是 <code>sqrt</code>。其他过程（<code>sqrt-iter</code>、<code>good-enough?</code> 和 <code>improve</code>）只会扰乱他们的头脑。他们不能把任何其他名为 <code>good-enough?</code> 的过程定义为另一个程序的一部分，来与求平方根程序协同工作，因为 <code>sqrt</code> 需要它。在由许多独立程序员构建大型系统时，这个问题尤其严重。例如，在构建大型数值过程库时，许多数值函数是通过逐次逼近来计算的，因此可能有名为 <code>good-enough?</code> 和 <code>improve</code> 的过程作为辅助过程。我们希望将这些子过程局部化，把它们隐藏在 <code>sqrt</code> 内部，这样 <code>sqrt</code> 就可以与其他逐次逼近共存，每个都有自己的私有 <code>good-enough?</code> 过程。为了实现这一点，我们允许一个过程拥有对该过程局部的内部定义。例如，在求平方根问题中，我们可以写成</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess x</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square guess</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">improve guess x</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">average guess </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x guess</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt-iter guess x</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess x</span><span class="clo">)</span><span class="pln">
+        guess
+        </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="opn">(</span><span class="pln">improve guess x</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="lit">1.0</span><span class="pln"> x</span><span class="clo">))</span></pre></div>
+
+<p>这种定义的嵌套称为<a id="index-block-structure"></a><em>块结构</em>，它基本上是最简单的名称打包问题的正确解决方案。但这里还潜藏着一个更好的想法。除了将辅助过程的定义内部化之外，我们还可以简化它们。由于 <code>x</code> 在 <code>sqrt</code> 的定义中被约束，在 <code>sqrt</code> 内部定义的 <code>good-enough?</code>、<code>improve</code> 和 <code>sqrt-iter</code> 这些过程处于 <code>x</code> 的作用域内。因此，没有必要将 <code>x</code> 显式地传递给这些过程中的每一个。相反，我们允许 <code>x</code> 成为内部定义中的自由变量，如下所示。然后 <code>x</code> 从调用外围过程 <code>sqrt</code> 时所用的参数中获得它的值。这种规则称为<a id="index-lexical-scoping"></a><em>词法作用域</em>。<a class="footnote_link" id="DOCF27" href="#FOOT27"><sup>27</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square guess</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">improve guess</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">average guess </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x guess</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt-iter guess</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess</span><span class="clo">)</span><span class="pln">
+        guess
+        </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="opn">(</span><span class="pln">improve guess</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="lit">1.0</span><span class="clo">))</span></pre></div>
+
+<p>我们将广泛使用块结构来帮助我们将大型程序分解为易于处理的部分。<a class="footnote_link" id="DOCF28" href="#FOOT28"><sup>28</sup></a>块结构的思想起源于编程语言 Algol 60。它出现在大多数高级编程语言中，是帮助组织大型程序构建的重要工具。</p>
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT4"><p><a class="footnote_backlink" href="#DOCF4"><sup>4</sup></a> 把数字说成“简单数据”是彻头彻尾的虚张声势。事实上，数字的处理是任何编程语言中最棘手、最令人困惑的方面之一。其中涉及的一些典型问题如下：有些计算机系统区分<a id="index-integers"></a><em>整数</em>，例如2，和<a id="index-real-numbers"></a><em>实数</em>，例如2.71。实数2.00与整数2不同吗？用于整数的算术运算与用于实数的运算相同吗？6除以2得到的是3，还是3.0？我们能表示多大的数？我们能表示多少位小数的精度？整数的范围与实数的范围相同吗？当然，除了这些问题之外，还有一系列关于舍入误差和截断误差的问题——整个数值分析科学。由于本书的重点是大规模程序设计而非数值技术，我们将忽略这些问题。本章中的数值例子将表现出人们在使用非整数运算中保持有限小数位精度的算术运算时所观察到的通常舍入行为。</p>
+</div>
+<div id="FOOT5"><p><a class="footnote_backlink" href="#DOCF5"><sup>5</sup></a>在本书中，当我们希望强调用户键入的输入与解释器打印的响应之间的区别时，我们将用斜体字显示后者。</p>
+</div>
+<div id="FOOT6"><p><a class="footnote_backlink" href="#DOCF6"><sup>6</sup></a>Lisp 系统通常提供帮助用户格式化表达式的功能。两个特别有用的功能是：每当开始新的一行时自动缩进到正确的美观打印位置，以及每当键入右括号时高亮显示匹配的左括号。</p>
+</div>
+<div id="FOOT7"><p><a class="footnote_backlink" href="#DOCF7"><sup>7</sup></a>Lisp 遵循每个表达式都有一个值的约定。这一约定，加上 Lisp 作为低效语言的旧名声，是 Alan Perlis（转述 Oscar Wilde 的话）那句俏皮话的来源：“Lisp 程序员知道一切事物的价值，却不知道任何事物的代价。”</p>
+</div>
+<div id="FOOT8"><p><a class="footnote_backlink" href="#DOCF8"><sup>8</sup></a>在本书中，我们不显示解释器对求值定义式的响应，因为这高度依赖于具体实现。</p>
+</div>
+<div id="FOOT9"><p><a class="footnote_backlink" href="#DOCF9"><sup>9</sup></a><a href="Chapter-3_zh.xhtml#Chapter-3">第 3</a>章将表明，这种环境的概念至关重要，无论是对于理解解释器如何工作，还是对于实现解释器而言。</p>
+</div>
+<div id="FOOT10"><p><a class="footnote_backlink" href="#DOCF10"><sup>10</sup></a>求值规则说，作为第一步的一部分，我们应该求值组合式最左边的元素，这似乎很奇怪，因为此时它只能是像 <code>+</code> 或 <code>*</code> 这样的运算符，代表诸如加法或乘法这样的内置基本过程。我们稍后会看到，能够处理运算符本身是复合表达式的组合式是很有用的。</p>
+</div>
+<div id="FOOT11"><p><a class="footnote_backlink" href="#DOCF11"><sup>11</sup></a>那些仅仅是为可以用更统一的方式书写的东西提供方便的替代表面结构的特殊语法形式，有时被称为<a id="index-syntactic-sugar"></a><em>语法糖</em>，这是 Peter Landin 创造的短语。与其他语言的用户相比，Lisp 程序员通常不太关心语法问题。（相比之下，看看任何一本 Pascal 手册，注意其中有多少内容专门用于描述语法。）这种对语法的蔑视，部分是由于 Lisp 的灵活性，使得改变表面语法很容易，部分是由于观察到许多“方便”的语法结构使语言变得不那么统一，当程序变得庞大而复杂时，最终带来的麻烦超过了它们的价值。用 Alan Perlis 的话说，“语法糖导致分号癌。”</p>
+</div>
+<div id="FOOT12"><p><a class="footnote_backlink" href="#DOCF12"><sup>12</sup></a>注意这里组合了两种不同的操作：我们正在创建过程，并且我们正在给它命名为 <code>square</code>。能够将这两个概念分开——创建过程而不命名它们，以及给已经创建的过程命名——是可能的，而且确实很重要。我们将在 <a href="1_002e3_zh.xhtml#g_t1_002e3_002e2">1.3.2</a> 中看到如何做到这一点。</p>
+</div>
+<div id="FOOT13"><p><a class="footnote_backlink" href="#DOCF13"><sup>13</sup></a>在本书中，我们将通过使用由尖括号分隔的斜体符号——例如 <code>⟨</code><var>name</var><code>⟩</code>——来描述表达式的一般语法，以表示当这样的表达式实际使用时需要填充的“槽位”。</p>
+</div>
+<div id="FOOT14"><p><a class="footnote_backlink" href="#DOCF14"><sup>14</sup></a>更一般地说，过程体可以是一个表达式序列。在这种情况下，解释器依次求值序列中的每个表达式，并返回最后一个表达式的值作为过程应用的值。</p>
+</div>
+<div id="FOOT15"><p><a class="footnote_backlink" href="#DOCF15"><sup>15</sup></a>尽管代换的想法很简单，但为代换过程给出严格的数学定义却出奇地复杂。问题源于过程的形参所使用的名字与过程可能应用到的表达式中使用的（可能相同的）名字之间可能产生混淆。事实上，在逻辑和编程语义的文献中，关于<a id="index-substitution"></a><em>代换</em>的错误定义有着悠久的历史。关于代换的仔细讨论，请参见 <a href="References_zh.xhtml#Stoy-1977">Stoy 1977</a>。</p>
+</div>
+<div id="FOOT16"><p><a class="footnote_backlink" href="#DOCF16"><sup>16</sup></a>在 <a href="Chapter-3_zh.xhtml#Chapter-3">第 3</a> 章中，我们将介绍<a id="index-stream-processing"></a><em>流处理</em>，这是一种通过纳入有限形式的正则序求值来处理表面上“无限”数据结构的方法。在 <a href="4_002e2_zh.xhtml#g_t4_002e2">4.2</a> 中，我们将修改 Scheme 解释器以产生 Scheme 的正则序变体。</p>
+</div>
+<div id="FOOT17"><p><a class="footnote_backlink" href="#DOCF17"><sup>17</sup></a>“解释为真或假”的意思是：在 Scheme 中，有两个由常量 <code>#t</code> 和 <code>#f</code> 表示的特殊值。当解释器检查谓词的值时，它将 <code>#f</code> 解释为假。任何其他值都被视为真。（因此，提供 <code>#t</code> 在逻辑上是不必要的，但很方便。）在本书中，我们将使用名称 <code>true</code> 和 <code>false</code>，它们分别与值 <code>#t</code> 和 <code>#f</code> 相关联。</p>
+</div>
+<div id="FOOT18"><p><a class="footnote_backlink" href="#DOCF18"><sup>18</sup></a><code>Abs</code> 还使用了“减号”运算符 <code>-</code>，当它与单个运算对象一起使用时，如 <code>(- x)</code> 中那样，表示取负。</p>
+</div>
+<div id="FOOT19"><p><a class="footnote_backlink" href="#DOCF19"><sup>19</sup></a><code>if</code> 和 <code>cond</code> 之间的一个小区别是，每个 <code>cond</code> 子句的 <code>⟨</code><var>e</var><code>⟩</code> 部分可以是一个表达式序列。如果发现对应的 <code>⟨</code><var>p</var><code>⟩</code> 为真，则表达式 <code>⟨</code><var>e</var><code>⟩</code> 被依次求值，并且序列中最后一个表达式的值作为 <code>cond</code> 的值返回。然而，在 <code>if</code> 表达式中，<code>⟨</code><var>consequent</var><code>⟩</code> 和 <code>⟨</code><var>alternative</var><code>⟩</code> 必须是单个表达式。</p>
+</div>
+<div id="FOOT20"><p><a class="footnote_backlink" href="#DOCF20"><sup>20</sup></a>声明式描述和命令式描述密切相关，正如数学和计算机科学确实密切相关一样。例如，说一个程序产生的答案是“正确的”，就是对该程序做出一个声明式陈述。有大量研究旨在建立证明程序正确性的技术，而这一主题的许多技术困难都与处理命令式陈述（程序由之构造）和声明式陈述（可用于推导事物）之间的转换有关。与此相关，当前编程语言设计的一个重要领域是探索所谓的甚高级语言，在这种语言中，人们实际上是用声明式陈述来编程。其想法是让解释器足够完善，以至于给定程序员指定的“是什么”知识，它们能够自动生成“如何做”知识。这在一般情况下无法做到，但在一些重要领域已经取得了进展。我们将在<a href="Chapter-4_zh.xhtml#Chapter-4">第 4</a> 章重新讨论这个想法。</p>
+</div>
+<div id="FOOT21"><p><a class="footnote_backlink" href="#DOCF21"><sup>21</sup></a>这个平方根算法实际上是牛顿法的一个特例，牛顿法是一种求方程根的一般技术。平方根算法本身是由亚历山大的希罗在公元<abbr></abbr>一世纪开发的。我们将在<a href="1_002e3_zh.xhtml#g_t1_002e3_002e4">1.3.4</a>中看到如何将一般的牛顿法表达为 Lisp 过程。</p>
+</div>
+<div id="FOOT22"><p><a class="footnote_backlink" href="#DOCF22"><sup>22</sup></a>我们通常给谓词起以问号结尾的名字，以帮助我们记住它们是谓词。这只是一个风格约定。就解释器而言，问号只是一个普通字符。</p>
+</div>
+<div id="FOOT23"><p><a class="footnote_backlink" href="#DOCF23"><sup>23</sup></a>注意，我们将初始猜测表示为 1.0 而不是 1。这在许多 Lisp 实现中不会产生任何区别。然而，<abbr>MIT</abbr> Scheme 区分精确整数和小数值，并且两个整数相除产生有理数而不是小数。例如，10 除以 6 得到 5/3，而 10.0 除以 6.0 得到 1.6666666666666667。（我们将在<a href="2_002e1_zh.xhtml#g_t2_002e1_002e1">2.1.1</a>中学习如何实现有理数算术。）如果我们在平方根程序中以初始猜测 1 开始，并且 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 是精确整数，那么平方根计算中产生的所有后续值都将是有理数而不是小数。有理数和小数的混合运算总是产生小数，因此以初始猜测 1.0 开始会强制所有后续值都是小数。</p>
+</div>
+<div id="FOOT24"><p><a class="footnote_backlink" href="#DOCF24"><sup>24</sup></a>担心使用过程调用来实现迭代所涉及效率问题的读者，应注意<a href="1_002e2_zh.xhtml#g_t1_002e2_002e1">1.2.1</a>中关于“尾递归”的论述。</p>
+</div>
+<div id="FOOT25"><p><a class="footnote_backlink" href="#DOCF25"><sup>25</sup></a>甚至不清楚这些过程中哪一个实现效率更高。这取决于可用的硬件。有些机器上，“显然的”实现反而是效率较低的那个。考虑一台以非常高效的方式存储了大量对数表和反对数表的机器。</p>
+</div>
+<div id="FOOT26"><p><a class="footnote_backlink" href="#DOCF26"><sup>26</sup></a>一致重命名的概念实际上很微妙，且难以形式化定义。著名逻辑学家在这里犯过令人尴尬的错误。</p>
+</div>
+<div id="FOOT27"><p><a class="footnote_backlink" href="#DOCF27"><sup>27</sup></a>词法作用域规定，过程中的自由变量被认为引用由外围过程定义所做的绑定；也就是说，它们是在定义该过程的环境中查找的。我们将在第 3 章研究环境和解释器的详细行为时，看到这如何详细运作。<a id="Footnote-28"></a></p>
+</div>
+<div id="FOOT28"><p><a class="footnote_backlink" href="#DOCF28"><sup>28</sup></a>嵌入的定义必须放在过程体的开头。对于运行将定义和使用交织在一起的程序所产生的后果，管理层不承担责任。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="1_002e2_zh.xhtml#g_t1_002e2" accesskey="n" rel="next">1.2</a>, 上一节： <a href="Chapter-1_zh.xhtml#Chapter-1" accesskey="p" rel="prev">第1章</a>, 上一级： <a href="#g_t1_002e1" accesskey="u" rel="prev">1.1</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

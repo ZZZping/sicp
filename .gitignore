@@ -2,6 +2,7 @@ content.opf
 toc.xhtml
 *.png
 *.json
+!translation_overrides.json
 *.vim
 *.swp
 *~

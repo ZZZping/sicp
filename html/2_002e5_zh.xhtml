@@ -1,0 +1,1498 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：2.5</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 2.5" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 2.5" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-2_zh.xhtml#Chapter-2" rel="prev" title="Chapter 2" />
+<link href="Chapter-3_zh.xhtml#Chapter-3" rel="next" title="Chapter 3" />
+<link href="2_002e4_zh.xhtml#g_t2_002e4_002e3" rel="prev" title="2.4.3" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t2_002e5"></a>
+<nav class="header">
+<p>下一节： <a href="Chapter-3_zh.xhtml#Chapter-3" accesskey="n" rel="next">第3章</a>, 上一节： <a href="2_002e4_zh.xhtml#g_t2_002e4" accesskey="p" rel="prev">2.4</a>, 上一级： <a href="Chapter-2_zh.xhtml#Chapter-2" accesskey="u" rel="prev">第2章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Systems-with-Generic-Operations"></a>
+<h3 class="section"><span class="secnum">2.5</span><span class="sectitle">带有通用操作的系统</span></h3>
+
+<p>在上一节中，我们看到了如何设计这样的系统：其中数据对象可以用不止一种方式表示。关键思想是通过通用接口过程将指定数据操作的代码与若干表示方式联系起来。现在我们将看到如何使用这同一个思想，不仅定义对不同的表示方式通用的操作，而且定义对不同类型的参数通用的操作。我们已经见过几个不同的算术操作包：内置于我们语言中的基本算术（<code>+</code>、<code>-</code>、<code>*</code>、<code>/</code>），<a href="2_002e1_zh.xhtml#g_t2_002e1_002e1">2.1.1</a> 中的有理数算术（<code>add-rat</code>、<code>sub-rat</code>、<code>mul-rat</code>、<code>div-rat</code>），以及我们在 <a href="2_002e4_zh.xhtml#g_t2_002e4_002e3">2.4.3</a> 中实现的复数算术。现在我们将使用数据导向技术来构造一个算术操作包，它包含我们已经构造的所有算术包。</p>
+<p><a href="#Figure-2_002e23">图 2.23</a> 展示了我们将要构建的系统的结构。注意其中的抽象屏障。从使用“数”的人的角度来看，存在一个单一的过程 <code>add</code>，它作用于所提供的任何数。<code>Add</code> 是通用接口的一部分，它使得使用数的程序能够统一地访问独立的普通算术、有理数算术和复数算术包。任何单独的算术包（例如复数包）本身也可以通过通用过程（例如 <code>add-complex</code>）来访问，这些通用过程组合了为不同表示方式（例如直角坐标形式和极坐标形式）设计的包。此外，该系统的结构是可加的，因此人们可以分别设计各个算术包，并将它们组合起来产生一个通用算术系统。</p>
+<figure class="float">
+<a id="Figure-2_002e23"></a>
+<object style="width: 59.40ex; height: 54.22ex;" data="fig/chap2/Fig2.23b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 2.23：</strong> 通用算术系统。</p>
+</figcaption>
+</figure>
+
+
+<a id="g_t2_002e5_002e1"></a>
+<a id="Generic-Arithmetic-Operations"></a>
+<h4 class="subsection"><span class="secnum">2.5.1</span><span class="sectitle">通用算术操作</span></h4>
+
+<p>设计通用算术操作的任务类似于设计通用复数操作的任务。例如，我们希望有一个通用加法过程 <code>add</code>，它对普通数的作用像普通基本加法 <code>+</code>，对有理数的作用像 <code>add-rat</code>，对复数的作用像 <code>add-complex</code>。我们可以按照在 <a href="2_002e4_zh.xhtml#g_t2_002e4_002e3">2.4.3</a> 中实现复数通用选择函数时所用的相同策略来实现 <code>add</code> 以及其他通用算术操作。我们将为每种数附加一个类型标签，并使通用过程根据其参数的数据类型分派到适当的包。</p>
+<p>通用算术过程定义如下：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">apply-generic </span><span class="lit">'add</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sub x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">apply-generic </span><span class="lit">'sub</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">apply-generic </span><span class="lit">'mul</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">div x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">apply-generic </span><span class="lit">'div</span><span class="pln"> x y</span><span class="clo">))</span></pre></div>
+
+<p>我们首先安装一个处理 <a id="index-ordinary"></a> <em>普通</em> 数的包，即我们语言中的基本数。我们将用符号 <code>scheme-number</code> 给它们打标签。这个包中的算术操作就是基本算术过程（因此无需定义额外过程来处理未打标签的数）。由于这些操作各接受两个参数，它们被安装在以表 <code>(scheme-number scheme-number)</code> 为键的表中：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">install-scheme-number-package</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag x</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">attach-tag </span><span class="lit">'scheme-number</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'add</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">scheme-number scheme-number</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'sub</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">scheme-number scheme-number</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> x y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'mul</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">scheme-number scheme-number</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'div</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">scheme-number scheme-number</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'make</span><span class="pln"> </span><span class="lit">'scheme-number</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag x</span><span class="clo">)))</span><span class="pln">
+  </span><span class="lit">'done</span><span class="clo">)</span></pre></div>
+
+<p>Scheme-number 包的用户将通过以下过程创建（带标签的）普通数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-scheme-number n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">get </span><span class="lit">'make</span><span class="pln"> </span><span class="lit">'scheme-number</span><span class="clo">)</span><span class="pln"> n</span><span class="clo">))</span></pre></div>
+
+<p>既然通用算术系统的框架已经就位，我们就可以轻松地包含新的数类型。这里是一个执行有理数算术的包。注意，作为可加性的好处，我们可以不加修改地使用 <a href="2_002e1_zh.xhtml#g_t2_002e1_002e1">2.1.1</a> 中的有理数代码作为该包中的内部过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">install-rational-package</span><span class="clo">)</span><span class="pln">
+  </span><span class="roman"><span class="com">;; internal procedures</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-rat n d</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">g </span><span class="opn">(</span><span class="pln">gcd n d</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> n g</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> d g</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-rat x y</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">make-rat </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)))</span><span class="pln">
+              </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sub-rat x y</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">make-rat </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)))</span><span class="pln">
+              </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul-rat x y</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">make-rat </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer y</span><span class="clo">))</span><span class="pln">
+              </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">div-rat x y</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">make-rat </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom y</span><span class="clo">))</span><span class="pln">
+              </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">denom x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">numer y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="roman"><span class="com">;; interface to rest of the system</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">attach-tag </span><span class="lit">'rational</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'add</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">rational rational</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">add-rat x y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'sub</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">rational rational</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">sub-rat x y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'mul</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">rational rational</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">mul-rat x y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'div</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">rational rational</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">div-rat x y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'make</span><span class="pln"> </span><span class="lit">'rational</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">n d</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">make-rat n d</span><span class="clo">))))</span><span class="pln">
+  </span><span class="lit">'done</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-rational n d</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">get </span><span class="lit">'make</span><span class="pln"> </span><span class="lit">'rational</span><span class="clo">)</span><span class="pln"> n d</span><span class="clo">))</span></pre></div>
+
+<p>我们可以安装一个类似的包来处理复数，使用标签 <code>complex</code>。在创建这个包时，我们从表中提取由直角坐标包和极坐标包定义的运算 <code>make-from-real-imag</code> 和 <code>make-from-mag-ang</code>。可加性允许我们使用来自 <a href="2_002e4_zh.xhtml#g_t2_002e4_002e1">2.4.1</a> 的相同 <code>add-complex</code>、<code>sub-complex</code>、<code>mul-complex</code> 和 <code>div-complex</code> 过程作为内部运算。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">install-complex-package</span><span class="clo">)</span><span class="pln">
+  </span><span class="roman"><span class="com">;; imported procedures from rectangular</span></span><span class="com"> </span><span class="pln">
+  </span><span class="roman"><span class="com">;; and polar packages</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-real-imag x y</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">((</span><span class="pln">get </span><span class="lit">'make-from-real-imag</span><span class="pln"> 
+          </span><span class="lit">'rectangular</span><span class="clo">)</span><span class="pln"> 
+     x y</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-mag-ang r a</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">((</span><span class="pln">get </span><span class="lit">'make-from-mag-ang</span><span class="pln"> </span><span class="lit">'polar</span><span class="clo">)</span><span class="pln"> 
+     r a</span><span class="clo">))</span><span class="pln">
+  </span><span class="roman"><span class="com">;; internal procedures</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-complex z1 z2</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">make-from-real-imag 
+     </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z2</span><span class="clo">))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z2</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sub-complex z1 z2</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">make-from-real-imag 
+     </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z2</span><span class="clo">))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z2</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul-complex z1 z2</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">make-from-mag-ang 
+     </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z2</span><span class="clo">))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z2</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">div-complex z1 z2</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">make-from-mag-ang 
+     </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z2</span><span class="clo">))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z2</span><span class="clo">))))</span><span class="pln">
+  </span><span class="roman"><span class="com">;; interface to rest of the system</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">attach-tag </span><span class="lit">'complex</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'add</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">complex complex</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z1 z2</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">add-complex z1 z2</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'sub</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">complex complex</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z1 z2</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">sub-complex z1 z2</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'mul</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">complex complex</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z1 z2</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">mul-complex z1 z2</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'div</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">complex complex</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z1 z2</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">div-complex z1 z2</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'make-from-real-imag</span><span class="pln"> </span><span class="lit">'complex</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">make-from-real-imag x y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'make-from-mag-ang</span><span class="pln"> </span><span class="lit">'complex</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">r a</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">make-from-mag-ang r a</span><span class="clo">))))</span><span class="pln">
+  </span><span class="lit">'done</span><span class="clo">)</span></pre></div>
+
+<p>复数包之外的程序既可以从实部和虚部构造复数，也可以从模和幅角构造复数。注意，原本定义在直角坐标包和极坐标包中的底层过程是如何导出到复数包，再从那里导出到外部世界的。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-complex-from-real-imag x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">get </span><span class="lit">'make-from-real-imag</span><span class="pln"> </span><span class="lit">'complex</span><span class="clo">)</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-complex-from-mag-ang r a</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">get </span><span class="lit">'make-from-mag-ang</span><span class="pln"> </span><span class="lit">'complex</span><span class="clo">)</span><span class="pln"> r a</span><span class="clo">))</span></pre></div>
+
+<p>这里我们拥有的是一个两级标签系统。一个典型的复数，例如直角坐标形式的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>3</mn>
+    <mo>+</mo>
+    <mn>4</mn>
+    <mi>i</mi>
+  </mrow>
+</math>，其表示如<a href="#Figure-2_002e24">图2.24</a>所示。外层标签（<code>complex</code>）用于将该数引导至复数包。一旦进入复数包，下一个标签（<code>rectangular</code>）则用于将该数引导至直角坐标包。在一个庞大而复杂的系统中，可能存在许多层级，每一层都通过通用操作与下一层接口。当一个数据对象被“向下”传递时，用于将其引导至适当包的外层标签会被剥去（通过应用<code>contents</code>），而下一层标签（如果有的话）则变得可见，以便用于进一步的分派。</p>
+<figure class="float">
+<a id="Figure-2_002e24"></a>
+<object style="width: 41.53ex; height: 12.00ex;" data="fig/chap2/Fig2.24d.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.24：</strong>直角坐标形式的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>3</mn>
+    <mo>+</mo>
+    <mn>4</mn>
+    <mi>i</mi>
+  </mrow>
+</math>的表示。</p>
+</figcaption>
+</figure>
+
+<p>在上述包中，我们完全按照最初编写的方式使用了<code>add-rat</code>、<code>add-complex</code>以及其他算术过程。然而，一旦这些定义成为不同安装过程的内部定义，它们就不再需要彼此不同的名称：我们可以在两个包中简单地将它们命名为<code>add</code>、<code>sub</code>、<code>mul</code>和<code>div</code>。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e77"></a>习题2.77：</strong> Louis Reasoner 试图求值表达式<code>(magnitude z)</code>，其中<code>z</code>是<a href="#Figure-2_002e24">图2.24</a>所示的对象。令他惊讶的是，他没有得到答案5，反而从<code>apply-generic</code>收到一条错误消息，说对于类型<code>(complex)</code>没有用于操作<code>magnitude</code>的方法。他把这个交互展示给 Alyssa P. Hacker，她说：“问题在于，复数选择函数从未为<code>complex</code>数定义过，只为<code>polar</code>数和<code>rectangular</code>数定义过。要让这个工作，你只需将以下内容添加到<code>complex</code>包中：”</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">put </span><span class="lit">'real-part</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">complex</span><span class="clo">)</span><span class="pln"> real-part</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">put </span><span class="lit">'imag-part</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">complex</span><span class="clo">)</span><span class="pln"> imag-part</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">put </span><span class="lit">'magnitude</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">complex</span><span class="clo">)</span><span class="pln"> magnitude</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">put </span><span class="lit">'angle</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">complex</span><span class="clo">)</span><span class="pln"> angle</span><span class="clo">)</span></pre></div>
+
+<p>详细描述为什么这能行。作为一个例子，追踪在求值表达式<code>(magnitude z)</code>时调用的所有过程，其中<code>z</code>是<a href="#Figure-2_002e24">图2.24</a>所示的对象。特别地，<code>apply-generic</code>被调用了多少次？在每种情况下分派到哪个过程？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e78"></a>习题2.78：</strong><code>scheme-number</code>包中的内部过程本质上不过是对基本过程<code>+</code>、<code>-</code>等的调用。之所以不能直接使用语言的基本过程，是因为我们的类型标签系统要求每个数据对象都附有一个类型。然而，事实上，所有 Lisp 实现内部都有一个类型系统。诸如<code>symbol?</code>和<code>number?</code>这样的基本谓词可以判断数据对象是否具有特定类型。修改<a href="2_002e4_zh.xhtml#g_t2_002e4_002e2">2.4.2</a>中<code>type-tag</code>、<code>contents</code>和<code>attach-tag</code>的定义，使我们的通用系统能够利用 Scheme 的内部类型系统。也就是说，系统应像以前一样工作，只是普通数字应简单地表示为 Scheme 数字，而不是表示为<code>car</code>是符号<code>scheme-number</code>的序对。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e79"></a>习题2.79：</strong>定义一个通用相等谓词<code>equ?</code>，用于测试两个数字是否相等，并将其安装到通用算术包中。该操作应适用于普通数字、有理数和复数。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e80"></a>习题2.80：</strong>定义一个通用谓词<code>=zero?</code>，用于测试其参数是否为零，并将其安装到通用算术包中。该操作应适用于普通数字、有理数和复数。</p></blockquote>
+
+<a id="g_t2_002e5_002e2"></a>
+<a id="Combining-Data-of-Different-Types"></a>
+<h4 class="subsection"><span class="secnum">2.5.2</span><span class="sectitle">组合不同类型的数据</span></h4>
+
+<p>我们已经看到了如何定义一个统一的算术系统，它涵盖普通数字、复数、有理数以及我们可能决定发明的任何其他类型的数字，但我们忽略了一个重要问题。到目前为止，我们定义的操作将不同的数据类型视为完全独立。因此，对于例如两个普通数字或两个复数的加法，存在单独的包。我们尚未考虑的是，定义跨越类型边界的操作是有意义的，例如将一个复数与一个普通数字相加。我们煞费苦心地引入程序各部分之间的屏障，以便它们可以分别开发和理解。我们希望以某种精心控制的方式引入跨类型操作，以便在不严重违反模块边界的情况下支持它们。</p>
+<p>处理跨类型操作的一种方法是为操作有效的每种可能的类型组合设计不同的过程。例如，我们可以扩展复数包，使其提供一个将复数与普通数字相加的过程，并使用标签<code>(complex scheme-number)</code>将其安装到表中：<a class="footnote_link" id="DOCF115" href="#FOOT115"><sup>115</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-complex-to-schemenum z x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-from-real-imag </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+                       </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">put </span><span class="lit">'add</span><span class="pln"> 
+     </span><span class="lit">'</span><span class="opn">(</span><span class="pln">complex scheme-number</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z x</span><span class="clo">)</span><span class="pln"> 
+       </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">add-complex-to-schemenum z x</span><span class="clo">))))</span></pre></div>
+
+<p>这种技术可行，但很笨拙。使用这样的系统，引入一个新类型的代价不仅是构造该类型的过程包，还包括构造和安装实现跨类型运算的过程。这很容易比定义该类型本身上的运算所需的代码多得多。这种方法还削弱了我们以可加方式组合独立包的能力，或者至少削弱了我们限制各个包的实现者需要考虑其他包的程度的能力。例如，在上面的例子中，处理复数和普通数的混合运算似乎应该是复数包的责任。然而，组合有理数和复数可能由复数包、有理数包或某个使用从这两个包中提取的运算的第三方包来完成。在涉及许多包和许多跨类型运算的系统设计中，制定关于包之间责任划分的一致策略可能是一项艰巨的任务。</p>
+<a id="Coercion"></a>
+<h5 class="subsubheading">强制转换</h5>
+
+<p>在完全无关的运算作用于完全无关的类型的一般情况下，实现显式的跨类型运算，尽管可能笨拙，但已是人们所能期望的最好办法。幸运的是，我们通常可以通过利用类型系统中可能潜藏的额外结构来做得更好。通常不同的数据类型并非完全独立，可能存在将一种类型的对象视为另一种类型的方法。这个过程称为<a id="index-coercion"></a><em>强制转换</em>。例如，如果要求我们将一个普通数与一个复数进行算术组合，我们可以将普通数视为虚部为零的复数。这将问题转化为组合两个复数的问题，可以由复数算术包以通常方式处理。</p>
+<p>一般来说，我们可以通过设计强制转换过程来实现这个想法，这些过程将一种类型的对象转换为另一种类型的等价对象。下面是一个典型的强制转换过程，它将给定的普通数转换为具有该实部和零虚部的复数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">scheme-number-</span><span class="pun">&gt;</span><span class="pln">complex n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-complex-from-real-imag 
+   </span><span class="opn">(</span><span class="pln">contents n</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">))</span></pre></div>
+
+<p>我们将这些强制转换过程安装在一个特殊的强制转换表中，以两个类型的名称为索引：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">put-coercion </span><span class="lit">'scheme-number</span><span class="pln"> </span><span class="lit">'complex</span><span class="pln"> 
+              scheme-number-</span><span class="pun">&gt;</span><span class="pln">complex</span><span class="clo">)</span></pre></div>
+
+<p>（我们假设有 <code>put-coercion</code> 和 <code>get-coercion</code> 过程可用于操作此表。）通常表中的某些槽位将为空，因为通常不可能将每种类型的任意数据对象强制转换为所有其他类型。例如，没有办法将任意复数强制转换为普通数，因此表中不会包含通用的 <code>complex-&gt;scheme-number</code> 过程。</p>
+<p>一旦强制转换表设置好，我们就可以通过修改 <a href="2_002e4_zh.xhtml#g_t2_002e4_002e3">2.4.3</a> 的 <code>apply-generic</code> 过程来以统一的方式处理强制转换。当要求应用一个运算时，我们首先像之前一样检查该运算是否对参数的类型有定义。如果有，我们就分派到运算-类型表中找到的过程。否则，我们尝试强制转换。为简单起见，我们只考虑有两个参数的情况。<a class="footnote_link" id="DOCF116" href="#FOOT116"><sup>116</sup></a>我们检查强制转换表，看第一种类型的对象是否可以强制转换为第二种类型。如果可以，我们强制转换第一个参数并再次尝试该运算。如果第一种类型的对象通常不能强制转换为第二种类型，我们尝试另一种方向的强制转换，看是否有办法将第二个参数强制转换为第一个参数的类型。最后，如果没有已知的方法将任一类型强制转换为另一类型，我们就放弃。以下是该过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">apply-generic op </span><span class="pun">.</span><span class="pln"> args</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">type-tags </span><span class="opn">(</span><span class="pln">map type-tag args</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">proc </span><span class="opn">(</span><span class="pln">get op type-tags</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> proc
+          </span><span class="opn">(</span><span class="pln">apply proc </span><span class="opn">(</span><span class="pln">map contents args</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">length args</span><span class="clo">)</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">type1 </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> type-tags</span><span class="clo">))</span><span class="pln">
+                    </span><span class="opn">(</span><span class="pln">type2 </span><span class="opn">(</span><span class="kwd">cadr</span><span class="pln"> type-tags</span><span class="clo">))</span><span class="pln">
+                    </span><span class="opn">(</span><span class="pln">a1 </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> args</span><span class="clo">))</span><span class="pln">
+                    </span><span class="opn">(</span><span class="pln">a2 </span><span class="opn">(</span><span class="kwd">cadr</span><span class="pln"> args</span><span class="clo">)))</span><span class="pln">
+                </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">t1-</span><span class="pun">&gt;</span><span class="pln">t2 
+                       </span><span class="opn">(</span><span class="pln">get-coercion type1
+                                     type2</span><span class="clo">))</span><span class="pln">
+                      </span><span class="opn">(</span><span class="pln">t2-</span><span class="pun">&gt;</span><span class="pln">t1 
+                       </span><span class="opn">(</span><span class="pln">get-coercion type2 
+                                     type1</span><span class="clo">)))</span><span class="pln">
+                  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">(</span><span class="pln">t1-</span><span class="pun">&gt;</span><span class="pln">t2
+                         </span><span class="opn">(</span><span class="pln">apply-generic 
+                          op </span><span class="opn">(</span><span class="pln">t1-</span><span class="pun">&gt;</span><span class="pln">t2 a1</span><span class="clo">)</span><span class="pln"> a2</span><span class="clo">))</span><span class="pln">
+                        </span><span class="opn">(</span><span class="pln">t2-</span><span class="pun">&gt;</span><span class="pln">t1
+                         </span><span class="opn">(</span><span class="pln">apply-generic 
+                          op a1 </span><span class="opn">(</span><span class="pln">t2-</span><span class="pun">&gt;</span><span class="pln">t1 a2</span><span class="clo">)))</span><span class="pln">
+                        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+                         </span><span class="opn">(</span><span class="err">error</span><span class="pln"> 
+                          </span><span class="str">"No method for 
+                           these types"</span><span class="pln">
+                          </span><span class="opn">(</span><span class="pln">list 
+                           op 
+                           type-tags</span><span class="clo">))))))</span><span class="pln">
+              </span><span class="opn">(</span><span class="err">error</span><span class="pln"> 
+               </span><span class="str">"No method for these types"</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">list op type-tags</span><span class="clo">)))))))</span></pre></div>
+
+<p>如上所述，这种强制转换方案比定义显式跨类型运算的方法有许多优点。尽管我们仍然需要编写强制转换过程来关联类型（对于具有 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 个类型的系统，可能需要 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mn>2</mn>
+  </msup>
+</math> 个过程），但我们只需要为每一对类型编写一个过程，而不是为每个类型集合和每个通用运算编写不同的过程。<a class="footnote_link" id="DOCF117" href="#FOOT117"><sup>117</sup></a>我们在这里依赖的事实是，类型之间的适当转换仅取决于类型本身，而不取决于要应用的运算。</p>
+<p>另一方面，可能存在我们的强制转换方案不够通用的应用。即使要组合的两个对象都不能转换为对方的类型，仍然可能通过将两个对象都转换为第三种类型来执行运算。为了处理这种复杂性并在程序中保持模块性，通常有必要构建利用类型之间关系中更深层结构的系统，正如我们接下来讨论的那样。</p>
+<a id="Hierarchies-of-types"></a>
+<h5 class="subsubheading">类型的层次结构</h5>
+
+<p>上面给出的强制转换方案依赖于类型对之间存在自然关系。通常，不同类型之间如何相互关联有着更“全局”的结构。例如，假设我们正在构建一个通用算术系统来处理整数、有理数、实数和复数。在这样的系统中，很自然地将整数视为一种特殊的有理数，而有理数又是一种特殊的实数，实数又是一种特殊的复数。我们实际拥有的是一个所谓的<a id="index-hierarchy-of-types"></a><em>类型层次</em>，其中，例如，整数是有理数的一个<a id="index-subtype"></a><em>子类型</em>（即，任何可以应用于有理数的操作都可以自动应用于整数）。反过来，我们说有理数构成整数的<a id="index-supertype"></a><em>超类型</em>。我们这里的特定层次属于非常简单的一类，其中每个类型至多有一个超类型和至多有一个子类型。这种结构称为<a id="index-tower"></a><em>塔</em>，如<a href="#Figure-2_002e25">图2.25</a>所示。</p>
+<figure class="float">
+<a id="Figure-2_002e25"></a>
+<object style="width: 8.46ex; height: 22.71ex;" data="fig/chap2/Fig2.25.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.25：</strong> 类型塔。</p>
+</figcaption>
+</figure>
+
+<p>如果我们有一个塔结构，那么我们可以极大地简化向层次中添加新类型的问题，因为我们只需指定新类型如何嵌入其上一级超类型中，以及它如何成为其下一级类型的超类型。例如，如果我们要将一个整数加到一个复数上，我们不需要显式地定义一个特殊的强制转换过程<code>integer-&gt;complex</code>。相反，我们定义整数如何转换为有理数，有理数如何转换为实数，以及实数如何转换为复数。然后我们允许系统通过这些步骤将整数转换为复数，然后将两个复数相加。</p>
+<p>我们可以按以下方式重新设计我们的<code>apply-generic</code>过程：对于每个类型，我们需要提供一个<code>raise</code>过程，它将塔中该类型的对象“提升”一级。然后，当系统需要对不同类型的对象进行操作时，它可以连续提升较低的类型，直到所有对象都处于塔中的同一级别。（<a href="#Exercise-2_002e83">习题2.83</a>和<a href="#Exercise-2_002e84">习题2.84</a>涉及实现这种策略的细节。）</p>
+<p>塔的另一个优点是我们可以轻松实现每个类型“继承”超类型上定义的所有操作的概念。例如，如果我们没有提供用于求整数实部的特殊过程，我们仍然应该期望<code>real-part</code>会为整数定义，因为整数是复数的子类型。在塔中，我们可以通过修改<code>apply-generic</code>来以统一的方式安排这一点。如果所需操作没有直接为给定对象的类型定义，我们将对象提升到其超类型并再次尝试。我们就这样沿着塔向上爬，一边爬一边转换我们的参数，直到我们找到一个可以执行所需操作的级别，或者到达顶部（在这种情况下我们放弃）。</p>
+<p>塔相对于更一般的层次的另一个优点是，它为我们提供了一种简单的方法来将数据对象“降低”到最简单的表示。例如，如果我们将<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>2</mn>
+    <mo>+</mo>
+    <mn>3</mn>
+    <mi>i</mi>
+  </mrow>
+</math>加到<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>4</mn>
+    <mo>−<!-- − --></mo>
+    <mn>3</mn>
+    <mi>i</mi>
+  </mrow>
+</math>上，最好能得到整数6作为答案，而不是复数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>6</mn>
+    <mo>+</mo>
+    <mn>0</mn>
+    <mi>i</mi>
+  </mrow>
+</math>。<a href="#Exercise-2_002e85">习题2.85</a>讨论了一种实现这种降低操作的方法。（诀窍在于我们需要一种通用的方法来区分那些可以降低的对象，例如<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>6</mn>
+    <mo>+</mo>
+    <mn>0</mn>
+    <mi>i</mi>
+  </mrow>
+</math>，和那些不能降低的对象，例如<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>6</mn>
+    <mo>+</mo>
+    <mn>2</mn>
+    <mi>i</mi>
+  </mrow>
+</math>。）</p>
+<a id="Inadequacies-of-hierarchies"></a>
+<h5 class="subsubheading">层次的不足</h5>
+
+<p>如果我们系统中的数据类型可以自然地排列成塔，正如我们所看到的，这极大地简化了处理不同类型上的通用操作的问题。不幸的是，通常情况并非如此。<a href="#Figure-2_002e26">图2.26</a>展示了一种更复杂的混合类型排列，这个图显示了不同类型的几何图形之间的关系。我们看到，一般来说，一个类型可能有多个子类型。例如，三角形和四边形都是多边形的子类型。此外，一个类型可能有多个超类型。例如，等腰直角三角形既可以视为等腰三角形，也可以视为直角三角形。这种多超类型的问题特别棘手，因为它意味着在层次中没有唯一的方式来“提升”一个类型。为对象找到应用操作的“正确”超类型可能需要像<code>apply-generic</code>这样的过程在整个类型网络中进行大量搜索。由于一个类型通常有多个子类型，在将值沿类型层次“向下”强制转换时也存在类似的问题。处理大量相互关联的类型，同时在大系统设计中保持模块化是非常困难的，并且是当前许多研究的一个领域。<a class="footnote_link" id="DOCF118" href="#FOOT118"><sup>118</sup></a></p>
+<figure class="float">
+<a id="Figure-2_002e26"></a>
+<object style="width: 68.12ex; height: 44.21ex;" data="fig/chap2/Fig2.26f.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.26：</strong> 几何图形类型之间的关系。</p>
+</figcaption>
+</figure>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e81"></a>习题2.81：</strong> Louis Reasoner注意到<code>apply-generic</code>可能会尝试将参数强制转换为彼此的类型，即使它们已经是相同的类型。因此，他推理说，我们需要在强制转换表中放入过程，以将每种类型的参数<a id="index-coerce"></a><em>强制转换</em>为其自身的类型。例如，除了上面显示的<code>scheme-number-&gt;complex</code>强制转换之外，他还会这样做：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">scheme-number-</span><span class="pun">&gt;</span><span class="pln">scheme-number n</span><span class="clo">)</span><span class="pln"> n</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">complex-</span><span class="pun">&gt;</span><span class="pln">complex z</span><span class="clo">)</span><span class="pln"> z</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">put-coercion </span><span class="lit">'scheme-number</span><span class="pln"> </span><span class="lit">'scheme-number</span><span class="pln">
+              scheme-number-</span><span class="pun">&gt;</span><span class="pln">scheme-number</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">put-coercion </span><span class="lit">'complex</span><span class="pln"> </span><span class="lit">'complex</span><span class="pln"> 
+              complex-</span><span class="pun">&gt;</span><span class="pln">complex</span><span class="clo">)</span></pre></div>
+
+<ol>
+<li>在安装了 Louis 的强制转换过程之后，如果对两个类型为 <code>scheme-number</code> 的参数或两个类型为 <code>complex</code> 的参数调用 <code>apply-generic</code>，而该操作在那些类型的表中找不到，会发生什么？例如，假设我们定义了一个通用的求幂操作：<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">exp x y</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">apply-generic </span><span class="lit">'exp</span><span class="pln"> x y</span><span class="clo">))</span></pre></div>
+
+<p>并在 Scheme-number 包中放入了一个求幂过程，但没有放入任何其他包：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="roman"><span class="com">;; following added to Scheme-number package</span></span><span class="pln">
+</span><span class="opn">(</span><span class="pln">put </span><span class="lit">'exp</span><span class="pln"> 
+     </span><span class="lit">'</span><span class="opn">(</span><span class="pln">scheme-number scheme-number</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> 
+       </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">expt x y</span><span class="clo">))))</span><span class="pln"> 
+       </span><span class="roman"><span class="com">; using primitive </span><code><span class="com">expt</span></code></span>
+</pre></div>
+
+<p>如果我们用两个复数作为参数调用 <code>exp</code>，会发生什么？</p>
+</li><li>Louis 认为必须对相同类型的参数进行强制转换处理，这是正确的吗？还是 <code>apply-generic</code> 本身就能正确工作？</li><li>修改 <code>apply-generic</code>，使得如果两个参数具有相同类型，它就不尝试强制转换。</li></ol>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e82"></a>习题 2.82：</strong> 展示如何推广 <code>apply-generic</code> 以处理多个参数的一般情况下的强制转换。一种策略是尝试将所有参数强制转换为第一个参数的类型，然后转换为第二个参数的类型，依此类推。给出一个例子，说明这种策略（以及上面给出的双参数版本）不够通用。（提示：考虑表中存在一些合适的混合类型操作，但这些操作不会被尝试的情况。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e83"></a>习题 2.83：</strong> 假设你正在设计一个通用算术系统，用于处理 <a href="#Figure-2_002e25">图 2.25</a> 中所示的类型塔：整数、有理数、实数、复数。对于每种类型（复数除外），设计一个过程，将该类型的对象在塔中提升一级。展示如何安装一个通用的 <code>raise</code> 操作，使其对每种类型（复数除外）都有效。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e84"></a>习题 2.84：</strong> 使用 <a href="#Exercise-2_002e83">习题 2.83</a> 的 <code>raise</code> 操作，修改 <code>apply-generic</code> 过程，使其通过逐次提升的方法将其参数强制转换为相同类型，如本节所讨论的。你需要设计一种方法来测试两种类型中哪一种在塔中更高。以一种与系统其余部分“兼容”且不会在向塔中添加新层级时导致问题的方式来实现这一点。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e85"></a>习题 2.85：</strong> 本节提到了一种通过将数据对象在类型塔中尽可能降低来“简化”它的方法。设计一个过程 <code>drop</code>，对 <a href="#Exercise-2_002e83">习题 2.83</a> 中描述的塔完成这一任务。关键在于以某种通用的方式判断一个对象是否可以降低。例如，复数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1.5</mn>
+    <mo>+</mo>
+    <mn>0</mn>
+    <mi>i</mi>
+  </mrow>
+</math> 可以降低到 <code>real</code>，复数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1</mn>
+    <mo>+</mo>
+    <mn>0</mn>
+    <mi>i</mi>
+  </mrow>
+</math> 可以降低到 <code>integer</code>，而复数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>2</mn>
+    <mo>+</mo>
+    <mn>3</mn>
+    <mi>i</mi>
+  </mrow>
+</math> 完全不能降低。以下是判断一个对象是否可以降低的方案：首先定义一个通用操作 <code>project</code>，将对象在塔中“下推”。例如，投影一个复数将涉及丢弃虚部。然后，如果一个数经过 <code>project</code> 再经过 <code>raise</code> 回到我们开始时的类型后，得到的结果等于我们开始时的结果，那么这个数就可以被降低。通过编写一个 <code>drop</code> 过程来尽可能降低一个对象，详细展示如何实现这一想法。你需要设计各种投影操作<a class="footnote_link" id="DOCF119" href="#FOOT119"><sup>119</sup></a>，并将 <code>project</code> 作为通用操作安装到系统中。你还需要使用一个通用相等谓词，如 <a href="#Exercise-2_002e79">习题 2.79</a> 中所述。最后，使用 <code>drop</code> 重写 <a href="#Exercise-2_002e84">习题 2.84</a> 中的 <code>apply-generic</code>，使其“简化”其答案。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e86"></a>习题 2.86：</strong> 假设我们想要处理实部、虚部、模和幅角可以是普通数、有理数或我们可能希望添加到系统中的其他数的复数。描述并实现系统所需的更改以适应这一点。你将需要定义诸如 <code>sine</code> 和 <code>cosine</code> 这样的操作，它们对普通数和有理数是通用的。</p></blockquote>
+
+<a id="g_t2_002e5_002e3"></a>
+<a id="Example_003a-Symbolic-Algebra"></a>
+<h4 class="subsection"><span class="secnum">2.5.3</span><span class="sectitle">示例：符号代数</span></h4>
+
+<p>符号代数表达式的操作是一个复杂的过程，它展示了许多在大型系统设计中出现的最困难的问题。一个代数表达式通常可以看作一个层次结构，即应用于运算对象的运算符树。我们可以从一组基本对象（如常量和变量）开始，并通过代数运算符（如加法和乘法）组合这些对象来构造代数表达式。与其他语言一样，我们形成抽象，使我们能够用简单的术语指代复合对象。符号代数中典型的抽象是诸如线性组合、多项式、有理函数或三角函数等概念。我们可以将这些视为复合“类型”，它们通常有助于指导表达式的处理。例如，我们可以将表达式 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+    <mi>sin</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mo stretchy="false">(</mo>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mi>cos</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mn>2</mn>
+    <mi>y</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>cos</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mo stretchy="false">(</mo>
+    <msup>
+      <mi>y</mi>
+      <mn>3</mn>
+    </msup>
+    <mo>−<!-- − --></mo>
+    <mn>2</mn>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 描述为关于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 的多项式，其系数是关于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math> 的多项式的三角函数，而这些多项式的系数是整数。</p>
+<p>我们不会在这里尝试开发一个完整的代数操作处理系统。这样的系统是极其复杂的程序，体现了深奥的代数知识和优雅的算法。我们将要做的是考察代数操作中一个简单但重要的部分：多项式的算术。我们将说明这类系统的设计者所面临的各种决策，以及如何应用抽象数据和通用操作的思想来帮助组织这项工作。</p>
+<a id="Arithmetic-on-polynomials"></a>
+<h5 class="subsubheading">多项式的算术</h5>
+
+<p>在设计一个用于对多项式进行算术运算的系统时，我们的首要任务是确定多项式究竟是什么。多项式通常是相对于某些变量（即多项式的<a id="index-indeterminates"></a><em>未定元</em>）来定义的。为简单起见，我们将自己限制在只有一个未定元的多项式（即<a id="index-univariate-polynomials"></a><em>一元多项式</em>）。<a class="footnote_link" id="DOCF120" href="#FOOT120"><sup>120</sup></a>我们将多项式定义为若干项的和，其中每一项要么是一个系数，要么是未定元的一个幂，要么是一个系数与未定元的一个幂的乘积。系数被定义为不依赖于多项式的未定元的代数表达式。例如，<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>5</mn>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>3</mn>
+    <mi>x</mi>
+  </mrow>
+  <mo>+</mo>
+  <mn>7</mn>
+</math>是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>中的一个简单多项式，而<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <msup>
+      <mi>x</mi>
+      <mn>3</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mn>2</mn>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+  </mrow>
+</math>是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>中的一个多项式，其系数是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>中的多项式。</p>
+<p>我们已经在绕开一些棘手的问题。这些多项式中的第一个是否与多项式<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>5</mn>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <mn>3</mn>
+    <mi>y</mi>
+    <mo>+</mo>
+    <mn>7</mn>
+  </mrow>
+</math>相同？一个合理的回答可能是“是的，如果我们纯粹把多项式视为一个数学函数；但如果我们把多项式视为一种语法形式，则不是。”第二个多项式在代数上等价于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>中的一个多项式，其系数是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>中的多项式。我们的系统是否应该识别这一点？此外，还有其他表示多项式的方式——例如，表示为因子的乘积，或者（对于一元多项式）表示为根的集合，或者表示为多项式在一组指定点上的值的表。<a class="footnote_link" id="DOCF121" href="#FOOT121"><sup>121</sup></a>我们可以通过决定在我们的代数操作系统中“多项式”将是一种特定的语法形式，而不是其底层的数学含义，来回避这些问题。</p>
+<p>现在我们必须考虑如何对多项式进行算术运算。在这个简单的系统中，我们将只考虑加法和乘法。此外，我们将坚持要求要组合的两个多项式必须具有相同的未定元。</p>
+<p>我们将遵循熟悉的数据抽象准则来设计我们的系统。我们将使用一种称为<a id="index-poly"></a><em>poly</em>的数据结构来表示多项式，它由一个变量和一个项的集合组成。我们假设有选择函数<code>variable</code>和<code>term-list</code>，它们从poly中提取这些部分，以及一个构造函数<code>make-poly</code>，它从给定的变量和项表组装出一个poly。变量将只是一个符号，因此我们可以使用<a href="2_002e3_zh.xhtml#g_t2_002e3_002e2">2.3.2</a>的<code>same-variable?</code>过程来比较变量。以下过程定义了多项式的加法和乘法：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-poly p1 p2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">same-variable? </span><span class="opn">(</span><span class="pln">variable p1</span><span class="clo">)</span><span class="pln"> 
+                      </span><span class="opn">(</span><span class="pln">variable p2</span><span class="clo">))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">make-poly 
+       </span><span class="opn">(</span><span class="pln">variable p1</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">add-terms </span><span class="opn">(</span><span class="pln">term-list p1</span><span class="clo">)</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">term-list p2</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Polys not in same var: 
+              ADD-POLY"</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">list p1 p2</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul-poly p1 p2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">same-variable? </span><span class="opn">(</span><span class="pln">variable p1</span><span class="clo">)</span><span class="pln"> 
+                      </span><span class="opn">(</span><span class="pln">variable p2</span><span class="clo">))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">make-poly 
+       </span><span class="opn">(</span><span class="pln">variable p1</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">mul-terms </span><span class="opn">(</span><span class="pln">term-list p1</span><span class="clo">)</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">term-list p2</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Polys not in same var: 
+              MUL-POLY"</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">list p1 p2</span><span class="clo">))))</span></pre></div>
+
+<p>为了将多项式纳入我们的通用算术系统，我们需要为它们提供类型标签。我们将使用标签<code>polynomial</code>，并在操作表中安装对带标签多项式的适当操作。我们将把所有代码嵌入到多项式包的一个安装过程中，类似于<a href="#g_t2_002e5_002e1">2.5.1</a>中的那些：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">install-polynomial-package</span><span class="clo">)</span><span class="pln">
+  </span><span class="roman"><span class="com">;; internal procedures</span></span><span class="pln">
+  </span><span class="roman"><span class="com">;; representation of poly</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-poly variable term-list</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> variable term-list</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">variable p</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> p</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">term-list p</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> p</span><span class="clo">))</span><span class="pln">
+  ⟨</span><em><span class="pln">procedures </span><code><span class="pln">same-variable?</span></code><span class="pln"> 
+   </span><span class="kwd">and</span><span class="pln"> </span><code><span class="pln">variable?</span></code><span class="pln"> from section </span><span class="lit">2.3.2</span></em><span class="pln">⟩
+
+  </span><span class="roman"><span class="com">;; representation of terms and term lists</span></span><span class="pln">
+  ⟨</span><em><span class="pln">procedures </span><code><span class="pln">adjoin-term</span></code><span class="pln"> </span><span class="roman"><span class="pun">…</span></span><span class="pln"> </span><code><span class="pln">coeff</span></code><span class="pln"> 
+  from text below</span></em><span class="pln">⟩
+
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-poly p1 p2</span><span class="clo">)</span><span class="pln"> </span><span class="roman"><span class="pun">…</span></span><span class="clo">)</span><span class="pln">
+  ⟨</span><em><span class="pln">procedures used by </span><code><span class="pln">add-poly</span></code></em><span class="pln">⟩
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul-poly p1 p2</span><span class="clo">)</span><span class="pln"> </span><span class="roman"><span class="pun">…</span></span><span class="clo">)</span><span class="pln">
+  ⟨</span><em><span class="pln">procedures used by </span><code><span class="pln">mul-poly</span></code></em><span class="pln">⟩
+
+  </span><span class="roman"><span class="com">;; interface to rest of the system</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag p</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">attach-tag </span><span class="lit">'polynomial</span><span class="pln"> p</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'add</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">polynomial polynomial</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p1 p2</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">add-poly p1 p2</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'mul</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">polynomial polynomial</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p1 p2</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">mul-poly p1 p2</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'make</span><span class="pln"> </span><span class="lit">'polynomial</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">var terms</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">make-poly var terms</span><span class="clo">))))</span><span class="pln">
+  </span><span class="lit">'done</span><span class="clo">)</span></pre></div>
+
+<p>多项式加法是逐项进行的。相同次数（即具有相同未定元幂次）的项必须合并。这是通过形成一个同次的新项来完成的，其系数是相加项系数的和。在一个加数中，如果在另一个加数中没有相同次数的项，则这些项被简单地累积到正在构造的和多项式中。</p>
+<p>为了操作项表，我们假设有一个构造函数<code>the-empty-termlist</code>返回空项表，以及一个构造函数<code>adjoin-term</code>将一个新项添加到项表。我们还假设有一个谓词<code>empty-termlist?</code>判断给定的项表是否为空，一个选择函数<code>first-term</code>从项表中提取最高次项，以及一个选择函数<code>rest-terms</code>返回除最高次项之外的所有项。为了操作项，我们假设有一个构造函数<code>make-term</code>，它用给定的次数和系数构造一个项，以及选择函数<code>order</code>和<code>coeff</code>，分别返回项的次数和系数。这些操作允许我们将项和项表都视为数据抽象，其具体表示我们可以单独考虑。</p>
+<p>以下是构造两个多项式之和的项表的过程：<a class="footnote_link" id="DOCF122" href="#FOOT122"><sup>122</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-terms L1 L2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">empty-termlist? L1</span><span class="clo">)</span><span class="pln"> L2</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">empty-termlist? L2</span><span class="clo">)</span><span class="pln"> L1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+         </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">t1 </span><span class="opn">(</span><span class="pln">first-term L1</span><span class="clo">))</span><span class="pln"> 
+               </span><span class="opn">(</span><span class="pln">t2 </span><span class="opn">(</span><span class="pln">first-term L2</span><span class="clo">)))</span><span class="pln">
+           </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">&gt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">order t1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">order t2</span><span class="clo">))</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">adjoin-term
+                   t1 
+                   </span><span class="opn">(</span><span class="pln">add-terms </span><span class="opn">(</span><span class="pln">rest-terms L1</span><span class="clo">)</span><span class="pln"> 
+                              L2</span><span class="clo">)))</span><span class="pln">
+                 </span><span class="opn">((</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">order t1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">order t2</span><span class="clo">))</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">adjoin-term
+                   t2 
+                   </span><span class="opn">(</span><span class="pln">add-terms 
+                    L1 
+                    </span><span class="opn">(</span><span class="pln">rest-terms L2</span><span class="clo">))))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">adjoin-term
+                   </span><span class="opn">(</span><span class="pln">make-term 
+                    </span><span class="opn">(</span><span class="pln">order t1</span><span class="clo">)</span><span class="pln">
+                    </span><span class="opn">(</span><span class="pln">add </span><span class="opn">(</span><span class="pln">coeff t1</span><span class="clo">)</span><span class="pln"> 
+                         </span><span class="opn">(</span><span class="pln">coeff t2</span><span class="clo">)))</span><span class="pln">
+                   </span><span class="opn">(</span><span class="pln">add-terms 
+                    </span><span class="opn">(</span><span class="pln">rest-terms L1</span><span class="clo">)</span><span class="pln">
+                    </span><span class="opn">(</span><span class="pln">rest-terms L2</span><span class="clo">)))))))))</span></pre></div>
+
+<p>这里要注意的最重要的一点是，我们使用了通用加法过程<code>add</code>来将正在合并的项的系数相加。这会带来很大的能力提升，我们将在下面看到。</p>
+<p>为了将两个项表相乘，我们将第一个表的每一项与另一个表的所有项相乘，反复使用<code>mul-term-by-all-terms</code>，它将给定的项与给定项表中的所有项相乘。得到的项表（第一个表的每一项对应一个）被累积成一个和。两个项相乘形成一个项，其次数是因子的次数之和，其系数是因子的系数之积：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul-terms L1 L2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-termlist? L1</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">the-empty-termlist</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">add-terms 
+       </span><span class="opn">(</span><span class="pln">mul-term-by-all-terms 
+        </span><span class="opn">(</span><span class="pln">first-term L1</span><span class="clo">)</span><span class="pln"> L2</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">mul-terms </span><span class="opn">(</span><span class="pln">rest-terms L1</span><span class="clo">)</span><span class="pln"> L2</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul-term-by-all-terms t1 L</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-termlist? L</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">the-empty-termlist</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">t2 </span><span class="opn">(</span><span class="pln">first-term L</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">adjoin-term
+         </span><span class="opn">(</span><span class="pln">make-term 
+          </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">order t1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">order t2</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">mul </span><span class="opn">(</span><span class="pln">coeff t1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">coeff t2</span><span class="clo">)))</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">mul-term-by-all-terms 
+          t1 
+          </span><span class="opn">(</span><span class="pln">rest-terms L</span><span class="clo">))))))</span></pre></div>
+
+<p>多项式加法和乘法的内容实际上就这么多。注意，由于我们使用通用过程 <code>add</code> 和 <code>mul</code> 对项进行操作，我们的多项式包自动能够处理通用算术包所知的任何类型的系数。如果我们加入一种强制转换机制，例如在 <a href="#g_t2_002e5_002e2">2.5.2</a> 中讨论的机制之一，那么我们也能自动处理不同系数类型的多项式上的运算，例如 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">[</mo>
+    <mn>3</mn>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <mo stretchy="false">(</mo>
+    <mn>2</mn>
+    <mo>+</mo>
+    <mn>3</mn>
+    <mi>i</mi>
+    <mo stretchy="false">)</mo>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mn>7</mn>
+    <mo stretchy="false">]</mo>
+    <mo>⋅<!-- ⋅ --></mo>
+  </mrow>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow>
+      <mo>[</mo>
+      <msup>
+        <mi>x</mi>
+        <mn>4</mn>
+      </msup>
+      <mo>+</mo>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mfrac>
+          <mn>2</mn>
+          <mn>3</mn>
+        </mfrac>
+      </mrow>
+      <msup>
+        <mi>x</mi>
+        <mn>2</mn>
+      </msup>
+      <mo>+</mo>
+      <mo stretchy="false">(</mo>
+      <mn>5</mn>
+      <mo>+</mo>
+      <mn>3</mn>
+      <mi>i</mi>
+      <mo stretchy="false">)</mo>
+      <mo>]</mo>
+    </mrow>
+    <mo>.</mo>
+  </mrow>
+</math>。因为我们将多项式加法和乘法过程 <code>add-poly</code> 和 <code>mul-poly</code> 作为类型 <code>polynomial</code> 的 <code>add</code> 和 <code>mul</code> 操作安装到通用算术系统中，我们的系统也自动能够处理多项式运算，例如 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo maxsize="1.623em" minsize="1.623em">[</mo>
+    </mrow>
+    <mo stretchy="false">(</mo>
+    <mi>y</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mi>x</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>y</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo maxsize="1.623em" minsize="1.623em">]</mo>
+    </mrow>
+    <mo>⋅<!-- ⋅ --></mo>
+  </mrow>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo maxsize="1.623em" minsize="1.623em">[</mo>
+    </mrow>
+    <mo stretchy="false">(</mo>
+    <mi>y</mi>
+    <mo>−<!-- − --></mo>
+    <mn>2</mn>
+    <mo stretchy="false">)</mo>
+    <mi>x</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msup>
+      <mi>y</mi>
+      <mn>3</mn>
+    </msup>
+    <mo>+</mo>
+    <mn>7</mn>
+    <mo stretchy="false">)</mo>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo maxsize="1.623em" minsize="1.623em">]</mo>
+    </mrow>
+    <mo>.</mo>
+  </mrow>
+</math>。原因是当系统试图组合系数时，它将通过 <code>add</code> 和 <code>mul</code> 进行分派。由于系数本身是多项式（在 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math> 中），这些将使用 <code>add-poly</code> 和 <code>mul-poly</code> 进行组合。结果是一种“数据导向的递归”，例如，对 <code>mul-poly</code> 的调用将导致对 <code>mul-poly</code> 的递归调用，以便乘以系数。如果系数的系数本身是多项式（可能用于表示三个变量的多项式），数据导向将确保系统遵循另一层递归调用，并依此类推，按照数据结构所指示的尽可能多的层级进行。<a class="footnote_link" id="DOCF123" href="#FOOT123"><sup>123</sup></a></p>
+<a id="Representing-term-lists"></a>
+<h5 class="subsubheading">表示项表</h5>
+
+<p>最后，我们必须面对为项表实现良好表示的任务。项表实际上是一组以项的次数为键的系数。因此，任何表示集合的方法，如 <a href="2_002e3_zh.xhtml#g_t2_002e3_002e3">2.3.3</a> 中所讨论的，都可以应用于此任务。另一方面，我们的过程 <code>add-terms</code> 和 <code>mul-terms</code> 总是从最高次到最低次顺序访问项表。因此，我们将使用某种有序表表示。</p>
+<p>我们应该如何构造表示项表的表？一个考虑是我们打算操作的多项式的“密度”。如果一个多项式在大多数次数的项上都有非零系数，则称其为 <a id="index-dense"></a><em>稠密</em>。如果它有许多零项，则称其为 <a id="index-sparse"></a><em>稀疏</em>。例如，<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>A</mi>
+  <mo>:</mo>
+  <mspace width="1em"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>x</mi>
+      <mn>5</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>2</mn>
+    <msup>
+      <mi>x</mi>
+      <mn>4</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>3</mn>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+  <mo>−<!-- − --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>2</mn>
+    <mi>x</mi>
+  </mrow>
+  <mo>−<!-- − --></mo>
+  <mn>5</mn>
+</math> 是稠密多项式，而 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>B</mi>
+  <mo>:</mo>
+  <mspace width="1em"/>
+  <msup>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mn>100</mn>
+    </mrow>
+  </msup>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>2</mn>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mn>1</mn>
+</math> 是稀疏的。</p>
+<p>稠密多项式的项表最有效地表示为系数表。例如，上面的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> 可以很好地表示为 <code>(1 2 0 3 -2 -5)</code>。在这种表示中，项的次数是从该项系数开始的子表的长度减 1。<a class="footnote_link" id="DOCF124" href="#FOOT124"><sup>124</sup></a> 对于像 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math> 这样的稀疏多项式，这将是一种糟糕的表示：会有一个巨大的零表，中间点缀着几个孤立的非零项。稀疏多项式的项表更合理的表示是非零项的表，其中每一项是一个包含该项的次数和该次数系数的表。在这种方案中，多项式 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math> 被有效地表示为 <code>((100 1) (2 2) (0 1))</code>。由于大多数多项式操作是在稀疏多项式上进行的，我们将使用这种方法。我们将假设项表表示为项的表，从最高次项到最低次项排列。一旦我们做出这个决定，实现项和项表的选择函数和构造函数就很简单了：<a class="footnote_link" id="DOCF125" href="#FOOT125"><sup>125</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">adjoin-term term term-list</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln">zero? </span><span class="opn">(</span><span class="pln">coeff term</span><span class="clo">))</span><span class="pln">
+      term-list
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> term term-list</span><span class="clo">)))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">the-empty-termlist</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">first-term term-list</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> term-list</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">rest-terms term-list</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> term-list</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-termlist? term-list</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">null? term-list</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-term order coeff</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">list order coeff</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">order term</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> term</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">coeff term</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cadr</span><span class="pln"> term</span><span class="clo">))</span></pre></div>
+
+<p>其中 <code>=zero?</code> 如 <a href="#Exercise-2_002e80">习题 2.80</a> 中所定义。（另见下面的 <a href="#Exercise-2_002e87">习题 2.87</a>。）</p>
+<p>多项式包的用户将通过以下过程创建（带标签的）多项式：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-polynomial var terms</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">get </span><span class="lit">'make</span><span class="pln"> </span><span class="lit">'polynomial</span><span class="clo">)</span><span class="pln"> var terms</span><span class="clo">))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e87"></a>习题 2.87：</strong> 在通用算术包中为多项式安装 <code>=zero?</code>。这将允许 <code>adjoin-term</code> 对系数本身是多项式的多项式起作用。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e88"></a>习题 2.88：</strong> 扩展多项式系统以包括多项式的减法。（提示：你可能会发现定义一个通用的取负操作很有帮助。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e89"></a>习题 2.89：</strong> 定义实现上述适用于稠密多项式的项表表示的过程。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e90"></a>习题 2.90：</strong> 假设我们想要一个对稀疏和稠密多项式都高效的多项式系统。一种方法是在我们的系统中允许两种项表表示。这种情况类似于 <a href="2_002e4_zh.xhtml#g_t2_002e4">2.4</a> 中的复数示例，其中我们允许直角坐标和极坐标表示。为此，我们必须区分不同类型的项表，并使项表上的操作通用化。重新设计多项式系统以实现这种泛化。这是一项重大工作，不是局部更改。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e91"></a>习题 2.91：</strong> 一个单变量多项式可以被另一个多项式除，产生一个多项式商和一个多项式余数。例如，<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mrow>
+        <msup>
+          <mi>x</mi>
+          <mn>5</mn>
+        </msup>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+      <mrow>
+        <msup>
+          <mi>x</mi>
+          <mn>2</mn>
+        </msup>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </mfrac>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>x</mi>
+      <mn>3</mn>
+    </msup>
+    <mo>+</mo>
+    <mi>x</mi>
+    <mo>,</mo>
+  </mrow>
+  <mtext> remainder </mtext>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1.</mn>
+  </mrow>
+</math> 除法可以通过长除法进行。即，将被除式的最高次项除以除式的最高次项。结果是商的第一项。接下来，将结果乘以除式，从被除式中减去，并通过递归地将差除以除式来产生答案的其余部分。当除式的次数超过被除式的次数时停止，并声明被除式为余数。此外，如果被除式变为零，则返回零作为商和余数。</p>
+<p>我们可以仿照<code>add-poly</code>和<code>mul-poly</code>的模型设计一个<code>div-poly</code>过程。该过程检查两个多项式是否具有相同的变量。如果是，<code>div-poly</code>剥去变量并将问题传递给<code>div-terms</code>，后者对项表执行除法运算。<code>Div-poly</code>最后将变量重新附加到<code>div-terms</code>所提供的结果上。将<code>div-terms</code>设计为同时计算除法的商和余数会很方便。<code>Div-terms</code>可以接受两个项表作为参数，并返回一个包含商项表和余项表的表。</p>
+<p>通过填写缺失的表达式来补全下面<code>div-terms</code>的定义。用它来实现<code>div-poly</code>，该过程接受两个多项式作为参数，并返回一个包含商多项式和余多项式的表。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">div-terms L1 L2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-termlist? L1</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">the-empty-termlist</span><span class="clo">)</span><span class="pln"> 
+            </span><span class="opn">(</span><span class="pln">the-empty-termlist</span><span class="clo">))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">t1 </span><span class="opn">(</span><span class="pln">first-term L1</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">t2 </span><span class="opn">(</span><span class="pln">first-term L2</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">order t2</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">order t1</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">the-empty-termlist</span><span class="clo">)</span><span class="pln"> L1</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">new-c </span><span class="opn">(</span><span class="pln">div </span><span class="opn">(</span><span class="pln">coeff t1</span><span class="clo">)</span><span class="pln"> 
+                              </span><span class="opn">(</span><span class="pln">coeff t2</span><span class="clo">)))</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">new-o </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">order t1</span><span class="clo">)</span><span class="pln"> 
+                            </span><span class="opn">(</span><span class="pln">order t2</span><span class="clo">))))</span><span class="pln">
+              </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">rest-of-result
+                     ⟨</span><var><span class="pln">compute rest of result 
+                     recursively</span></var><span class="pln">⟩ </span><span class="clo">))</span><span class="pln">
+                ⟨</span><var><span class="pln">form complete result</span></var><span class="pln">⟩ </span><span class="clo">))))))</span></pre></div>
+</blockquote>
+
+<a id="Hierarchies-of-types-in-symbolic-algebra"></a>
+<h5 class="subsubheading">符号代数中的类型层次</h5>
+
+<p>我们的多项式系统说明了，一种类型的对象（多项式）实际上可能是复杂的对象，其组成部分是许多不同类型的对象。这在定义通用操作时并没有带来真正的困难。我们只需安装适当的通用操作，以执行对复合类型各部分所需的操作。事实上，我们看到多项式构成了一种“递归数据抽象”，因为多项式的部分本身可能就是多项式。我们的通用操作和我们的数据导向编程风格处理这种复杂性不会有太大麻烦。</p>
+<p>另一方面，多项式代数是一个数据类型无法自然地排列成塔的系统。例如，可以有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>的多项式，其系数是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>的多项式。也可以有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>的多项式，其系数是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>的多项式。这两种类型在任何自然意义上都不“高于”另一种，然而经常需要将来自每个集合的元素相加。有几种方法可以做到这一点。一种可能性是将一个多项式转换为另一个的类型，通过展开和重新排列项，使两个多项式具有相同的主变量。人们可以通过对变量排序，从而总是将任何多项式转换为一种“规范形式”，其中最高优先级的变量占主导地位，较低优先级的变量埋藏在系数中，从而强加一种类似塔的结构。这种策略相当有效，只是转换可能会不必要地展开多项式，使其难以阅读，并且可能降低工作效率。塔策略对于这个领域，或者对于任何用户可以使用旧类型以各种组合形式（如三角函数、幂级数和积分）动态发明新类型的领域来说，当然都不是自然的。</p>
+<p>在大规模代数操作系统的设计中，控制强制转换是一个严重的问题，这不应令人惊讶。这类系统的许多复杂性都与不同类型之间的关系有关。确实，可以说我们尚未完全理解强制转换。事实上，我们尚未完全理解数据类型的概念。然而，我们所知道的为我们提供了强大的结构化和模块化原则，以支持大型系统的设计。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e92"></a>习题2.92：</strong> 通过对变量施加排序，扩展多项式包，使得多项式的加法和乘法适用于不同变量的多项式。（这并不容易！）</p></blockquote>
+
+<a id="Extended-exercise_003a-Rational-functions"></a>
+<h5 class="subsubheading">扩展练习：有理函数</h5>
+
+<p>我们可以扩展通用算术系统，使其包含<a id="index-rational-functions"></a><em>有理函数</em>。这些是分子和分母为多项式的“分数”，例如<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mrow>
+          <mi>x</mi>
+          <mo>+</mo>
+          <mn>1</mn>
+        </mrow>
+        <mrow>
+          <msup>
+            <mi>x</mi>
+            <mn>3</mn>
+          </msup>
+          <mo>−<!-- − --></mo>
+          <mn>1</mn>
+        </mrow>
+      </mfrac>
+    </mrow>
+    <mo>.</mo>
+  </mrow>
+</math> 系统应能对有理函数进行加、减、乘、除运算，并执行诸如<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mrow>
+        <mi>x</mi>
+        <mo>+</mo>
+        <mn>1</mn>
+      </mrow>
+      <mrow>
+        <msup>
+          <mi>x</mi>
+          <mn>3</mn>
+        </msup>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </mfrac>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mi>x</mi>
+      <mrow>
+        <msup>
+          <mi>x</mi>
+          <mn>2</mn>
+        </msup>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </mfrac>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mrow>
+          <msup>
+            <mi>x</mi>
+            <mn>3</mn>
+          </msup>
+          <mo>+</mo>
+          <mn>2</mn>
+          <msup>
+            <mi>x</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>+</mo>
+          <mn>3</mn>
+          <mi>x</mi>
+          <mo>+</mo>
+          <mn>1</mn>
+        </mrow>
+        <mrow>
+          <msup>
+            <mi>x</mi>
+            <mn>4</mn>
+          </msup>
+          <mo>+</mo>
+          <msup>
+            <mi>x</mi>
+            <mn>3</mn>
+          </msup>
+          <mo>−<!-- − --></mo>
+          <mi>x</mi>
+          <mo>−<!-- − --></mo>
+          <mn>1</mn>
+        </mrow>
+      </mfrac>
+    </mrow>
+    <mo>.</mo>
+  </mrow>
+</math>这样的计算（这里通过消去公因子简化了和。普通的“交叉相乘”会产生一个四次多项式除以一个五次多项式。）</p>
+<p>如果我们修改有理算术包，使其使用通用操作，那么它将完成我们想要的功能，除了将分数化为最简形式的问题。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e93"></a>习题2.93：</strong> 修改有理算术包以使用通用操作，但更改<code>make-rat</code>，使其不尝试将分数化为最简形式。通过调用<code>make-rational</code>对两个多项式生成一个有理函数来测试你的系统：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> p1 </span><span class="opn">(</span><span class="pln">make-polynomial </span><span class="lit">'x</span><span class="pln"> </span><span class="lit">'</span><span class="opn">((</span><span class="lit">2</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">0</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> p2 </span><span class="opn">(</span><span class="pln">make-polynomial </span><span class="lit">'x</span><span class="pln"> </span><span class="lit">'</span><span class="opn">((</span><span class="lit">3</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">0</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> rf </span><span class="opn">(</span><span class="pln">make-rational p2 p1</span><span class="clo">))</span></pre></div>
+
+<p>现在使用<code>add</code>将<code>rf</code>加到自身。你会观察到这个加法过程不会将分数化为最简形式。</p></blockquote>
+
+<p>我们可以使用与整数相同的思路将多项式分数化为最简形式：修改<code>make-rat</code>，将分子和分母都除以它们的最大公约数。“最大公约数”的概念对多项式是有意义的。事实上，我们可以使用本质上与整数相同的欧几里得算法来计算两个多项式的<abbr>GCD</abbr>。<a class="footnote_link" id="DOCF126" href="#FOOT126"><sup>126</sup></a> 整数版本是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">gcd a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> b </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      a
+      </span><span class="opn">(</span><span class="pln">gcd b </span><span class="opn">(</span><span class="pln">remainder a b</span><span class="clo">))))</span></pre></div>
+
+<p>利用这一点，我们可以进行明显的修改，定义一个作用于项表的<abbr>GCD</abbr>操作：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">gcd-terms a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-termlist? b</span><span class="clo">)</span><span class="pln">
+      a
+      </span><span class="opn">(</span><span class="pln">gcd-terms b </span><span class="opn">(</span><span class="pln">remainder-terms a b</span><span class="clo">))))</span></pre></div>
+
+<p>其中<code>remainder-terms</code>挑出项表除法操作<code>div-terms</code>返回的表的余数部分，该操作在<a href="#Exercise-2_002e91">习题2.91</a>中实现。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e94"></a>习题2.94：</strong> 使用<code>div-terms</code>，实现过程<code>remainder-terms</code>，并用它如上定义<code>gcd-terms</code>。现在编写一个过程<code>gcd-poly</code>，计算两个多项式的多项式<abbr>GCD</abbr>。（如果两个多项式不在同一变量中，该过程应发出错误信号。）在系统中安装一个通用操作<code>greatest-common-divisor</code>，对于多项式归约为<code>gcd-poly</code>，对于普通数字归约为普通的<code>gcd</code>。作为测试，尝试</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> p1 
+  </span><span class="opn">(</span><span class="pln">make-polynomial 
+   </span><span class="lit">'x</span><span class="pln"> </span><span class="lit">'</span><span class="opn">((</span><span class="lit">4</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">3</span><span class="pln"> </span><span class="lit">-1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">2</span><span class="pln"> </span><span class="lit">-2</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> p2 
+  </span><span class="opn">(</span><span class="pln">make-polynomial 
+   </span><span class="lit">'x</span><span class="pln"> </span><span class="lit">'</span><span class="opn">((</span><span class="lit">3</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">-1</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">greatest-common-divisor p1 p2</span><span class="clo">)</span></pre></div>
+
+<p>并手工检查你的结果。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e95"></a>习题 2.95：</strong>定义 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>3</mn>
+  </msub>
+</math> 为多项式 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right left" rowspacing="4pt" columnspacing="1em">
+    <mtr>
+      <mtd>
+        <msub>
+          <mi>P</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>:</mo>
+      </mtd>
+      <mtd>
+        <msup>
+          <mi>x</mi>
+          <mn>2</mn>
+        </msup>
+        <mo>−<!-- − --></mo>
+        <mn>2</mn>
+        <mi>x</mi>
+        <mo>+</mo>
+        <mn>1</mn>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msub>
+          <mi>P</mi>
+          <mn>2</mn>
+        </msub>
+        <mo>:</mo>
+      </mtd>
+      <mtd>
+        <mn>11</mn>
+        <msup>
+          <mi>x</mi>
+          <mn>2</mn>
+        </msup>
+        <mo>+</mo>
+        <mn>7</mn>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msub>
+          <mi>P</mi>
+          <mn>3</mn>
+        </msub>
+        <mo>:</mo>
+      </mtd>
+      <mtd>
+        <mn>13</mn>
+        <mi>x</mi>
+        <mo>+</mo>
+        <mn>5.</mn>
+      </mtd>
+    </mtr>
+  </mtable>
+</math> 现在定义 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>Q</mi>
+    <mn>1</mn>
+  </msub>
+</math> 为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+</math> 的乘积，定义 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>Q</mi>
+    <mn>2</mn>
+  </msub>
+</math> 为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>3</mn>
+  </msub>
+</math> 的乘积，并使用 <code>greatest-common-divisor</code>（<a href="#Exercise-2_002e94">习题 2.94</a>）来计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>Q</mi>
+    <mn>1</mn>
+  </msub>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>Q</mi>
+    <mn>2</mn>
+  </msub>
+</math> 的 <abbr>GCD</abbr>。注意答案与 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> 不同。这个例子将非整数运算引入计算中，给 <abbr>GCD</abbr> 算法带来了困难。<a class="footnote_link" id="DOCF127" href="#FOOT127"><sup>127</sup></a> 要理解发生了什么，可以尝试在计算 <abbr>GCD</abbr> 时跟踪 <code>gcd-terms</code>，或者尝试手工进行除法。</p></blockquote>
+
+<p>如果我们使用以下对 <abbr>GCD</abbr> 算法的修改（它实际上只适用于具有整数系数的多项式），就可以解决 <a href="#Exercise-2_002e95">习题 2.95</a> 中展示的问题。在 <abbr>GCD</abbr> 计算中执行任何多项式除法之前，我们将被除式乘以一个整数常数因子，选择该因子以保证在除法过程中不会出现分数。因此，我们的答案将与实际的 <abbr>GCD</abbr> 相差一个整数常数因子，但在将有理函数化为最简形式时这无关紧要；<abbr>GCD</abbr> 将用于同时除分子和分母，因此整数常数因子会被约去。</p>
+<p>更准确地说，如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+</math> 是多项式，令 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>O</mi>
+    <mn>1</mn>
+  </msub>
+</math> 为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+</math> 的次数（即 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+</math> 的最高次项的次数），令 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>O</mi>
+    <mn>2</mn>
+  </msub>
+</math> 为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+</math> 的次数。令 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+</math> 为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+</math> 的首项系数。那么可以证明，如果我们将 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+</math> 乘以 <a id="index-integerizing-factor"></a> <em>整数化<!-- /@w -->因子<!-- /@w --></em> <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>c</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mn>1</mn>
+      <mo>+</mo>
+      <msub>
+        <mi>O</mi>
+        <mn>1</mn>
+      </msub>
+      <mo>−<!-- − --></mo>
+      <msub>
+        <mi>O</mi>
+        <mn>2</mn>
+      </msub>
+    </mrow>
+  </msup>
+</math>，所得多项式可以使用 <code>div-terms</code> 算法除以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+</math> 而不引入任何分数。将被除式乘以这个常数然后进行除法的操作有时被称为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>P</mi>
+</math> 除以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>Q</mi>
+</math> 的 <a id="index-pseudodivision"></a> <em>伪除法</em>。除法的余数被称为 <a id="index-pseudoremainder"></a> <em>伪余数</em>。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e96"></a>习题 2.96：</strong></p><ol>
+<li>实现过程 <code>pseudoremainder-terms</code>，它就像 <code>remainder-terms</code> 一样，只是在调用 <code>div-terms</code> 之前将被除式乘以上述整数化因子。修改 <code>gcd-terms</code> 以使用 <code>pseudoremainder-terms</code>，并验证 <code>greatest-common-divisor</code> 现在在 <a href="#Exercise-2_002e95">习题 2.95</a> 的例子中产生具有整数系数的答案。</li><li><abbr>GCD</abbr> 现在具有整数系数，但它们比 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> 的系数更大。修改 <code>gcd-terms</code>，使其通过将所有系数除以它们的（整数）最大公约数来从答案的系数中去除公因子。</li></ol>
+</blockquote>
+
+<p>因此，以下是将有理函数化为最简形式的方法：</p>
+<ul>
+<li>使用来自 <a href="#Exercise-2_002e96">习题 2.96</a> 的 <code>gcd-terms</code> 版本，计算分子和分母的 <abbr>GCD</abbr>。</li><li>当你获得 <abbr>GCD</abbr> 后，在除以 <abbr>GCD</abbr> 之前，将分子和分母都乘以相同的整数化因子，这样除以 <abbr>GCD</abbr> 就不会引入任何非整数系数。作为因子，你可以使用 <abbr>GCD</abbr> 的首项系数的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1</mn>
+    <mo>+</mo>
+    <msub>
+      <mi>O</mi>
+      <mn>1</mn>
+    </msub>
+    <mo>−<!-- − --></mo>
+    <msub>
+      <mi>O</mi>
+      <mn>2</mn>
+    </msub>
+  </mrow>
+</math> 次幂，其中 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>O</mi>
+    <mn>2</mn>
+  </msub>
+</math> 是 <abbr>GCD</abbr> 的次数，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>O</mi>
+    <mn>1</mn>
+  </msub>
+</math> 是分子和分母的次数的最大值。这将确保将分子和分母除以 <abbr>GCD</abbr> 不会引入任何分数。</li><li>此操作的结果将是一个具有整数系数的分子和分母。由于所有整数化因子，系数通常会非常大，因此最后一步是通过计算分子和分母所有系数的（整数）最大公约数并除以该因子来去除冗余因子。</li></ul>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e97"></a>习题 2.97：</strong></p><ol>
+<li>将此算法实现为过程 <code>reduce-terms</code>，它接受两个项表 <code>n</code> 和 <code>d</code> 作为参数，并返回由 <code>nn</code> 和 <code>dd</code> 组成的表，它们是通过上述算法化为最简形式的 <code>n</code> 和 <code>d</code>。还要编写一个过程 <code>reduce-poly</code>，类似于 <code>add-poly</code>，它检查两个多项式是否具有相同的变量。如果是，<code>reduce-poly</code> 剥离变量并将问题传递给 <code>reduce-terms</code>，然后将变量重新附加到由 <code>reduce-terms</code> 提供的两个项表上。</li><li>定义一个类似于 <code>reduce-terms</code> 的过程，它执行原始 <code>make-rat</code> 对整数所做的操作：<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reduce-integers n d</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">g </span><span class="opn">(</span><span class="pln">gcd n d</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> n g</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> d g</span><span class="clo">))))</span></pre></div>
+
+<p>并将 <code>reduce</code> 定义为一个通用操作，它调用 <code>apply-generic</code> 来分派到 <code>reduce-poly</code>（对于 <code>polynomial</code> 参数）或 <code>reduce-integers</code>（对于 <code>scheme-number</code> 参数）。现在，你可以通过让 <code>make-rat</code> 在组合给定的分子和分母以形成有理数之前调用 <code>reduce</code>，轻松地使有理算术包将分数化为最简形式。系统现在可以处理整数或多项式的有理表达式。要测试你的程序，请尝试这个扩展练习开头的例子：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> p1 
+  </span><span class="opn">(</span><span class="pln">make-polynomial </span><span class="lit">'x</span><span class="pln"> </span><span class="lit">'</span><span class="opn">((</span><span class="lit">1</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">0</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> p2 
+  </span><span class="opn">(</span><span class="pln">make-polynomial </span><span class="lit">'x</span><span class="pln"> </span><span class="lit">'</span><span class="opn">((</span><span class="lit">3</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">0</span><span class="pln"> </span><span class="lit">-1</span><span class="clo">))))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> p3 
+  </span><span class="opn">(</span><span class="pln">make-polynomial </span><span class="lit">'x</span><span class="pln"> </span><span class="lit">'</span><span class="opn">((</span><span class="lit">1</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> p4 
+  </span><span class="opn">(</span><span class="pln">make-polynomial </span><span class="lit">'x</span><span class="pln"> </span><span class="lit">'</span><span class="opn">((</span><span class="lit">2</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">0</span><span class="pln"> </span><span class="lit">-1</span><span class="clo">))))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> rf1 </span><span class="opn">(</span><span class="pln">make-rational p1 p2</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> rf2 </span><span class="opn">(</span><span class="pln">make-rational p3 p4</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">add rf1 rf2</span><span class="clo">)</span></pre></div>
+
+<p>看看你是否得到正确的答案，并正确地化为最简形式。</p></li></ol>
+</blockquote>
+
+<p><abbr>GCD</abbr> 计算是任何对有理函数进行操作的系统的核心。上面使用的算法虽然在数学上很直接，但极其缓慢。缓慢的部分原因是大量的除法操作，部分原因是伪除法产生的中间系数的巨大规模。代数操作系统的开发中的一个活跃领域是设计更好的计算多项式 <abbr>GCD</abbr> 的算法。<a class="footnote_link" id="DOCF128" href="#FOOT128"><sup>128</sup></a></p>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT115"><p><a class="footnote_backlink" href="#DOCF115"><sup>115</sup></a> 我们还必须提供一个几乎相同的过程来处理类型 <code>(scheme-number complex)</code>。</p>
+</div>
+<div id="FOOT116"><p><a class="footnote_backlink" href="#DOCF116"><sup>116</sup></a> 参见 <a href="#Exercise-2_002e82">习题 2.82</a> 以了解推广。</p>
+</div>
+<div id="FOOT117"><p><a class="footnote_backlink" href="#DOCF117"><sup>117</sup></a> 如果我们足够聪明，通常可以用少于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mn>2</mn>
+  </msup>
+</math>个强制转换过程来应付。例如，如果我们知道如何从类型1转换到类型2，以及从类型2转换到类型3，那么我们可以利用这一知识从类型1转换到类型3。当我们向系统中添加一个新类型时，这可以极大地减少我们需要显式提供的强制转换过程的数量。如果我们愿意在系统中构建所需的复杂程度，我们可以让它搜索类型之间关系的“图”，并自动生成那些可以从显式提供的过程推断出来的强制转换过程。</p>
+</div>
+<div id="FOOT118"><p><a class="footnote_backlink" href="#DOCF118"><sup>118</sup></a> 这一陈述也出现在本书的第一版中，它现在仍然像我们十二年前写下它时一样正确。为表达不同类型实体之间的关系（哲学家称之为“本体论”）开发一个有用且通用的框架，似乎困难得难以处理。十年前存在的混乱与现在存在的混乱之间的主要区别在于，现在各种不充分的本体论理论已经被体现在大量相应不充分的编程语言中。例如，面向对象编程语言的大部分复杂性——以及当代面向对象语言之间那些微妙而令人困惑的差异——都集中在处理相互关联类型上的通用操作。我们在<a href="Chapter-3_zh.xhtml#Chapter-3">第3</a>章中对计算对象的讨论完全避开了这些问题。熟悉面向对象编程的读者会注意到，我们在第3章中有很多关于局部状态的内容要讲，但我们甚至没有提到“类”或“继承”。事实上，我们怀疑这些问题仅从计算机语言设计的角度无法得到充分解决，还需要借鉴知识表示和自动推理方面的工作。</p>
+</div>
+<div id="FOOT119"><p><a class="footnote_backlink" href="#DOCF119"><sup>119</sup></a> 可以使用<code>round</code>基本过程将实数投影为整数，它返回最接近其参数的整数。</p>
+</div>
+<div id="FOOT120"><p><a class="footnote_backlink" href="#DOCF120"><sup>120</sup></a> 另一方面，我们将允许系数本身是其他变量的多项式的多项式。这基本上会给我们带来与完整的多变量系统相同的表示能力，尽管它确实会导致强制转换问题，如下所述。</p>
+</div>
+<div id="FOOT121"><p><a class="footnote_backlink" href="#DOCF121"><sup>121</sup></a> 对于单变量多项式，给出多项式在给定点集上的值可以是一种特别好的表示。这使得多项式算术极其简单。例如，要获得以这种方式表示的两个多项式之和，我们只需要在对应点上将多项式的值相加。要转换回更熟悉的表示，我们可以使用拉格朗日插值公式，它展示了在给定多项式于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+  </mrow>
+</math>个点上的值时，如何恢复一个<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>次多项式的系数。</p>
+</div>
+<div id="FOOT122"><p><a class="footnote_backlink" href="#DOCF122"><sup>122</sup></a> 这个操作非常像我们在<a href="2_002e3_zh.xhtml#Exercise-2_002e62">习题2.62</a>中开发的有序<code>union-set</code>操作。事实上，如果我们把多项式的项看作一个根据未定元的幂排序的集合，那么生成和的项表的程序几乎与<code>union-set</code>完全相同。</p>
+</div>
+<div id="FOOT123"><p><a class="footnote_backlink" href="#DOCF123"><sup>123</sup></a> 为了使这一切完全顺利运行，我们还应该向通用算术系统中添加将“数”强制转换为多项式的能力，方法是将其视为系数为该数的零次多项式。如果我们要执行诸如<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">[</mo>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <mo stretchy="false">(</mo>
+    <mi>y</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mn>5</mn>
+    <mo stretchy="false">]</mo>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">[</mo>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <mn>2</mn>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mo stretchy="false">]</mo>
+    <mo>,</mo>
+  </mrow>
+</math>这样的操作，这是必要的，该操作需要将系数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+  </mrow>
+</math>与系数2相加。</p>
+</div>
+<div id="FOOT124"><p><a class="footnote_backlink" href="#DOCF124"><sup>124</sup></a> 在这些多项式示例中，我们假设已经使用<a href="#Exercise-2_002e78">习题2.78</a>中建议的类型机制实现了通用算术系统。因此，作为普通数的系数将表示为数本身，而不是表示为<code>car</code>为符号<code>scheme-number</code>的序对。</p>
+</div>
+<div id="FOOT125"><p><a class="footnote_backlink" href="#DOCF125"><sup>125</sup></a> 尽管我们假设项表是有序的，但我们实现的<code>adjoin-term</code>只是将新项<code>cons</code>到现有项表上。只要我们保证使用<code>adjoin-term</code>的过程（例如<code>add-terms</code>）总是以比表中出现的项次数更高的项来调用它，我们就可以这样做。如果我们不想做出这样的保证，我们可以将<code>adjoin-term</code>实现为类似于集合的有序表表示的<code>adjoin-set</code>构造过程（<a href="2_002e3_zh.xhtml#Exercise-2_002e61">习题2.61</a>）。</p>
+</div>
+<div id="FOOT126"><p><a class="footnote_backlink" href="#DOCF126"><sup>126</sup></a> 欧几里得算法适用于多项式这一事实，在代数中通过说多项式构成一种称为<a id="index-Euclidean-ring"></a><em>欧几里得环</em>的代数结构来形式化。欧几里得环是一个允许加法、减法和交换乘法的整环，并且有一种为环中每个元素<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>分配一个正整数“度量”<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>m</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的方法，其性质是：对于任何非零的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>，有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>m</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+    <mo>≥<!-- ≥ --></mo>
+    <mi>m</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>；并且，给定任何<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>，存在一个<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math>使得<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo>=</mo>
+    <mi>q</mi>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mi>r</mi>
+  </mrow>
+</math>，并且要么<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>r</mi>
+    <mo>=</mo>
+    <mn>0</mn>
+  </mrow>
+</math>，要么<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>m</mi>
+    <mo stretchy="false">(</mo>
+    <mi>r</mi>
+    <mo stretchy="false">)</mo>
+    <mo>&lt;</mo>
+    <mi>m</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。从抽象的角度来看，这就是证明欧几里得算法有效所需要的。对于整数整环，整数的度量<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math>是整数本身的绝对值。对于多项式整环，多项式的度量是它的次数。</p>
+</div>
+<div id="FOOT127"><p><a class="footnote_backlink" href="#DOCF127"><sup>127</sup></a> 在像<abbr>MIT</abbr> Scheme这样的实现中，这会生成一个确实是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>Q</mi>
+    <mn>1</mn>
+  </msub>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>Q</mi>
+    <mn>2</mn>
+  </msub>
+</math>的因子的多项式，但带有有理系数。在许多其他Scheme系统中，整数的除法可能产生有限精度的十进制数，我们可能无法得到有效的因子。</p>
+</div>
+<div id="FOOT128"><p><a class="footnote_backlink" href="#DOCF128"><sup>128</sup></a>计算多项式<abbr>GCD</abbr>的一种极其高效且优雅的方法是由Richard <a href="References_zh.xhtml#Zippel-_00281979_0029">Zippel（1979）</a>发现的。该方法是一种概率算法，正如我们在<a href="Chapter-1_zh.xhtml#Chapter-1">第1</a>章中讨论的素性快速测试一样。Zippel的书（<a href="References_zh.xhtml#Zippel-1993">Zippel 1993</a>）描述了这种方法，以及计算多项式<abbr>GCD</abbr>的其他方法。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="Chapter-3_zh.xhtml#Chapter-3" accesskey="n" rel="next">第3章</a>, 上一节： <a href="2_002e4_zh.xhtml#g_t2_002e4" accesskey="p" rel="prev">2.4</a>, 上一级： <a href="#g_t2_002e5" accesskey="u" rel="prev">2.5</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

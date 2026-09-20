@@ -1,0 +1,635 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：5.1</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 5.1" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 5.1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-5_zh.xhtml#Chapter-5" rel="prev" title="Chapter 5" />
+<link href="5_002e2_zh.xhtml#g_t5_002e2" rel="next" title="5.2" />
+<link href="Chapter-5_zh.xhtml#Chapter-5" rel="prev" title="Chapter 5" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t5_002e1"></a>
+<nav class="header">
+<p>下一节： <a href="5_002e2_zh.xhtml#g_t5_002e2" accesskey="n" rel="next">5.2</a>, 上一节： <a href="Chapter-5_zh.xhtml#Chapter-5" accesskey="p" rel="prev">第5章</a>, 上一级： <a href="Chapter-5_zh.xhtml#Chapter-5" accesskey="u" rel="prev">第5章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Designing-Register-Machines"></a>
+<h3 class="section"><span class="secnum">5.1</span><span class="sectitle">设计寄存器机器</span></h3>
+
+<p>要设计一台寄存器机器，我们必须设计它的 <a id="index-data-paths"></a> <em>数据通路</em>（寄存器和操作）以及对这些操作进行排序的 <a id="index-controller"></a> <em>控制器</em>。为了说明简单寄存器机器的设计，让我们考察欧几里得算法，它用于计算两个整数的最大公约数（<abbr>GCD</abbr>）。正如我们在 <a href="1_002e2_zh.xhtml#g_t1_002e2_002e5">1.2.5</a> 中看到的，欧几里得算法可以通过一个迭代计算过程来执行，如下过程所指定：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">gcd a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> b </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      a
+      </span><span class="opn">(</span><span class="pln">gcd b </span><span class="opn">(</span><span class="pln">remainder a b</span><span class="clo">))))</span></pre></div>
+
+<p>执行这个算法的机器必须跟踪两个数，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>，所以让我们假设这两个数存储在具有这些名字的两个寄存器中。所需的基本操作是测试寄存器 <code>b</code> 的内容是否为零，以及计算寄存器 <code>a</code> 的内容除以寄存器 <code>b</code> 的内容的余数。求余数操作是一个复杂的过程，但暂时假设我们有一个计算余数的基本设备。在 <abbr>GCD</abbr> 算法的每个循环中，寄存器 <code>a</code> 的内容必须被寄存器 <code>b</code> 的内容替换，而 <code>b</code> 的内容必须被 <code>a</code> 的旧内容除以 <code>b</code> 的旧内容的余数替换。如果这些替换能够同时完成会很方便，但在我们的寄存器机器模型中，我们将假设每一步只能给一个寄存器赋新值。为了完成这些替换，我们的机器将使用第三个“临时”寄存器，我们称之为 <code>t</code>。（首先将余数放入 <code>t</code>，然后将 <code>b</code> 的内容放入 <code>a</code>，最后将存储在 <code>t</code> 中的余数放入 <code>b</code>。）</p>
+<p>我们可以用 <a href="#Figure-5_002e1">图 5.1</a> 中所示的数据通路图来说明这台机器所需的寄存器和操作。在这个图中，寄存器（<code>a</code>、<code>b</code> 和 <code>t</code>）用矩形表示。给寄存器赋值的每种方式都由一个箭头指示，箭头头部后面有一个 <code>X</code>，从数据源指向寄存器。我们可以把 <code>X</code> 看作一个按钮，当按下时，允许源处的值“流入”指定的寄存器。每个按钮旁边的标签是我们用来指代该按钮的名字。这些名字是任意的，可以选择具有助记价值（例如，<code>a&lt;-b</code> 表示按下将寄存器 <code>b</code> 的内容赋给寄存器 <code>a</code> 的按钮）。寄存器的数据源可以是另一个寄存器（如 <code>a&lt;-b</code> 赋值中），一个操作结果（如 <code>t&lt;-r</code> 赋值中），或一个常量（一个不能改变的内置值，在数据通路图中用包含该常量的三角形表示）。</p>
+<figure class="float">
+<a id="Figure-5_002e1"></a>
+<object style="width: 37.90ex; height: 26.07ex;" data="fig/chap5/Fig5.1a.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 5.1：</strong> 一台 <abbr>GCD</abbr> 机器的数据通路。</p>
+</figcaption>
+</figure>
+
+<p>从常量和寄存器内容计算值的操作在数据通路图中用一个包含操作名称的梯形表示。例如，在<a href="#Figure-5_002e1">图5.1</a>中标记为<code>rem</code>的方框表示一个操作，它计算与其相连的寄存器<code>a</code>和<code>b</code>的内容的余数。箭头（不带按钮）从输入寄存器和常量指向方框，箭头将操作的输出值连接到寄存器。测试用一个包含测试名称的圆圈表示。例如，我们的<abbr>GCD</abbr>机器有一个操作，测试寄存器<code>b</code>的内容是否为零。测试也有来自其输入寄存器和常量的箭头，但它没有输出箭头；它的值由控制器使用，而不是由数据通路使用。总的来说，数据通路图显示了机器所需的寄存器和操作以及它们必须如何连接。如果我们把箭头看作导线，把<code>X</code>按钮看作开关，那么数据通路图就非常像一台可以用电子元件构建的机器的布线图。</p>
+<p>为了使数据通路真正计算<abbr>GCD</abbr>，必须按正确的顺序按下按钮。我们将用控制器图来描述这个顺序，如<a href="#Figure-5_002e2">图5.2</a>所示。控制器图的元素指示应如何操作数据通路组件。控制器图中的矩形框标识要按下的数据通路按钮，箭头描述从一个步骤到下一个步骤的顺序。图中的菱形表示一个判定。根据菱形中标识的数据通路测试的值，将沿着两个顺序箭头之一进行。我们可以用物理类比来解释控制器：把图想象成一个迷宫，一颗弹珠在其中滚动。当弹珠滚入一个方框时，它按下该方框所命名的数据通路按钮。当弹珠滚入一个判定节点（例如测试<code>b</code> = 0）时，它根据所指示测试的结果沿着确定的路径离开该节点。数据通路和控制器一起完整地描述了一台计算<abbr>GCD</abbr>的机器。我们在寄存器<code>a</code>和<code>b</code>中放入数字后，在标记为<code>start</code>的位置启动控制器（滚动的弹珠）。当控制器到达<code>done</code>时，我们将在寄存器<code>a</code>中找到<abbr>GCD</abbr>的值。</p>
+<figure class="float">
+<a id="Figure-5_002e2"></a>
+<object style="width: 27.46ex; height: 30.74ex;" data="fig/chap5/Fig5.2.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图5.2：</strong> <abbr>GCD</abbr>机器的控制器。</p>
+</figcaption>
+</figure>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e1"></a>习题5.1：</strong> 设计一台寄存器机器，使用以下过程指定的迭代算法来计算阶乘。画出这台机器的数据通路图和控制器图。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">iter product counter</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> counter n</span><span class="clo">)</span><span class="pln">
+        product
+        </span><span class="opn">(</span><span class="pln">iter </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> counter product</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> counter </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">iter </span><span class="lit">1</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+
+<a id="g_t5_002e1_002e1"></a>
+<a id="A-Language-for-Describing-Register-Machines"></a>
+<h4 class="subsection"><span class="secnum">5.1.1</span><span class="sectitle">一种描述寄存器机器的语言</span></h4>
+
+<p>数据通路图和控制器图足以表示像<abbr>GCD</abbr>这样的简单机器，但对于描述像Lisp解释器这样的大型机器来说，它们就显得笨拙了。为了能够处理复杂的机器，我们将创建一种语言，以文本形式呈现数据通路图和控制器图给出的所有信息。我们将从一种直接反映这些图的记法开始。</p>
+<p>我们通过描述寄存器和操作来定义机器的数据通路。为了描述一个寄存器，我们给它一个名称，并指定控制对其赋值的按钮。我们给每个这样的按钮一个名称，并指定在按钮控制下进入寄存器的数据来源。（来源是一个寄存器、一个常量或一个操作。）为了描述一个操作，我们给它一个名称，并指定它的输入（寄存器或常量）。</p>
+<p>我们将机器的控制器定义为一个<a id="index-instructions-1"></a> <em>指令</em>序列，以及标识序列中<a id="index-entry-points"></a> <em>入口点</em>的<a id="index-labels"></a> <em>标签</em>。一条指令是以下之一：</p>
+<ul>
+<li>要按下的数据通路按钮的名称，用于给寄存器赋值。（这对应于控制器图中的一个方框。）</li><li>一条<code>test</code>指令，执行指定的测试。</li><li>根据前一个测试的结果，条件分支（<code>branch</code>指令）到由控制器标签指示的位置。（测试和分支一起对应于控制器图中的一个菱形。）如果测试为假，控制器应继续执行序列中的下一条指令。否则，控制器应继续执行标签之后的指令。</li><li>一条无条件分支（<code>goto</code>指令），指定一个控制器标签，在该标签处继续执行。</li></ul>
+
+<p>机器从控制器指令序列的开头开始，当执行到达序列末尾时停止。除非分支改变了控制流，否则指令按列出的顺序执行。</p>
+<p><a href="#Figure-5_002e3">图5.3</a>展示了以这种方式描述的<abbr>GCD</abbr>机器。这个例子只是暗示了这些描述的普遍性，因为<abbr>GCD</abbr>机器是一个非常简单的例子：每个寄存器只有一个按钮，并且每个按钮和测试在控制器中只使用一次。</p>
+<blockquote>
+<p><strong><a id="Figure-5_002e3"></a>图5.3：</strong> <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">↓<!-- ↓ --></mo>
+</math> <abbr>GCD</abbr>机器的规格说明。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">data-paths
+ </span><span class="opn">(</span><span class="pln">registers
+  </span><span class="opn">((</span><span class="pln">name a</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">buttons </span><span class="opn">((</span><span class="pln">name a</span><span class="pun">&lt;-</span><span class="pln">b</span><span class="clo">)</span><span class="pln"> 
+             </span><span class="opn">(</span><span class="pln">source </span><span class="opn">(</span><span class="pln">register b</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">name b</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">buttons </span><span class="opn">((</span><span class="pln">name b</span><span class="pun">&lt;-</span><span class="pln">t</span><span class="clo">)</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">source </span><span class="opn">(</span><span class="pln">register t</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">name t</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">buttons </span><span class="opn">((</span><span class="pln">name t</span><span class="pun">&lt;-</span><span class="pln">r</span><span class="clo">)</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">source </span><span class="opn">(</span><span class="pln">operation rem</span><span class="clo">))))))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">operations
+  </span><span class="opn">((</span><span class="pln">name rem</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">inputs </span><span class="opn">(</span><span class="pln">register a</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">register b</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">name </span><span class="pun">=</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">inputs </span><span class="opn">(</span><span class="pln">register b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">constant </span><span class="lit">0</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">controller
+ test-b                </span><span class="roman"><span class="com">; label</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">test </span><span class="pun">=</span><span class="clo">)</span><span class="pln">            </span><span class="roman"><span class="com">; test</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">branch 
+    </span><span class="opn">(</span><span class="pln">label gcd-done</span><span class="clo">))</span><span class="pln">  </span><span class="roman"><span class="com">; conditional branch</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">t</span><span class="pun">&lt;-</span><span class="pln">r</span><span class="clo">)</span><span class="pln">              </span><span class="roman"><span class="com">; button push</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">a</span><span class="pun">&lt;-</span><span class="pln">b</span><span class="clo">)</span><span class="pln">              </span><span class="roman"><span class="com">; button push</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">b</span><span class="pun">&lt;-</span><span class="pln">t</span><span class="clo">)</span><span class="pln">              </span><span class="roman"><span class="com">; button push</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">goto 
+    </span><span class="opn">(</span><span class="pln">label test-b</span><span class="clo">))</span><span class="pln">    </span><span class="roman"><span class="com">; unconditional branch</span></span><span class="pln">
+ gcd-done</span><span class="clo">)</span><span class="pln">             </span><span class="roman"><span class="com">; label</span></span>
+</pre></div>
+
+</blockquote>
+
+<p>不幸的是，这样的描述很难阅读。为了理解控制器指令，我们必须不断回头查看按钮名称和操作名称的定义，而为了理解按钮做什么，我们可能又必须查看操作名称的定义。因此，我们将变换我们的表示法，把数据通路和控制器描述中的信息结合起来，以便能一起看到全部信息。</p>
+<p>为了得到这种形式的描述，我们将用其行为的定义来替换任意的按钮和操作名称。也就是说，不再（在控制器中）说“按下按钮<code>t&lt;-r</code>”，并另外（在数据通路中）说“按钮<code>t&lt;-r</code>将<code>rem</code>操作的值赋给寄存器<code>t</code>”以及“<code>rem</code>操作的输入是寄存器<code>a</code>和<code>b</code>的内容”，我们将在（控制器中）说“按下那个将寄存器<code>a</code>和<code>b</code>的内容上<code>rem</code>操作的值赋给寄存器<code>t</code>的按钮”。类似地，不再（在控制器中）说“执行<code>=</code>测试”，并另外（在数据通路中）说“<code>=</code>测试对寄存器<code>b</code>的内容和常量0进行操作”，我们将说“对寄存器<code>b</code>的内容和常量0执行<code>=</code>测试”。我们将省略数据通路描述，只留下控制器序列。这样，<abbr>GCD</abbr>机器描述如下：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">controller
+ test-b
+   </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="pun">=</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">const </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label gcd-done</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign t </span><span class="opn">(</span><span class="pln">op rem</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg a</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign a </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign b </span><span class="opn">(</span><span class="pln">reg t</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label test-b</span><span class="clo">))</span><span class="pln">
+ gcd-done</span><span class="clo">)</span></pre></div>
+
+<p>这种形式的描述比<a href="#Figure-5_002e3">图5.3</a>中所示的那种更容易阅读，但它也有缺点：</p>
+<ul>
+<li>对于大型机器来说，它更冗长，因为每当控制器指令序列中提到数据通路元件时，这些元件的完整描述都会被重复。（这在<abbr>GCD</abbr>例子中不是问题，因为每个操作和按钮只使用一次。）此外，重复数据通路描述会掩盖机器实际的数据通路结构；对于大型机器来说，有多少寄存器、操作和按钮以及它们如何互连并不明显。</li><li>因为机器定义中的控制器指令看起来像Lisp表达式，所以很容易忘记它们并不是任意的Lisp表达式。它们只能表示合法的机器操作。例如，操作只能直接作用于常量和寄存器的内容，而不能作用于其他操作的结果。</li></ul>
+
+<p>尽管有这些缺点，我们将在本章中一直使用这种寄存器机器语言，因为我们更关心理解控制器，而不是理解数据通路中的元件和连接。然而，我们应该记住，数据通路设计在设计真实机器时是至关重要的。</p>
+<blockquote>
+<p><strong><a id="Exercise-5_002e2"></a>习题5.2：</strong> 用寄存器机器语言描述<a href="#Exercise-5_002e1">习题5.1</a>中的迭代阶乘机器。</p></blockquote>
+
+<a id="Actions"></a>
+<h5 class="subsubheading">动作</h5>
+
+<p>让我们修改<abbr>GCD</abbr>机器，以便我们可以输入想要计算<abbr>GCD</abbr>的数，并在终端上打印出答案。我们不讨论如何制造一台能读和打印的机器，而是假设（就像我们在Scheme中使用<code>read</code>和<code>display</code>时那样）它们可以作为基本操作使用。<a class="footnote_link" id="DOCF286" href="#FOOT286"><sup>286</sup></a></p>
+<p><code>Read</code>与我们一直使用的操作类似，因为它产生一个可以存储在寄存器中的值。但<code>read</code>不从任何寄存器获取输入；它的值取决于在我们所设计的机器部件之外发生的事情。我们将允许机器的操作具有这样的行为，因此将像绘制和表示任何其他计算值的操作一样来绘制和表示<code>read</code>的使用。</p>
+<p>另一方面，<code>Print</code>与我们一直使用的操作有一个根本区别：它不产生要存储在寄存器中的输出值。虽然它有效果，但这个效果不在我们所设计的机器部件上。我们将把这种操作称为<a id="index-action"></a><em>动作</em>。我们将在数据通路图中像表示计算值的操作一样表示动作——用一个包含动作名称的梯形。箭头从任何输入（寄存器或常量）指向动作框。我们还为动作关联一个按钮。按下按钮使动作发生。为了让控制器按下一个动作按钮，我们使用一种称为<code>perform</code>的新指令。因此，打印寄存器<code>a</code>内容的动作在控制器序列中由以下指令表示</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">perform </span><span class="opn">(</span><span class="pln">op print</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg a</span><span class="clo">))</span></pre></div>
+
+<p><a href="#Figure-5_002e4">图5.4</a>显示了新<abbr>GCD</abbr>机器的数据通路和控制器。我们没有让机器在打印答案后停止，而是让它重新开始，这样它反复读取一对数，计算它们的<abbr>GCD</abbr>，并打印结果。这种结构类似于我们在<a href="Chapter-4_zh.xhtml#Chapter-4">第4章</a>解释器中使用的驱动循环。</p>
+<figure class="float">
+<a id="Figure-5_002e4"></a>
+<object style="width: 59.92ex; height: 69.76ex;" data="fig/chap5/Fig5.4c.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图5.4：</strong> 一个读取输入并打印结果的<abbr>GCD</abbr>机器。</p>
+</figcaption>
+</figure>
+
+<a id="g_t5_002e1_002e2"></a>
+<a id="Abstraction-in-Machine-Design"></a>
+<h4 class="subsection"><span class="secnum">5.1.2</span><span class="sectitle">机器设计中的抽象</span></h4>
+
+<p>我们经常定义机器时包含实际上非常复杂的“基本”操作。例如，在<a href="5_002e4_zh.xhtml#g_t5_002e4">5.4</a>和<a href="5_002e5_zh.xhtml#g_t5_002e5">5.5</a>中，我们将把Scheme的环境操作视为基本操作。这种抽象是有价值的，因为它允许我们忽略机器某些部分的细节，从而可以专注于设计的其他方面。然而，我们把大量复杂性掩盖起来这一事实并不意味着机器设计不现实。我们总是可以用更简单的基本操作来替换复杂的“基本”操作。</p>
+<p>考虑<abbr>GCD</abbr>机器。该机器有一条指令，它计算寄存器<code>a</code>和<code>b</code>中内容的余数，并将结果赋给寄存器<code>t</code>。如果我们想在不使用基本余数操作的情况下构造<abbr>GCD</abbr>机器，就必须说明如何用更简单的操作（例如减法）来计算余数。事实上，我们可以按如下方式编写一个用这种方式求余数的 Scheme 过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">remainder n d</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> n d</span><span class="clo">)</span><span class="pln"> n </span><span class="opn">(</span><span class="pln">remainder </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n d</span><span class="clo">)</span><span class="pln"> d</span><span class="clo">)))</span></pre></div>
+
+<p>因此，我们可以把<abbr>GCD</abbr>机器数据通路中的余数操作替换为一个减法操作和一个比较测试。<a href="#Figure-5_002e5">图5.5</a>展示了经此展开后的机器的数据通路和控制器。指令</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">assign t </span><span class="opn">(</span><span class="pln">op rem</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg a</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span></pre></div>
+
+<p>在<abbr>GCD</abbr>控制器定义中，它被替换为一段包含循环的指令序列，如<a href="#Figure-5_002e6">图5.6</a>所示。</p>
+<figure class="float">
+<a id="Figure-5_002e5"></a>
+<object style="width: 44.03ex; height: 70.71ex;" data="fig/chap5/Fig5.5b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图5.5：</strong>经展开后的<abbr>GCD</abbr>机器的数据通路和控制器。</p>
+</figcaption>
+</figure>
+
+<blockquote>
+<p><strong><a id="Figure-5_002e6"></a>图5.6：</strong> <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">↓<!-- ↓ --></mo>
+</math> <a href="#Figure-5_002e5">图5.5</a>中<abbr>GCD</abbr>机器的控制器指令序列。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">controller
+ test-b
+   </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="pun">=</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">const </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label gcd-done</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign t </span><span class="opn">(</span><span class="pln">reg a</span><span class="clo">))</span><span class="pln">
+ rem-loop
+   </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="pun">&lt;</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg t</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label rem-done</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign t </span><span class="opn">(</span><span class="pln">op </span><span class="pun">-</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg t</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label rem-loop</span><span class="clo">))</span><span class="pln">
+ rem-done
+   </span><span class="opn">(</span><span class="pln">assign a </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign b </span><span class="opn">(</span><span class="pln">reg t</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label test-b</span><span class="clo">))</span><span class="pln">
+ gcd-done</span><span class="clo">)</span></pre></div>
+
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e3"></a>习题5.3：</strong>设计一台用牛顿法计算平方根的机器，如<a href="1_002e1_zh.xhtml#Sec_002e1_002e1_002e7">1.1.7</a>中所述：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square guess</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">improve guess</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">average guess </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x guess</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt-iter guess</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess</span><span class="clo">)</span><span class="pln">
+        guess
+        </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="opn">(</span><span class="pln">improve guess</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="lit">1.0</span><span class="clo">))</span></pre></div>
+
+<p>首先假设<code>good-enough?</code>和<code>improve</code>操作可作为基本操作使用。然后说明如何用算术操作展开它们。通过画出数据通路图并用寄存器机器语言编写控制器定义，描述<code>sqrt</code>机器设计的每个版本。</p></blockquote>
+
+<a id="g_t5_002e1_002e3"></a>
+<a id="Subroutines"></a>
+<h4 class="subsection"><span class="secnum">5.1.3</span><span class="sectitle">子程序</span></h4>
+
+<p>在设计一台执行计算的机器时，我们通常更希望安排计算的不同部分共享组件，而不是复制组件。考虑一台包含两个<abbr>GCD</abbr>计算的机器——一个求寄存器<code>a</code>和<code>b</code>中内容的<abbr>GCD</abbr>，另一个求寄存器<code>c</code>和<code>d</code>中内容的<abbr>GCD</abbr>。我们可能先假设有一个基本<code>gcd</code>操作，然后用更基本的操作展开<code>gcd</code>的两个实例。<a href="#Figure-5_002e7">图5.7</a>只展示了所得机器数据通路中的<abbr>GCD</abbr>部分，没有展示它们如何连接到机器的其余部分。该图还展示了机器控制器序列的相应部分。</p>
+<figure class="float">
+<a id="Figure-5_002e7"></a>
+<object style="width: 56.64ex; height: 63.20ex;" data="fig/chap5/Fig5.7b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图5.7：</strong>具有两个<abbr>GCD</abbr>计算的机器的数据通路和控制器序列<!-- /@w -->的部分。</p>
+</figcaption>
+</figure>
+
+<p>这台机器有两个余数操作框和两个相等性测试框。如果被复制的组件很复杂，比如余数框，那么这不会是一种经济的机器构造方式。只要这样做不会影响更大的机器其余部分的计算，我们就可以通过让两个<abbr>GCD</abbr>计算使用相同的组件来避免复制数据通路组件。如果在控制器到达<code>gcd-2</code>时不再需要寄存器<code>a</code>和<code>b</code>中的值（或者这些值可以移到其他寄存器中妥善保存），我们就可以修改机器，使得在计算第二个<abbr>GCD</abbr>时也像计算第一个那样使用寄存器<code>a</code>和<code>b</code>，而不是寄存器<code>c</code>和<code>d</code>。如果这样做，就得到<a href="#Figure-5_002e8">图5.8</a>所示的控制器序列。</p>
+<blockquote>
+<p><strong><a id="Figure-5_002e8"></a>图5.8：</strong> <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">↓<!-- ↓ --></mo>
+</math> 一台对两个不同<abbr>GCD</abbr>计算使用相同数据通路组件的机器的控制器序列的部分。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">gcd-1
+ </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="pun">=</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">const </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label after-gcd-1</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign t </span><span class="opn">(</span><span class="pln">op rem</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg a</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign a </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign b </span><span class="opn">(</span><span class="pln">reg t</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label gcd-1</span><span class="clo">))</span><span class="pln">
+after-gcd-1
+  </span><span class="roman"><span class="pun">…</span></span><span class="pln">
+gcd-2
+ </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="pun">=</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">const </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label after-gcd-2</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign t </span><span class="opn">(</span><span class="pln">op rem</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg a</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign a </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign b </span><span class="opn">(</span><span class="pln">reg t</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label gcd-2</span><span class="clo">))</span><span class="pln">
+after-gcd-2</span></pre></div>
+
+</blockquote>
+
+<p>我们已经去掉了重复的数据通路组件（因此数据通路又像<a href="#Figure-5_002e1">图5.1</a>中那样），但控制器现在有两个<abbr>GCD</abbr>序列，它们只在入口点标签上不同。更好的做法是把这两个序列替换为跳转到单个序列的分支——一个<code>gcd</code> <a id="index-subroutine"></a> <em>子程序</em>——在该序列末尾再跳回主指令序列中的正确位置。我们可以按如下方式做到这一点：在跳转到<code>gcd</code>之前，把一个区分值（例如0或1）放入一个特殊寄存器<code>continue</code>。在<code>gcd</code>子程序末尾，根据<code>continue</code>寄存器的值，我们要么返回到<code>after-gcd-1</code>，要么返回到<code>after-gcd-2</code>。<a href="#Figure-5_002e9">图5.9</a>展示了所得控制器序列的相关部分，其中只包含<code>gcd</code>指令的一份副本。</p>
+<blockquote>
+<p><strong><a id="Figure-5_002e9"></a>图5.9：</strong> <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">↓<!-- ↓ --></mo>
+</math> 使用<code>continue</code>寄存器来避免<a href="#Figure-5_002e8">图5.8</a>中重复的控制器序列。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">gcd
+ </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="pun">=</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">const </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label gcd-done</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign t </span><span class="opn">(</span><span class="pln">op rem</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg a</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign a </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign b </span><span class="opn">(</span><span class="pln">reg t</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label gcd</span><span class="clo">))</span><span class="pln">
+gcd-done
+ </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="pun">=</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">const </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label after-gcd-1</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label after-gcd-2</span><span class="clo">))</span><span class="pln">
+  </span><span class="roman"><span class="pun">…</span></span><span class="pln">
+</span><span class="roman"><span class="com">;; Before branching to </span><code><span class="com">gcd</span></code><span class="com"> from</span></span><span class="pln">
+</span><span class="roman"><span class="com">;; the first place where it is needed,</span></span><span class="pln">
+</span><span class="roman"><span class="com">;; we place 0 in the </span><code><span class="com">continue</span></code><span class="com"> register</span></span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign continue </span><span class="opn">(</span><span class="pln">const </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label gcd</span><span class="clo">))</span><span class="pln">
+after-gcd-1
+  </span><span class="roman"><span class="pun">…</span></span><span class="pln">
+</span><span class="roman"><span class="com">;; Before the second use of </span><code><span class="com">gcd</span></code><span class="com">,</span></span><span class="com"> </span><span class="pln">
+</span><span class="roman"><span class="com">;; we place 1 in the </span><code><span class="com">continue</span></code><span class="com"> register</span></span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign continue </span><span class="opn">(</span><span class="pln">const </span><span class="lit">1</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label gcd</span><span class="clo">))</span><span class="pln">
+after-gcd-2</span></pre></div>
+
+</blockquote>
+
+<p>对于处理小问题来说，这是一种合理的方法，但如果控制器序列中有许多<abbr>GCD</abbr>计算的实例，它就会变得很笨拙。为了决定在<code>gcd</code>子程序之后从哪里继续执行，我们需要在数据通路中为所有使用<code>gcd</code>的地方设置测试，并在控制器中设置分支指令。实现子程序的一种更强大的方法是让<code>continue</code>寄存器保存控制器序列中入口点的标签，当子程序结束时，执行应从该入口点继续。实现这一策略需要在寄存器机器的数据通路和控制器之间建立一种新型连接：必须有一种方法，能把控制器序列中的一个标签赋给某个寄存器，使得这个值可以从该寄存器中取出，并用于在指定的入口点继续执行。</p>
+<p>为了体现这一能力，我们将扩展寄存器机器语言的 <code>assign</code> 指令，允许将一个寄存器赋值为控制器序列中的一个标签（作为一种特殊的常量）。我们还将扩展 <code>goto</code> 指令，允许执行从寄存器内容所描述的入口点继续，而不仅仅是从常量标签所描述的入口点继续。使用这些新构造，我们可以通过跳转到存储在 <code>continue</code> 寄存器中的位置来终止 <code>gcd</code> 子程序。这导致了 <a href="#Figure-5_002e10">图 5.10</a> 中所示的控制器序列。</p>
+<blockquote>
+<p><strong><a id="Figure-5_002e10"></a>图 5.10：</strong> <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">↓<!-- ↓ --></mo>
+</math> 将标签赋给 <code>continue</code> 寄存器简化并推广了 <a href="#Figure-5_002e9">图 5.9</a> 中所示的策略。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">gcd
+ </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="pun">=</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">const </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label gcd-done</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign t </span><span class="opn">(</span><span class="pln">op rem</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg a</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign a </span><span class="opn">(</span><span class="pln">reg b</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign b </span><span class="opn">(</span><span class="pln">reg t</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label gcd</span><span class="clo">))</span><span class="pln">
+gcd-done
+ </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">))</span><span class="pln">
+  </span><span class="roman"><span class="pun">…</span></span><span class="pln">
+</span><span class="roman"><span class="com">;; Before calling </span><code><span class="com">gcd</span></code><span class="com">,</span></span><span class="com"> </span><span class="pln">
+</span><span class="roman"><span class="com">;; we assign to </span><code><span class="com">continue</span></code><span class="com"> the label</span></span><span class="pln">
+</span><span class="roman"><span class="com">;; to which </span><code><span class="com">gcd</span></code><span class="com"> should return.</span></span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign continue </span><span class="opn">(</span><span class="pln">label after-gcd-1</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label gcd</span><span class="clo">))</span><span class="pln">
+after-gcd-1
+  </span><span class="roman"><span class="pun">…</span></span><span class="pln">
+</span><span class="roman"><span class="com">;; Here is the second call to </span><code><span class="com">gcd</span></code><span class="com">,</span></span><span class="pln">
+</span><span class="roman"><span class="com">;; with a different continuation.</span></span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">assign continue </span><span class="opn">(</span><span class="pln">label after-gcd-2</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label gcd</span><span class="clo">))</span><span class="pln">
+after-gcd-2</span></pre></div>
+
+</blockquote>
+
+<p>具有多个子程序的机器可以使用多个继续寄存器（例如，<code>gcd-continue</code>、<code>factorial-continue</code>），或者我们可以让所有子程序共享一个 <code>continue</code> 寄存器。共享更经济，但如果有一个子程序（<code>sub1</code>）调用另一个子程序（<code>sub2</code>），我们必须小心。除非 <code>sub1</code> 在为调用 <code>sub2</code> 设置 <code>continue</code> 之前将 <code>continue</code> 的内容保存在其他某个寄存器中，否则 <code>sub1</code> 在完成时将不知道去哪里。下一节中为处理递归而开发的机制也为这个嵌套子程序调用问题提供了更好的解决方案。</p>
+<a id="g_t5_002e1_002e4"></a>
+<a id="Using-a-Stack-to-Implement-Recursion"></a>
+<h4 class="subsection"><span class="secnum">5.1.4</span><span class="sectitle">使用栈实现递归</span></h4>
+
+<p>借助到目前为止所展示的思想，我们可以通过指定一个寄存器机器来实现任何迭代计算过程，该机器有一个与计算过程的每个状态变量相对应的寄存器。机器反复执行一个控制器循环，改变寄存器的内容，直到满足某个终止条件。在控制器序列的每一点，机器的状态（表示迭代计算过程的状态）完全由寄存器的内容（状态变量的值）决定。</p>
+<p>然而，实现递归计算过程需要一种额外的机制。考虑下面这个计算阶乘的递归方法，我们最初在 <a href="1_002e2_zh.xhtml#g_t1_002e2_002e1">1.2.1</a> 中考察过它：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> 
+      </span><span class="lit">1</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))</span><span class="pln"> n</span><span class="clo">)))</span></pre></div>
+
+<p>正如我们从该过程所看到的，计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math> 需要计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo>!</mo>
+  </mrow>
+</math>。我们的 <abbr>GCD</abbr> 机器仿照该过程</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">gcd a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> b </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+      a
+      </span><span class="opn">(</span><span class="pln">gcd b </span><span class="opn">(</span><span class="pln">remainder a b</span><span class="clo">))))</span></pre></div>
+
+<p>同样必须计算另一个 <abbr>GCD</abbr>。但是，将原始计算归约为一个新的 <abbr>GCD</abbr> 计算的 <code>gcd</code> 过程，与需要计算另一个阶乘作为子问题的 <code>factorial</code> 之间，有一个重要区别。在 <abbr>GCD</abbr> 中，新的 <abbr>GCD</abbr> 计算的答案就是原始问题的答案。为了计算下一个 <abbr>GCD</abbr>，我们只需将新的参数放入 <abbr>GCD</abbr> 机器的输入寄存器中，并通过执行相同的控制器序列来重用机器的数据通路。当机器完成求解最终的 <abbr>GCD</abbr> 问题时，它就完成了整个计算。</p>
+<p>在阶乘（或任何递归计算过程）的情况下，新的阶乘子问题的答案不是原始问题的答案。为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo>!</mo>
+  </mrow>
+</math> 得到的值必须乘以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 才能得到最终答案。如果我们试图模仿 <abbr>GCD</abbr> 的设计，通过递减 <code>n</code> 寄存器并重新运行阶乘机器来求解阶乘子问题，我们将不再拥有用于乘以结果的 <code>n</code> 的旧值。因此，我们需要第二台阶乘机器来处理子问题。这第二次阶乘计算本身又有一个阶乘子问题，这需要第三台阶乘机器，依此类推。由于每台阶乘机器内部都包含另一台阶乘机器，整个机器包含一个无限嵌套的相似机器，因此无法由固定、有限数量的部件构造出来。</p>
+<p>尽管如此，如果我们能够安排对机器的每个嵌套实例使用相同的组件，我们就可以将阶乘计算过程实现为寄存器机器。具体来说，计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math> 的机器应该使用相同的组件来处理计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo>!</mo>
+  </mrow>
+</math> 的子问题、计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>2</mn>
+    <mo stretchy="false">)</mo>
+    <mo>!</mo>
+  </mrow>
+</math> 的子问题，等等。这是合理的，因为尽管阶乘计算过程要求使用数量没有上限的相同机器副本来执行计算，但在任何给定时刻只需要其中一份处于活动状态。当机器遇到递归子问题时，它可以暂停主问题上的工作，重用相同的物理部件来处理子问题，然后继续被暂停的计算。</p>
+<p>在子问题中，寄存器的内容将与主问题中的内容不同。（在这种情况下，<code>n</code> 寄存器被递减。）为了能够继续被暂停的计算，机器必须保存子问题解决后所需的所有寄存器的内容，以便可以恢复这些内容以继续被暂停的计算。在阶乘的情况下，我们将保存 <code>n</code> 的旧值，以便在完成计算递减后的 <code>n</code> 寄存器的阶乘时恢复它。<a class="footnote_link" id="DOCF287" href="#FOOT287"><sup>287</sup></a></p>
+<p>由于对嵌套递归调用的深度没有<em>先验</em>限制，我们可能需要保存任意数量的寄存器值。这些值必须按照与保存时相反的顺序恢复，因为在嵌套递归中，最后进入的子问题最先完成。这决定了要使用<a id="index-stack-1"></a><em>栈</em>，即“后进先出”数据结构，来保存寄存器值。我们可以扩展寄存器机器语言，通过添加两种指令来包含栈：使用<code>save</code>指令将值放入栈中，使用<code>restore</code>指令从栈中恢复值。在一系列值被<code>save</code>到栈上之后，一系列<code>restore</code>将按相反顺序取回这些值。<a class="footnote_link" id="DOCF288" href="#FOOT288"><sup>288</sup></a></p>
+<p>借助栈，我们可以为每个阶乘子问题重用阶乘机器数据通路的单一副本。在重用操作数据通路的控制器序列时也存在类似的设计问题。为了重新执行阶乘计算，控制器不能像迭代计算过程那样简单地循环回开头，因为在求解<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo>!</mo>
+  </mrow>
+</math>子问题之后，机器仍然必须将结果乘以<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>。控制器必须暂停其对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math>的计算，求解<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo>!</mo>
+  </mrow>
+</math>子问题，然后继续其对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math>的计算。这种对阶乘计算的看法表明应使用<a href="#g_t5_002e1_002e3">5.1.3</a>中描述的子程序机制，该机制让控制器使用<code>continue</code>寄存器转移到序列中求解子问题的部分，然后在主问题上从离开的地方继续。因此，我们可以制作一个阶乘子程序，返回到存储在<code>continue</code>寄存器中的入口点。在每次子程序调用前后，我们保存和恢复<code>continue</code>，就像我们对<code>n</code>寄存器所做的那样，因为阶乘计算的每个“层级”都将使用相同的<code>continue</code>寄存器。也就是说，阶乘子程序在为一个子问题调用自身时必须将新值放入<code>continue</code>，但它将需要旧值以便返回到调用它求解子问题的位置。</p>
+<p><a href="#Figure-5_002e11">图5.11</a>展示了实现递归<code>factorial</code>过程的机器的数据通路和控制器。该机器有一个栈和三个寄存器，分别称为<code>n</code>、<code>val</code>和<code>continue</code>。为了简化数据通路图，我们没有命名寄存器赋值按钮，只命名了栈操作按钮（<code>sc</code>和<code>sn</code>用于保存寄存器，<code>rc</code>和<code>rn</code>用于恢复寄存器）。要操作该机器，我们将希望计算其阶乘的数放入寄存器<code>n</code>并启动机器。当机器到达<code>fact-done</code>时，计算完成，答案将在<code>val</code>寄存器中找到。在控制器序列中，<code>n</code>和<code>continue</code>在每次递归调用之前被保存，并在调用返回时恢复。从调用返回是通过分支到存储在<code>continue</code>中的位置来完成的。<code>Continue</code>在机器启动时初始化，以便最后一次返回将转到<code>fact-done</code>。保存阶乘计算结果的<code>val</code>寄存器在递归调用之前不被保存，因为<code>val</code>的旧内容在子程序返回后没有用处。只需要新值，即子计算产生的值。</p>
+<figure class="float">
+<a id="Figure-5_002e11"></a>
+<object style="width: 66.14ex; height: 73.13ex;" data="fig/chap5/Fig5.11b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图5.11：</strong> 递归阶乘机器。</p>
+</figcaption>
+</figure>
+
+<p>尽管原则上阶乘计算需要无限机器，但<a href="#Figure-5_002e11">图5.11</a>中的机器实际上是有限的，除了栈可能无界。然而，任何特定的物理栈实现都将具有有限大小，这将限制机器可以处理的递归调用深度。这个阶乘实现说明了将递归算法实现为用栈增强的普通寄存器机器的一般策略。当遇到递归子问题时，我们将子问题解决后需要其当前值的寄存器保存到栈上，求解递归子问题，然后恢复保存的寄存器并继续在主问题上执行。<code>continue</code>寄存器必须始终保存。是否需要保存其他寄存器取决于特定机器，因为并非所有递归计算都需要在子问题求解期间被修改的寄存器的原始值（见<a href="#Exercise-5_002e4">习题5.4</a>）。</p>
+<a id="A-double-recursion"></a>
+<h5 class="subsubheading">双重递归</h5>
+
+<p>让我们考察一个更复杂的递归计算过程，即斐波那契数的树形递归计算，我们在<a href="1_002e2_zh.xhtml#g_t1_002e2_002e2">1.2.2</a>中介绍过它：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> n </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> 
+      n 
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">2</span><span class="clo">)))))</span></pre></div>
+
+<p>就像阶乘一样，我们可以将递归斐波那契计算实现为带有寄存器<code>n</code>、<code>val</code>和<code>continue</code>的寄存器机器。该机器比阶乘机器更复杂，因为控制器序列中有两个地方需要执行递归调用——一次计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，一次计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>2</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。为了为每个调用做准备，我们保存稍后需要其值的寄存器，将<code>n</code>寄存器设置为需要递归计算其Fib的数（<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math>或<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>2</mn>
+  </mrow>
+</math>），并将主序列中要返回的入口点（分别为<code>afterfib-n-1</code>或<code>afterfib-n-2</code>）赋给<code>continue</code>。然后我们转到<code>fib-loop</code>。当我们从递归调用返回时，答案在<code>val</code>中。<a href="#Figure-5_002e12">图5.12</a>展示了该机器的控制器序列。</p>
+<blockquote>
+<p><strong><a id="Figure-5_002e12"></a>图5.12：</strong> <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">↓<!-- ↓ --></mo>
+</math> 计算斐波那契数的机器的控制器。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">controller
+   </span><span class="opn">(</span><span class="pln">assign continue </span><span class="opn">(</span><span class="pln">label fib-done</span><span class="clo">))</span><span class="pln">
+ fib-loop
+   </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="pun">&lt;</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg n</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">const </span><span class="lit">2</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label immediate-answer</span><span class="clo">))</span><span class="pln">
+   </span><span class="roman"><span class="com">;; set up to compute Fib(</span><em><span class="com">n</span></em><span class="com"> − 1)</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">save continue</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign continue </span><span class="opn">(</span><span class="pln">label afterfib-n-1</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">save n</span><span class="clo">)</span><span class="pln">           </span><span class="roman"><span class="com">; save old value of </span><code><span class="com">n</span></code></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign n 
+           </span><span class="opn">(</span><span class="pln">op </span><span class="pun">-</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">reg n</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">const </span><span class="lit">1</span><span class="clo">))</span><span class="pln"> </span><span class="roman"><span class="com">; clobber </span><code><span class="com">n</span></code><span class="com"> to </span><code><span class="com">n-1</span></code></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">goto 
+    </span><span class="opn">(</span><span class="pln">label fib-loop</span><span class="clo">))</span><span class="pln"> </span><span class="roman"><span class="com">; perform recursive call</span></span><span class="pln">
+ afterfib-n-1 </span><span class="roman"><span class="com">; upon return, </span><code><span class="com">val</span></code><span class="com"> contains Fib(</span><em><span class="com">n</span></em><span class="com"> − 1)</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">restore n</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">restore continue</span><span class="clo">)</span><span class="pln">
+   </span><span class="roman"><span class="com">;; set up to compute Fib(</span><em><span class="com">n</span></em><span class="com"> − 2)</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign n </span><span class="opn">(</span><span class="pln">op </span><span class="pun">-</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg n</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">const </span><span class="lit">2</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">save continue</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign continue </span><span class="opn">(</span><span class="pln">label afterfib-n-2</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">save val</span><span class="clo">)</span><span class="pln">         </span><span class="roman"><span class="com">; save Fib(</span><em><span class="com">n</span></em><span class="com"> − 1)</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label fib-loop</span><span class="clo">))</span><span class="pln">
+ afterfib-n-2 </span><span class="roman"><span class="com">; upon return, </span><code><span class="com">val</span></code><span class="com"> contains Fib(</span><em><span class="com">n</span></em><span class="com"> − 2)</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign n 
+           </span><span class="opn">(</span><span class="pln">reg val</span><span class="clo">))</span><span class="pln"> </span><span class="roman"><span class="com">; </span><code><span class="com">n</span></code><span class="com"> now contains Fib(</span><em><span class="com">n</span></em><span class="com"> − 2)</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">restore val</span><span class="clo">)</span><span class="pln">      </span><span class="roman"><span class="com">; </span><code><span class="com">val</span></code><span class="com"> now contains Fib(</span><em><span class="com">n</span></em><span class="com"> − 1)</span></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">restore continue</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">assign val        </span><span class="roman"><span class="com">; Fib(</span><em><span class="com">n</span></em><span class="com"> − 1) + Fib(</span><em><span class="com">n</span></em><span class="com"> − 2)</span></span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">op </span><span class="pun">+</span><span class="clo">)</span><span class="pln"> 
+           </span><span class="opn">(</span><span class="pln">reg val</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">reg n</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">goto              </span><span class="roman"><span class="com">; return to caller,</span></span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">))</span><span class="pln">   </span><span class="roman"><span class="com">; answer is in </span><code><span class="com">val</span></code></span><span class="pln">
+ immediate-answer
+   </span><span class="opn">(</span><span class="pln">assign val 
+           </span><span class="opn">(</span><span class="pln">reg n</span><span class="clo">))</span><span class="pln">   </span><span class="roman"><span class="com">; base case: Fib(</span><em><span class="com">n</span></em><span class="com">) = </span><em><span class="com">n</span></em></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">))</span><span class="pln">
+ fib-done</span><span class="clo">)</span></pre></div>
+
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e4"></a>习题5.4：</strong> 指定实现以下每个过程的寄存器机器。对于每台机器，编写控制器指令序列并绘制显示数据通路的图。</p>
+<ol>
+<li>递归求幂：<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expt b n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">1</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> b </span><span class="opn">(</span><span class="pln">expt b </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)))))</span></pre></div>
+
+</li><li>迭代求幂：<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expt b n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expt-iter counter product</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> counter </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        product
+        </span><span class="opn">(</span><span class="pln">expt-iter </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> counter </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+                   </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> b product</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">expt-iter n </span><span class="lit">1</span><span class="clo">))</span></pre></div>
+
+</li></ol>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e5"></a>习题 5.5：</strong> 使用某个非平凡输入（要求至少执行一次递归调用）手工模拟阶乘机器和 斐波那契 机器。展示执行过程中每个重要时刻栈的内容。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e6"></a>习题 5.6：</strong> Ben Bitdiddle 观察到 斐波那契 机器的控制器序列中多了一条 <code>save</code> 和一条 <code>restore</code>，去掉它们可以使机器更快。这些指令在哪里？</p></blockquote>
+
+<a id="g_t5_002e1_002e5"></a>
+<a id="Instruction-Summary"></a>
+<h4 class="subsection"><span class="secnum">5.1.5</span><span class="sectitle">指令摘要</span></h4>
+
+<p>我们的寄存器机器语言中的控制器指令具有下列形式之一，其中每个 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">⟨</mo>
+    <mspace width="0.06em"/>
+    <mi>i</mi>
+    <mi>n</mi>
+    <mi>p</mi>
+    <mi>u</mi>
+    <msub>
+      <mi>t</mi>
+      <mi>i</mi>
+    </msub>
+    <mo stretchy="false">⟩</mo>
+  </mrow>
+</math> 要么是 <code>(reg ⟨<var>register-name</var>⟩)</code> 要么是 <code>(const ⟨<var>constant-value</var>⟩)</code>。这些指令是在 <a href="#g_t5_002e1_002e1">5.1.1</a> 中引入的：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">assign ⟨</span><var><span class="pln">register-name</span></var><span class="pln">⟩ </span><span class="opn">(</span><span class="pln">reg ⟨</span><var><span class="pln">register-name</span></var><span class="pln">⟩</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">assign ⟨</span><var><span class="pln">register-name</span></var><span class="pln">⟩ 
+        </span><span class="opn">(</span><span class="pln">const ⟨</span><var><span class="pln">constant-value</span></var><span class="pln">⟩</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">assign ⟨</span><var><span class="pln">register-name</span></var><span class="pln">⟩ 
+        </span><span class="opn">(</span><span class="pln">op ⟨</span><var><span class="pln">operation-name</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln"> 
+        ⟨</span><var><span class="pln">input</span><span class="pun">₁</span></var><span class="pln">⟩ </span><span class="roman"><span class="pun">…</span></span><span class="pln"> ⟨</span><var><span class="pln">input</span><span class="pun">ₙ</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">perform </span><span class="opn">(</span><span class="pln">op ⟨</span><var><span class="pln">operation-name</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln"> 
+         ⟨</span><var><span class="pln">input</span><span class="pun">₁</span></var><span class="pln">⟩ 
+         </span><span class="roman"><span class="pun">…</span></span><span class="pln"> 
+         ⟨</span><var><span class="pln">input</span><span class="pun">ₙ</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op ⟨</span><var><span class="pln">operation-name</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln"> 
+      ⟨</span><var><span class="pln">input</span><span class="pun">₁</span></var><span class="pln">⟩ 
+      </span><span class="roman"><span class="pun">…</span></span><span class="pln"> 
+      ⟨</span><var><span class="pln">input</span><span class="pun">ₙ</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ⟨</span><var><span class="pln">label-name</span></var><span class="pln">⟩</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label ⟨</span><var><span class="pln">label-name</span></var><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+
+<p>使用寄存器保存标签的做法是在 <a href="#g_t5_002e1_002e3">5.1.3</a> 中引入的：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">assign ⟨</span><var><span class="pln">register-name</span></var><span class="pln">⟩ </span><span class="opn">(</span><span class="pln">label ⟨</span><var><span class="pln">label-name</span></var><span class="pln">⟩</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">reg ⟨</span><var><span class="pln">register-name</span></var><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+
+<p>使用栈的指令是在 <a href="#g_t5_002e1_002e4">5.1.4</a> 中引入的：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">save ⟨</span><var><span class="pln">register-name</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">restore ⟨</span><var><span class="pln">register-name</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>到目前为止我们所见到的唯一一种 <code>⟨</code><var>constant-value</var><code>⟩</code> 是数，但以后我们还会使用字符串、符号和表。例如，<br /> <code>(const "abc")</code> 是字符串 <code>"abc"</code>，<br /> <code>(const abc)</code> 是符号 <code>abc</code>，<br /> <code>(const (a b c))</code> 是表 <code>(a b c)</code>，<br /> 而 <code>(const ())</code> 是空表。</p>
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT286"><p><a class="footnote_backlink" href="#DOCF286"><sup>286</sup></a> 这一假设掩盖了大量复杂性。通常，Lisp 系统实现中的很大一部分都专门用于使读取和打印能够正常工作。</p>
+</div>
+<div id="FOOT287"><p><a class="footnote_backlink" href="#DOCF287"><sup>287</sup></a> 有人可能会争辩说，我们不需要保存旧的 <code>n</code>；在将它减一并求解子问题之后，我们只需将它递增即可恢复旧值。尽管这种策略对阶乘有效，但它一般不能奏效，因为寄存器的旧值并不总能由新值计算出来。</p>
+</div>
+<div id="FOOT288"><p><a class="footnote_backlink" href="#DOCF288"><sup>288</sup></a> 在 <a href="5_002e3_zh.xhtml#g_t5_002e3">5.3</a> 中我们将看到如何用更基本的操作来实现栈。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="5_002e2_zh.xhtml#g_t5_002e2" accesskey="n" rel="next">5.2</a>, 上一节： <a href="Chapter-5_zh.xhtml#Chapter-5" accesskey="p" rel="prev">第5章</a>, 上一级： <a href="#g_t5_002e1" accesskey="u" rel="prev">5.1</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

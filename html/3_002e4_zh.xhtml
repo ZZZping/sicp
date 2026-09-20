@@ -1,0 +1,756 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：3.4</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 3.4" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 3.4" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-3_zh.xhtml#Chapter-3" rel="prev" title="Chapter 3" />
+<link href="3_002e5_zh.xhtml#g_t3_002e5" rel="next" title="3.5" />
+<link href="3_002e3_zh.xhtml#g_t3_002e3_002e5" rel="prev" title="3.3.5" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t3_002e4"></a>
+<nav class="header">
+<p>下一节： <a href="3_002e5_zh.xhtml#g_t3_002e5" accesskey="n" rel="next">3.5</a>, 上一节： <a href="3_002e3_zh.xhtml#g_t3_002e3" accesskey="p" rel="prev">3.3</a>, 上一级： <a href="Chapter-3_zh.xhtml#Chapter-3" accesskey="u" rel="prev">第3章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Concurrency_003a-Time-Is-of-the-Essence"></a>
+<h3 class="section"><span class="secnum">3.4</span><span class="sectitle">并发：时间至关重要</span></h3>
+
+<p>我们已经看到了具有局部状态的计算对象作为建模工具的强大之处。然而，正如<a href="3_002e1_zh.xhtml#g_t3_002e1_002e3">3.1.3</a>所警告的，这种能力付出了代价：失去了引用透明性，引发了关于同一性和变化的大量问题，并且需要放弃代换求值模型，转而使用更复杂的环境模型。</p>
+<p>隐藏在状态、同一性和变化的复杂性之下的核心问题是，通过引入赋值，我们被迫承认<a id="index-time"></a><em>时间</em>进入我们的计算模型。在我们引入赋值之前，所有程序都是无时间的，即任何有值的表达式总是具有相同的值。相比之下，回想一下在<a href="3_002e1_zh.xhtml#g_t3_002e1_002e1">3.1.1</a>开头介绍的模拟从银行账户取款并返回结果余额的例子：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">withdraw </span><span class="lit">25</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">75</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">withdraw </span><span class="lit">25</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">50</span></i>
+</pre></div>
+
+<p>这里，对同一表达式的连续求值产生不同的值。这种行为源于赋值语句的执行（在本例中，是对变量<code>balance</code>的赋值）划定了值发生变化的<a id="index-moments-in-time"></a><em>时间点</em>。求值表达式的结果不仅取决于表达式本身，还取决于求值发生在这时刻之前还是之后。用具有局部状态的计算对象来构建模型，迫使我们面对时间作为编程中的一个基本概念。</p>
+<p>我们可以在构造计算模型以匹配我们对物理世界的感知方面走得更远。世界上的对象并不是一次一个按顺序变化的。相反，我们将它们感知为 <a id="index-concurrently"></a><em>并发</em>地行动——全部同时发生。因此，将系统建模为并发执行的计算过程的集合通常是自然的。正如我们可以通过按照具有独立局部状态的对象来组织模型从而使程序模块化一样，将计算模型划分为单独且并发演化的部分通常也是合适的。即使程序要在顺序计算机上执行，将程序编写得好像它们要并发执行的做法也会迫使程序员避免不必要的时间约束，从而使程序更加模块化。</p>
+<p>除了使程序更加模块化之外，并发计算还可以提供相对于顺序计算的速度优势。顺序计算机一次只执行一个操作，因此执行任务所需的时间与执行的操作总数成正比。<a class="footnote_link" id="DOCF162" href="#FOOT162"><sup>162</sup></a> 然而，如果可以将问题分解为相对独立且只需很少通信的部分，则可能可以将这些部分分配给单独的计算处理器，从而产生与可用处理器数量成正比的速度优势。</p>
+<p>不幸的是，在存在并发的情况下，赋值引入的复杂性变得更加棘手。并发执行这一事实，无论是由于世界并行运作还是由于我们的计算机并行运作，都意味着我们在理解时间方面需要额外的复杂性。</p>
+
+<a id="g_t3_002e4_002e1"></a>
+<a id="The-Nature-of-Time-in-Concurrent-Systems"></a>
+<h4 class="subsection"><span class="secnum">3.4.1</span><span class="sectitle">并发系统中的时间本质</span></h4>
+
+<p>从表面上看，时间似乎很简单。它是强加于事件之上的一种排序。<a class="footnote_link" id="DOCF163" href="#FOOT163"><sup>163</sup></a> 对于任意事件 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math>，要么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> 发生在 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math> 之前，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math> 是同时的，要么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> 发生在 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>B</mi>
+</math> 之后。例如，回到银行账户的例子，假设 Peter 从最初包含 $100 的联名账户中取出 $10，Paul 取出 $25，账户中剩下 $65。根据两次取款的顺序，账户中余额的序列要么是 $100 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">→<!-- → --></mo>
+</math> $90 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">→<!-- → --></mo>
+</math> $65，要么是 $100 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">→<!-- → --></mo>
+</math> $75 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">→<!-- → --></mo>
+</math> $65。在银行系统的计算机实现中，这种不断变化的余额序列可以通过对变量 <code>balance</code> 的连续赋值来建模。</p>
+<p>然而，在复杂情况下，这种观点可能有问题。假设 Peter 和 Paul 以及其他人正在通过遍布世界各地的银行机器网络访问同一个银行账户。账户中余额的实际序列将关键取决于访问的详细时序以及机器之间通信的细节。</p>
+<p>事件顺序的这种不确定性可能会在并发系统的设计中造成严重问题。例如，假设 Peter 和 Paul 的取款被实现为两个共享公共变量 <code>balance</code> 的独立进程，每个进程由 <a href="3_002e1_zh.xhtml#g_t3_002e1_002e1">3.1.1</a> 中给出的过程指定：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">withdraw amount</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> balance amount</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance 
+              </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+        balance</span><span class="clo">)</span><span class="pln">
+      </span><span class="str">"Insufficient funds"</span><span class="clo">))</span></pre></div>
+
+<p>如果这两个进程独立运行，那么 Peter 可能会检查余额并尝试取出一个合法的金额。然而，Paul 可能会在 Peter 检查余额和 Peter 完成取款之间取出一些资金，从而使 Peter 的检查失效。</p>
+<p>情况可能更糟。考虑表达式</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance amount</span><span class="clo">))</span></pre></div>
+
+<p>作为每个取款过程的一部分执行。这由三个步骤组成：(1) 访问 <code>balance</code> 变量的值；(2) 计算新余额；(3) 将 <code>balance</code> 设置为这个新值。如果 Peter 和 Paul 的取款并发执行此语句，那么两次取款可能会交错它们访问 <code>balance</code> 并将其设置为新值的顺序。</p>
+<p><a href="#Figure-3_002e29">图3.29</a>中的时序图描绘了一个事件顺序：<code>balance</code>从100开始，Peter取出10，Paul取出25，然而<code>balance</code>的最终值却是75。如图所示，这一异常现象的原因是，Paul将75赋值给<code>balance</code>时，假设将要减小的<code>balance</code>的值是100。然而，当Peter将<code>balance</code>改为90时，这个假设就失效了。这对银行系统来说是一个灾难性的失败，因为系统中的总金额没有得到守恒。交易之前，总金额是$100。之后，Peter有$10，Paul有$25，银行有$75。<a class="footnote_link" id="DOCF164" href="#FOOT164"><sup>164</sup></a></p>
+<figure class="float">
+<a id="Figure-3_002e29"></a>
+<object style="width: 60.18ex; height: 57.93ex;" data="fig/chap3/Fig3.29b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.29：</strong>时序图，展示了在两次银行取款中交错事件顺序如何导致错误的最终余额。</p>
+</figcaption>
+</figure>
+
+<p>这里说明的一般现象是，多个进程可能共享一个公共状态变量。使问题复杂化的是，可能有不止一个进程试图同时操作共享状态。对于银行账户的例子，在每笔交易期间，每个客户都应该能够表现得好像其他客户不存在一样。当一个客户以依赖于余额的方式改变余额时，他必须能够假定，就在改变的那一刻之前，余额仍然是他所认为的那个值。</p>
+<a id="Correct-behavior-of-concurrent-programs"></a>
+<h5 class="subsubheading">并发程序的正确行为</h5>
+
+<p>上面的例子体现了可能悄悄混入并发程序中的那些微妙错误。这种复杂性的根源在于对不同进程之间共享的变量进行赋值。我们已经知道，在编写使用<code>set!</code>的程序时必须小心，因为计算的结果取决于赋值发生的顺序。<a class="footnote_link" id="DOCF165" href="#FOOT165"><sup>165</sup></a>对于并发进程，我们必须特别小心赋值，因为我们可能无法控制不同进程所做赋值的顺序。如果若干个这样的修改可能并发发生（比如两个储户访问一个联名账户），我们就需要某种方式来确保系统行为正确。例如，在从联名银行账户取款的情况下，我们必须确保金额守恒。为了使并发程序行为正确，我们可能必须对并发执行施加某些限制。</p>
+<p>对并发的一种可能限制会规定，任何两个改变共享状态变量的操作不能同时发生。这是一个极其严格的要求。对于分布式银行系统，这将要求系统设计者确保一次只能进行一个事务。这既低效又过于保守。<a href="#Figure-3_002e30">图3.30</a>展示了 Peter 和 Paul 共享一个银行账户，其中 Paul 还有一个私人账户。该图说明了从共享账户进行的两次取款（一次由 Peter 进行，一次由 Paul 进行）以及向 Paul 私人账户的一次存款。<a class="footnote_link" id="DOCF166" href="#FOOT166"><sup>166</sup></a>从共享账户进行的两次取款不能并发（因为二者都访问并更新同一个账户），而 Paul 的存款和取款也不能并发（因为二者都访问并更新 Paul 钱包中的金额）。但是，允许 Paul 向其私人账户存款与 Peter 从共享账户取款并发进行应该没有问题。</p>
+<figure class="float">
+<a id="Figure-3_002e30"></a>
+<object style="width: 67.52ex; height: 52.84ex;" data="fig/chap3/Fig3.30c.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.30：</strong>在银行1的联名账户和银行2的私人账户中并发的存款和取款。</p>
+</figcaption>
+</figure>
+
+<p>对并发的一种不那么严格的限制会确保并发系统产生的结果与这些进程按某种顺序顺序运行所产生的结果相同。这一要求有两个重要方面。第一，它并不要求进程实际顺序运行，而只要求产生的结果与<em>如同</em>它们顺序运行所得的结果相同。对于<a href="#Figure-3_002e30">图3.30</a>中的例子，银行账户系统的设计者可以安全地允许 Paul 的存款和 Peter 的取款并发发生，因为净结果将与这两个操作顺序发生时的结果相同。第二，并发程序可能产生不止一个可能的“正确”结果，因为我们只要求结果与<em>某个</em>顺序的结果相同。例如，假设 Peter 和 Paul 的联名账户初始有 $100，Peter 存入 $40，而 Paul 同时取出账户中一半的钱。那么顺序执行可能导致账户余额为 $70 或 $90（见<a href="#Exercise-3_002e38">习题 3.38</a>）。<a class="footnote_link" id="DOCF167" href="#FOOT167"><sup>167</sup></a></p>
+<p>对于并发程序的正确执行，还有更弱的要求。一个模拟扩散（比如物体中的热流）的程序可能由大量进程组成，每个进程代表空间中的一个小体积，它们并发地更新自己的值。每个进程反复将自己的值改为自身值与邻居值的平均值。该算法收敛到正确答案，与操作完成的顺序无关；不需要对共享值的并发使用施加任何限制。</p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e38"></a>习题 3.38：</strong>假设 Peter、Paul 和 Mary 共享一个联名银行账户，初始包含 $100。并发地，Peter 存入 $10，Paul 取出 $20，而 Mary 取出账户中一半的钱，通过执行以下命令：</p>
+<div class="example">
+<pre class="example">Peter: (set! balance (+ balance 10))
+Paul:  (set! balance (- balance 20))
+Mary:  (set! balance (- balance 
+                        (/ balance 2)))
+</pre></div>
+
+<ol>
+<li>列出这三个事务完成后 <code>balance</code> 所有不同的可能值，假设银行系统强制这三个进程按某种次序依次运行。</li><li>如果系统允许进程交错执行，还可能产生哪些其他值？画出像<a href="#Figure-3_002e29">图3.29</a>中那样的时序图来解释这些值如何出现。</li></ol>
+</blockquote>
+
+<a id="g_t3_002e4_002e2"></a>
+<a id="Mechanisms-for-Controlling-Concurrency"></a>
+<h4 class="subsection"><span class="secnum">3.4.2</span><span class="sectitle">控制并发的机制</span></h4>
+
+<p>我们已经看到，处理并发进程的困难根源在于需要考虑不同进程中事件顺序的交错。例如，假设我们有两个进程，一个有三个有序事件 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>a</mi>
+    <mo>,</mo>
+    <mi>b</mi>
+    <mo>,</mo>
+    <mi>c</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，另一个有三个有序事件 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo>,</mo>
+    <mi>y</mi>
+    <mo>,</mo>
+    <mi>z</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。如果这两个进程并发运行，且对它们的执行如何交错没有约束，那么与这两个进程各自顺序一致的事件共有 20 种不同的可能顺序：</p>
+<div class="example">
+<pre class="example">(a,b,c,x,y,z)  (a,x,b,y,c,z)  (x,a,b,c,y,z)  
+(x,a,y,z,b,c)  (a,b,x,c,y,z)  (a,x,b,y,z,c)  
+(x,a,b,y,c,z)  (x,y,a,b,c,z)  (a,b,x,y,c,z)  
+(a,x,y,b,c,z)  (x,a,b,y,z,c)  (x,y,a,b,z,c)
+(a,b,x,y,z,c)  (a,x,y,b,z,c)  (x,a,y,b,c,z)  
+(x,y,a,z,b,c)  (a,x,b,c,y,z)  (a,x,y,z,b,c)  
+(x,a,y,b,z,c)  (x,y,z,a,b,c)
+</pre></div>
+
+<p>作为设计这个系统的程序员，我们必须考虑这 20 种顺序中每一种的效果，并检查每种行为是否可接受。随着进程数和事件数的增加，这种方法会迅速变得难以处理。</p>
+<p>设计并发系统的一种更实用的方法是设计通用机制，使我们能够约束并发进程的交错，从而可以确信程序行为正确。为此目的已经开发了许多机制。在本节中，我们描述其中一种，即<a id="index-serializer"></a><em>串行化器</em>。</p>
+<a id="Serializing-access-to-shared-state"></a>
+<h5 class="subsubheading">对共享状态的访问进行串行化</h5>
+
+<p>串行化实现了以下思想：进程将并发执行，但存在某些过程集合不能并发执行。更确切地说，串行化创建了可区分的若干过程集合，使得每个串行化集合中一次只允许一个过程执行。如果集合中的某个过程正在执行，那么试图执行该集合中任何过程的进程将被迫等待，直到第一次执行完成。</p>
+<p>我们可以使用串行化来控制对共享变量的访问。例如，如果我们想根据共享变量的先前值来更新该变量，我们将对该变量先前值的访问和对该变量新值的赋值放在同一个过程中。然后，我们通过用同一个串行化器串行化所有这些过程，来确保没有其他对该变量赋值的过程可以与此过程并发运行。这保证了变量的值在访问和相应的赋值之间不能被改变。</p>
+<a id="Serializers-in-Scheme"></a>
+<h5 class="subsubheading">Scheme 中的串行化器</h5>
+
+<p>为了使上述机制更具体，假设我们扩展了 Scheme，加入一个名为 <code>parallel-execute</code> 的过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">parallel-execute ⟨</span><var><span class="pln">p</span><span class="pun">₁</span></var><span class="pln">⟩ 
+                  ⟨</span><var><span class="pln">p</span><span class="pun">₂</span></var><span class="pln">⟩ 
+                  </span><span class="roman"><span class="pun">…</span></span><span class="pln"> 
+                  ⟨</span><var><span class="pln">p</span><span class="pun">ₖ</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>每个 <code>⟨</code><var>p</var><code>⟩</code> 必须是一个不带参数的过程。<code>Parallel-execute</code> 为每个 <code>⟨</code><var>p</var><code>⟩</code> 创建一个单独的进程，该进程应用 <code>⟨</code><var>p</var><code>⟩</code>（不带参数）。这些进程全部并发运行。<a class="footnote_link" id="DOCF168" href="#FOOT168"><sup>168</sup></a></p>
+<p>作为其用法的一个例子，考虑</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">parallel-execute </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">)))</span><span class="pln">
+                  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">1</span><span class="clo">))))</span></pre></div>
+
+<p>这会创建两个并发进程——<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math>，它将 <code>x</code> 设为 <code>x</code> 乘以 <code>x</code>，以及 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+</math>，它递增 <code>x</code>。执行完成后，<code>x</code> 将留下五种可能值之一，具体取决于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+</math> 的事件的交错情况：</p>
+<div class="example">
+<pre class="example">101: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> sets <code>x</code> to 100 and then <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+</math> increments
+     <code>x</code> to 101.
+121: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+</math> increments <code>x</code> to 11 and then <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> sets
+     <code>x</code> to <code>x</code> times <code>x</code>.
+110: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+</math> changes <code>x</code> from 10 to 11 between the 
+     two times that <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> accesses the value of 
+     <code>x</code> during the evaluation of <code>(* x x)</code>.
+ 11: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+</math> accesses <code>x</code>, then <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> sets <code>x</code> to 100, 
+     then <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+</math> sets <code>x</code>.
+100: <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> accesses <code>x</code> (twice), then <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+</math> sets
+     <code>x</code> to 11, then <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> sets <code>x</code>.
+</pre></div>
+
+<p>我们可以通过使用串行化过程来约束并发，这些过程由 <a id="index-serializers"></a> <em>串行化器</em> 创建。串行化器由 <code>make-serializer</code> 构造，其实现如下所示。串行化器接受一个过程作为参数，并返回一个行为类似于原过程的串行化过程。对给定串行化器的所有调用都返回同一集合中的串行化过程。</p>
+<p>因此，与上面的例子相比，执行</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> s </span><span class="opn">(</span><span class="pln">make-serializer</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">parallel-execute 
+ </span><span class="opn">(</span><span class="pln">s </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">))))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">s </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">1</span><span class="clo">)))))</span></pre></div>
+
+<p>只能为 <code>x</code> 产生两种可能值，101 或 121。其他可能性被消除，因为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>1</mn>
+  </msub>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>P</mi>
+    <mn>2</mn>
+  </msub>
+</math> 的执行不能交错。</p>
+<p>这里是来自 <a href="3_002e1_zh.xhtml#g_t3_002e1_002e1">3.1.1</a> 的 <code>make-account</code> 过程的一个版本，其中存款和取款已被串行化：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-account balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">withdraw amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> balance amount</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance 
+                     </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+               balance</span><span class="clo">)</span><span class="pln">
+        </span><span class="str">"Insufficient funds"</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">deposit amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+    balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">protected </span><span class="opn">(</span><span class="pln">make-serializer</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'withdraw</span><span class="clo">)</span><span class="pln"> 
+             </span><span class="opn">(</span><span class="pln">protected withdraw</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'deposit</span><span class="clo">)</span><span class="pln"> 
+             </span><span class="opn">(</span><span class="pln">protected deposit</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'balance</span><span class="clo">)</span><span class="pln"> 
+             balance</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown request: 
+                          MAKE-ACCOUNT"</span><span class="pln">
+                         m</span><span class="clo">))))</span><span class="pln">
+    dispatch</span><span class="clo">))</span></pre></div>
+
+<p>使用此实现，两个进程不能同时从单个账户取款或向其中存款。这消除了 <a href="#Figure-3_002e29">图 3.29</a> 中所示的错误来源，其中 Peter 在 Paul 访问余额以计算新值的时间和 Paul 实际执行赋值的时间之间改变了账户余额。另一方面，每个账户有自己的串行化器，因此不同账户的存款和取款可以并发进行。</p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e39"></a>习题 3.39：</strong> 如果我们改为如下串行化执行，上面所示的并行执行中的五种可能性中哪些仍然存在：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> s </span><span class="opn">(</span><span class="pln">make-serializer</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">parallel-execute 
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> 
+    </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">((</span><span class="pln">s </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">))))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">s </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">1</span><span class="clo">)))))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e40"></a>习题 3.40：</strong> 给出执行以下代码可能产生的 <code>x</code> 的所有可能值</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">parallel-execute 
+ </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">)))</span><span class="pln">
+ </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x x</span><span class="clo">))))</span></pre></div>
+
+<p>如果我们改为使用串行化过程，这些可能性中哪些仍然存在：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> s </span><span class="opn">(</span><span class="pln">make-serializer</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">parallel-execute 
+ </span><span class="opn">(</span><span class="pln">s </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">))))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">s </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x x</span><span class="clo">)))))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e41"></a>习题 3.41：</strong> Ben Bitdiddle 担心，将银行账户实现如下会更好（其中带注释的那一行已被更改）：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-account balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">withdraw amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> balance amount</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> 
+          </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance 
+                </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+          balance</span><span class="clo">)</span><span class="pln">
+        </span><span class="str">"Insufficient funds"</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">deposit amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+    balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">protected </span><span class="opn">(</span><span class="pln">make-serializer</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'withdraw</span><span class="clo">)</span><span class="pln"> 
+             </span><span class="opn">(</span><span class="pln">protected withdraw</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'deposit</span><span class="clo">)</span><span class="pln"> 
+             </span><span class="opn">(</span><span class="pln">protected deposit</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'balance</span><span class="clo">)</span><span class="pln">
+             </span><span class="opn">((</span><span class="pln">protected 
+                </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> 
+                  balance</span><span class="clo">))))</span><span class="pln"> </span><span class="roman"><span class="com">; serialized</span></span><span class="pln">
+            </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> 
+             </span><span class="opn">(</span><span class="err">error</span><span class="pln"> 
+              </span><span class="str">"Unknown request: 
+               MAKE-ACCOUNT"</span><span class="pln">
+              m</span><span class="clo">))))</span><span class="pln">
+    dispatch</span><span class="clo">))</span></pre></div>
+
+<p>因为允许对银行余额进行非串行化访问可能导致异常行为。你同意吗？是否有任何场景能证明 Ben 的担忧？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e42"></a>习题 3.42：</strong> Ben Bitdiddle 建议，为响应每个 <code>withdraw</code> 和 <code>deposit</code> 消息而创建新的串行化过程是浪费时间。他说可以更改 <code>make-account</code>，使得对 <code>protected</code> 的调用在 <code>dispatch</code> 过程之外完成。也就是说，账户每次被请求取款过程时，都会返回同一个串行化过程（该过程在创建账户时同时创建）。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-account balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">withdraw amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> balance amount</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance 
+                     </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+               balance</span><span class="clo">)</span><span class="pln">
+        </span><span class="str">"Insufficient funds"</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">deposit amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+    balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">protected </span><span class="opn">(</span><span class="pln">make-serializer</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">protected-withdraw 
+           </span><span class="opn">(</span><span class="pln">protected withdraw</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">protected-deposit 
+           </span><span class="opn">(</span><span class="pln">protected deposit</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'withdraw</span><span class="clo">)</span><span class="pln"> 
+               protected-withdraw</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'deposit</span><span class="clo">)</span><span class="pln"> 
+               protected-deposit</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'balance</span><span class="clo">)</span><span class="pln"> 
+               balance</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> 
+               </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown request: 
+                       MAKE-ACCOUNT"</span><span class="pln">
+                      m</span><span class="clo">))))</span><span class="pln">
+      dispatch</span><span class="clo">)))</span></pre></div>
+
+<p>这是一个安全的更改吗？特别是，这两个版本的 <code>make-account</code> 所允许的并发性有任何区别吗？</p></blockquote>
+
+<a id="Complexity-of-using-multiple-shared-resources"></a>
+<h5 class="subsubheading">使用多个共享资源的复杂性</h5>
+
+<p>串行化器提供了一种强大的抽象，有助于隔离并发程序的复杂性，以便能够仔细且（希望）正确地处理它们。然而，虽然当只有一个共享资源（例如单个银行账户）时使用串行化器相对简单，但当存在多个共享资源时，并发编程可能极其困难。</p>
+<p>为了说明可能出现的一种困难，假设我们希望交换两个银行账户中的余额。我们访问每个账户以查找余额，计算余额之间的差值，从一个账户中取出该差值，并将其存入另一个账户。我们可以如下实现：<a class="footnote_link" id="DOCF169" href="#FOOT169"><sup>169</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">exchange account1 account2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">difference </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">account1 </span><span class="lit">'balance</span><span class="clo">)</span><span class="pln">
+                       </span><span class="opn">(</span><span class="pln">account2 </span><span class="lit">'balance</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">((</span><span class="pln">account1 </span><span class="lit">'withdraw</span><span class="clo">)</span><span class="pln"> difference</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">((</span><span class="pln">account2 </span><span class="lit">'deposit</span><span class="clo">)</span><span class="pln"> difference</span><span class="clo">)))</span></pre></div>
+
+<p>当只有一个进程试图进行交换时，这个过程工作得很好。然而，假设 Peter 和 Paul 都能访问账户 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>1</mn>
+</mrow>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>2</mn>
+</mrow>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>3</mn>
+</mrow>
+</math>，并且 Peter 交换 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>1</mn>
+</mrow>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>2</mn>
+</mrow>
+</math>，而 Paul 同时交换 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>1</mn>
+</mrow>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>3</mn>
+</mrow>
+</math>。即使针对单个账户的存款和取款已经串行化（如本节前面展示的 <code>make-account</code> 过程那样），<code>exchange</code> 仍然可能产生不正确的结果。例如，Peter 可能计算了 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>1</mn>
+</mrow>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>2</mn>
+</mrow>
+</math> 的余额之差，但随后 Paul 可能在 Peter 能够完成交换之前改变了 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>1</mn>
+</mrow>
+</math> 中的余额。<a class="footnote_link" id="DOCF170" href="#FOOT170"><sup>170</sup></a> 为了行为正确，我们必须安排 <code>exchange</code> 过程在交换的整个期间阻止对账户的任何其他并发访问。</p>
+<p>我们可以做到这一点的一种方式是使用两个账户的串行化器来串行化整个 <code>exchange</code> 过程。为此，我们将安排对账户的串行化器的访问。注意，我们通过暴露串行化器故意破坏了银行账户对象的模块性。下面这个版本的 <code>make-account</code> 与 <a href="3_002e1_zh.xhtml#g_t3_002e1_002e1">3.1.1</a> 中给出的原始版本相同，不同之处在于提供了一个串行化器来保护 balance 变量，并且该串行化器通过消息传递导出：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-account-and-serializer balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">withdraw amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> balance amount</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> 
+          </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+          balance</span><span class="clo">)</span><span class="pln">
+        </span><span class="str">"Insufficient funds"</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">deposit amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+    balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">balance-serializer 
+         </span><span class="opn">(</span><span class="pln">make-serializer</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'withdraw</span><span class="clo">)</span><span class="pln"> withdraw</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'deposit</span><span class="clo">)</span><span class="pln"> deposit</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'balance</span><span class="clo">)</span><span class="pln"> balance</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'serializer</span><span class="clo">)</span><span class="pln"> 
+             balance-serializer</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown request: 
+                          MAKE-ACCOUNT"</span><span class="pln">
+                         m</span><span class="clo">))))</span><span class="pln">
+    dispatch</span><span class="clo">))</span></pre></div>
+
+<p>我们可以用它来进行串行化的存款和取款。然而，与我们之前串行化的账户不同，现在银行账户对象的每个用户都有责任显式地管理串行化，例如如下所示：<a class="footnote_link" id="DOCF171" href="#FOOT171"><sup>171</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">deposit account amount</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">s </span><span class="opn">(</span><span class="pln">account </span><span class="lit">'serializer</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">d </span><span class="opn">(</span><span class="pln">account </span><span class="lit">'deposit</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">((</span><span class="pln">s d</span><span class="clo">)</span><span class="pln"> amount</span><span class="clo">)))</span></pre></div>
+
+<p>以这种方式导出串行化器给了我们足够的灵活性来实现一个串行化的交换程序。我们只需用两个账户的串行化器来串行化原来的 <code>exchange</code> 过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">serialized-exchange account1 account2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">serializer1 </span><span class="opn">(</span><span class="pln">account1 </span><span class="lit">'serializer</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">serializer2 </span><span class="opn">(</span><span class="pln">account2 </span><span class="lit">'serializer</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">((</span><span class="pln">serializer1 </span><span class="opn">(</span><span class="pln">serializer2 exchange</span><span class="clo">))</span><span class="pln">
+     account1
+     account2</span><span class="clo">)))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e43"></a>习题 3.43：</strong> 假设三个账户中的余额初始分别为 $10、$20 和 $30，并且多个进程运行，交换账户中的余额。论证如果这些进程顺序运行，那么在任何数量的并发交换之后，账户余额应该以某种顺序为 $10、$20 和 $30。画一个类似 <a href="#Figure-3_002e29">图 3.29</a> 中的时序图，以展示如果使用本节中第一个版本的账户交换程序来实现交换，这个条件如何可能被违反。另一方面，论证即使使用这个 <code>exchange</code> 程序，账户中余额的总和也将保持不变。画一个时序图，以展示如果我们不串行化单个账户上的事务，甚至这个条件也会如何被违反。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e44"></a>习题 3.44：</strong> 考虑从一个账户向另一个账户转账一定金额的问题。Ben Bitdiddle 声称，即使有多个人同时在多个账户之间转账，使用任何串行化存款和取款事务的账户机制，例如上文中的 <code>make-account</code> 版本，这也可以用以下过程完成。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">transfer from-account to-account amount</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">from-account </span><span class="lit">'withdraw</span><span class="clo">)</span><span class="pln"> amount</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">to-account </span><span class="lit">'deposit</span><span class="clo">)</span><span class="pln"> amount</span><span class="clo">))</span></pre></div>
+
+<p>Louis Reasoner 声称这里有一个问题，并且我们需要使用一种更复杂的方法，例如处理交换问题所需的那种方法。Louis 对吗？如果不对，转账问题和交换问题之间的本质区别是什么？（你应该假设 <code>from-account</code> 中的余额至少为 <code>amount</code>。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e45"></a>习题 3.45：</strong> Louis Reasoner 认为，既然存款和取款不再自动串行化，我们的银行账户系统就不必要地复杂且容易出错。他建议 <code>make-account-and-serializer</code> 应该除了（而不是代替）像 <code>make-account</code> 那样使用串行化器来串行化账户和存款之外，还导出串行化器（供诸如 <code>serialized-exchange</code> 这样的过程使用）。他提议如下重新定义账户：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">make-account-and-serializer balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">withdraw amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> balance amount</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance 
+                     </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+               balance</span><span class="clo">)</span><span class="pln">
+        </span><span class="str">"Insufficient funds"</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">deposit amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+    balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">balance-serializer 
+         </span><span class="opn">(</span><span class="pln">make-serializer</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'withdraw</span><span class="clo">)</span><span class="pln"> 
+             </span><span class="opn">(</span><span class="pln">balance-serializer withdraw</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'deposit</span><span class="clo">)</span><span class="pln"> 
+             </span><span class="opn">(</span><span class="pln">balance-serializer deposit</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'balance</span><span class="clo">)</span><span class="pln"> 
+             balance</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'serializer</span><span class="clo">)</span><span class="pln"> 
+             balance-serializer</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown request: 
+                          MAKE-ACCOUNT"</span><span class="pln">
+                         m</span><span class="clo">))))</span><span class="pln">
+    dispatch</span><span class="clo">))</span></pre></div>
+
+<p>然后存款的处理方式与原来的 <code>make-account</code> 一样：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">deposit account amount</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">account </span><span class="lit">'deposit</span><span class="clo">)</span><span class="pln"> amount</span><span class="clo">))</span></pre></div>
+
+<p>解释 Louis 的推理有什么问题。特别地，考虑当调用 <code>serialized-exchange</code> 时会发生什么。</p></blockquote>
+
+<a id="Implementing-serializers"></a>
+<h5 class="subsubheading">实现串行化器</h5>
+
+<p>我们根据一种更基本的同步机制来实现串行化器，这种机制称为 <a id="index-mutex"></a> <em>互斥量</em>。互斥量是一个支持两种操作的对象——互斥量可以被 <a id="index-acquired"></a> <em>获取</em>，并且互斥量可以被 <a id="index-released"></a> <em>释放</em>。一旦互斥量被获取，在该互斥量被释放之前，对该互斥量的任何其他获取操作都不能进行。<a class="footnote_link" id="DOCF172" href="#FOOT172"><sup>172</sup></a> 在我们的实现中，每个串行化器都有一个关联的互斥量。给定一个过程 <code>p</code>，串行化器返回一个过程，该过程获取互斥量，运行 <code>p</code>，然后释放互斥量。这确保了由该串行化器产生的过程中只有一个能同时运行，这正是我们需要保证的串行化性质。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-serializer</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">mutex </span><span class="opn">(</span><span class="pln">make-mutex</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">serialized-p </span><span class="pun">.</span><span class="pln"> args</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">mutex </span><span class="lit">'acquire</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">val </span><span class="opn">(</span><span class="pln">apply p args</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">mutex </span><span class="lit">'release</span><span class="clo">)</span><span class="pln">
+          val</span><span class="clo">))</span><span class="pln">
+      serialized-p</span><span class="clo">)))</span></pre></div>
+
+<p>互斥量是一个可变对象（这里我们将使用一个单元素表，我们称之为 <a id="index-cell"></a> <em>单元</em>），它可以保存值 true 或 false。当值为 false 时，互斥量可供获取。当值为 true 时，互斥量不可用，任何试图获取该互斥量的进程都必须等待。</p>
+<p>我们的互斥量构造函数 <code>make-mutex</code> 首先将单元内容初始化为 false。要获取互斥量，我们测试该单元。如果互斥量可用，我们将单元内容设置为 true 并继续。否则，我们在一个循环中等待，一遍又一遍地尝试获取，直到我们发现互斥量可用。<a class="footnote_link" id="DOCF173" href="#FOOT173"><sup>173</sup></a> 要释放互斥量，我们将单元内容设置为 false。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-mutex</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">cell </span><span class="opn">(</span><span class="pln">list false</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">the-mutex m</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'acquire</span><span class="clo">)</span><span class="pln">
+             </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">test-and-set! cell</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">the-mutex </span><span class="lit">'acquire</span><span class="clo">)))</span><span class="pln"> </span><span class="roman"><span class="com">; retry</span></span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'release</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">clear! cell</span><span class="clo">))))</span><span class="pln">
+    the-mutex</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">clear! cell</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-car! cell false</span><span class="clo">))</span></pre></div>
+
+<p><code>Test-and-set!</code> 测试该单元并返回测试结果。此外，如果测试结果为 false，<code>test-and-set!</code> 在返回 false 之前将单元内容设置为 true。我们可以将这种行为表达为以下过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">test-and-set! cell</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> cell</span><span class="clo">)</span><span class="pln">
+      true
+      </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-car! cell true</span><span class="clo">)</span><span class="pln">
+             false</span><span class="clo">)))</span></pre></div>
+
+<p>然而，这个<code>test-and-set!</code>的实现本身并不够用。这里有一个关键的微妙之处，这正是并发控制进入系统的关键所在：<code>test-and-set!</code>操作必须<a id="index-atomically"></a><em>原子地</em>执行。也就是说，我们必须保证，一旦某个进程测试了该单元并发现它为假，那么在任何其他进程能够测试该单元之前，该单元的内容实际上会被设置为真。如果我们不做出这个保证，那么互斥量就可能以类似于<a href="#Figure-3_002e29">图3.29</a>中银行账户失败的方式失败。（参见<a href="#Exercise-3_002e46">习题3.46</a>。）</p>
+<p><code>test-and-set!</code>的实际实现取决于我们的系统如何运行并发进程的细节。例如，我们可能在使用时间切片机制在顺序处理器上执行并发进程，该机制循环遍历各个进程，允许每个进程运行一小段时间，然后中断它并转向下一个进程。在这种情况下，<code>test-and-set!</code>可以通过在测试和设置期间禁用时间切片来工作。<a class="footnote_link" id="DOCF174" href="#FOOT174"><sup>174</sup></a>或者，多处理计算机提供直接在硬件中支持原子操作的指令。<a class="footnote_link" id="DOCF175" href="#FOOT175"><sup>175</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e46"></a>习题3.46：</strong>假设我们使用文本中所示的普通过程来实现<code>test-and-set!</code>，而不试图使该操作成为原子的。画一个类似于<a href="#Figure-3_002e29">图3.29</a>中的时序图，来演示互斥量实现如何通过允许两个进程同时获取互斥量而失败。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e47"></a>习题3.47：</strong>信号量（大小为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>）是互斥量的一种推广。与互斥量一样，信号量支持获取和释放操作，但它更通用，因为最多可以有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>个进程并发地获取它。试图获取信号量的额外进程必须等待释放操作。给出信号量的实现</p>
+<ol>
+<li>基于互斥量</li><li>基于原子<code>test-and-set!</code>操作。</li></ol>
+</blockquote>
+
+<a id="Deadlock"></a>
+<h5 class="subsubheading">死锁</h5>
+
+<p>现在我们已经看到了如何实现串行化器，我们可以看到，即使有了上面的<code>serialized-exchange</code>过程，账户交换仍然存在问题。设想Peter试图将<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>1</mn>
+</mrow>
+</math>与<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>2</mn>
+</mrow>
+</math>交换，而Paul同时试图将<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>2</mn>
+</mrow>
+</math>与<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>1</mn>
+</mrow>
+</math>交换。假设Peter的进程到达了它已进入保护<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>1</mn>
+</mrow>
+</math>的串行化过程的那个点，紧接着，Paul的进程进入了保护<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>2</mn>
+</mrow>
+</math>的串行化过程。现在Peter无法继续（进入保护<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>2</mn>
+</mrow>
+</math>的串行化过程），直到Paul退出保护<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>2</mn>
+</mrow>
+</math>的串行化过程。类似地，Paul也无法继续，直到Peter退出保护<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>a</mi>
+  <mn>1</mn>
+</mrow>
+</math>的串行化过程。每个进程都永远停滞，等待另一个进程。这种情况被称为<a id="index-deadlock"></a><em>死锁</em>。在提供对多个共享资源并发访问的系统中，死锁始终是一种危险。</p>
+<p>避免这种情况下的死锁的一种方法是给每个账户一个唯一的标识号，并重写<code>serialized-exchange</code>，使得进程总是首先尝试进入保护编号最小的账户的过程。尽管这种方法对于交换问题效果很好，但还有其他情况需要更复杂的死锁避免技术，或者根本无法避免死锁。（参见<a href="#Exercise-3_002e48">习题3.48</a>和<a href="#Exercise-3_002e49">习题3.49</a>。）<a class="footnote_link" id="DOCF176" href="#FOOT176"><sup>176</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e48"></a>习题3.48：</strong>详细解释为什么上述死锁避免方法（即，账户被编号，每个进程首先尝试获取编号较小的账户）在交换问题中避免了死锁。重写<code>serialized-exchange</code>以纳入这个想法。（你还需要修改<code>make-account</code>，使得每个账户在创建时带有一个编号，可以通过发送适当的消息来访问该编号。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e49"></a>习题3.49：</strong>给出一个上述死锁避免机制不起作用的场景。（提示：在交换问题中，每个进程事先知道它需要访问哪些账户。考虑这样一种情况：一个进程必须先访问某些共享资源，然后才能知道它还需要哪些额外的共享资源。）</p></blockquote>
+
+<a id="Concurrency_002c-time_002c-and-communication"></a>
+<h5 class="subsubheading">并发、时间和通信</h5>
+
+<p>我们已经看到了编程并发系统需要控制不同进程访问共享状态时的事件顺序，我们也看到了如何通过明智地使用串行化器来实现这种控制。但并发的问题比这更深刻，因为从根本的角度来看，“共享状态”的含义并不总是清晰的。</p>
+<p>诸如<code>test-and-set!</code>之类的机制要求进程在任意时刻检查一个全局共享标志。在现代高速处理器中，由于流水线和缓存内存等优化技术，内存的内容可能并非在每个瞬间都处于一致状态，因此这实现起来有问题且效率低下。因此，在当代多处理系统中，串行化器范式正被新的并发控制方法所取代。<a class="footnote_link" id="DOCF177" href="#FOOT177"><sup>177</sup></a></p>
+<p>共享状态的问题方面也会在大规模分布式系统中出现。例如，设想一个分布式银行系统，其中各个分行维护本地银行余额值，并定期与其他分行维护的值进行比较。在这样的系统中，“账户余额”的值将是不确定的，除非恰好在同步之后。如果 Peter 在他与 Paul 共同持有的账户中存钱，我们应在何时说账户余额已经改变——是在本地分行的余额改变时，还是直到同步之后？而如果 Paul 从不同的分行访问该账户，为了使得行为“正确”，对银行系统应施加哪些合理的约束？对于正确性而言，唯一可能重要的是 Peter 和 Paul 各自观察到的行为以及同步之后立即的账户“状态”。关于“真实”账户余额或同步之间事件顺序的问题可能是无关紧要或无意义的。<a class="footnote_link" id="DOCF178" href="#FOOT178"><sup>178</sup></a></p>
+<p>这里的基本现象是，同步不同进程、建立共享状态或对事件施加顺序都需要进程间的通信。本质上，并发控制中任何时间概念都必须与通信紧密相关。<a class="footnote_link" id="DOCF179" href="#FOOT179"><sup>179</sup></a>有趣的是，时间与通信之间的类似联系也出现在相对论中，其中光速（可用于同步事件的最快信号）是关联时间与空间的基本常数。我们在计算模型中处理时间和状态时遇到的复杂性，实际上可能反映了物理宇宙的一种基本复杂性。</p>
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT162"><p><a class="footnote_backlink" href="#DOCF162"><sup>162</sup></a>大多数真实处理器实际上一次执行几个操作，遵循一种称为<a id="index-pipelining"></a><em>流水线</em>的策略。尽管这种技术极大地提高了硬件的有效利用率，但它仅用于加速顺序指令流的执行，同时保留顺序程序的行为。</p>
+</div>
+<div id="FOOT163"><p><a class="footnote_backlink" href="#DOCF163"><sup>163</sup></a>引用剑桥某建筑墙上看到的涂鸦：“时间是一种被发明出来防止所有事情同时发生的装置。”</p>
+</div>
+<div id="FOOT164"><p><a class="footnote_backlink" href="#DOCF164"><sup>164</sup></a>如果两个<code>set!</code>操作试图同时改变余额，这个系统可能发生更严重的故障，在这种情况下，内存中实际出现的数据可能最终是两个进程写入信息的随机组合。大多数计算机对基本的内存写操作有互锁机制，以防止这种同时访问。然而，即使这种看似简单的保护，在多处理计算机的设计中也带来了实现挑战，需要精心设计的<a id="index-cache_002dcoherence"></a><em>缓存一致性</em>协议来确保各个处理器对内存内容保持一致视图，尽管数据可能在不同处理器之间复制（“缓存”）以提高内存访问速度。</p>
+</div>
+<div id="FOOT165"><p><a class="footnote_backlink" href="#DOCF165"><sup>165</sup></a><a href="3_002e1_zh.xhtml#g_t3_002e1_002e3">3.1.3</a>中的阶乘程序说明了单个顺序进程的这种情况。</p>
+</div>
+<div id="FOOT166"><p><a class="footnote_backlink" href="#DOCF166"><sup>166</sup></a>各列显示了 Peter 的钱包、共同账户（在 Bank1 中）、Paul 的钱包以及 Paul 的私人账户（在 Bank2 中）在每次取款（W）和存款（D）前后的内容。Peter 从 Bank1 取款 $10；Paul 在 Bank2 存款 $5，然后从 Bank1 取款 $25。</p>
+</div>
+<div id="FOOT167"><p><a class="footnote_backlink" href="#DOCF167"><sup>167</sup></a><a id="Footnote-167"></a>更形式化地表达这一想法的方式是说，并发程序本质上是<a id="index-nondeterministic"></a><em>非确定性的</em>。也就是说，它们不是由单值函数描述的，而是由结果为一组可能值的函数描述的。在<a href="4_002e3_zh.xhtml#g_t4_002e3">4.3</a>中，我们将研究一种用于表达非确定性计算的语言。</p>
+</div>
+<div id="FOOT168"><p><a class="footnote_backlink" href="#DOCF168"><sup>168</sup></a><code>Parallel-execute</code>不是标准 Scheme 的一部分，但可以在<abbr>MIT</abbr> Scheme 中实现。在我们的实现中，新的并发进程也与原始 Scheme 进程并发运行。此外，在我们的实现中，<code>parallel-execute</code>返回的值是一个特殊控制对象，可用于停止新创建的进程。</p>
+</div>
+<div id="FOOT169"><p><a class="footnote_backlink" href="#DOCF169"><sup>169</sup></a>我们通过利用我们的<code>deposit</code>消息接受负金额这一事实简化了<code>exchange</code>。（这是我们银行系统中的一个严重缺陷！）</p>
+</div>
+<div id="FOOT170"><p><a class="footnote_backlink" href="#DOCF170"><sup>170</sup></a>如果账户余额初始为 $10、$20 和 $30，那么在任何数量的并发交换之后，余额仍应以某种顺序为 $10、$20 和 $30。将存款串行化到各个账户并不足以保证这一点。参见<a href="#Exercise-3_002e43">习题3.43</a>。</p>
+</div>
+<div id="FOOT171"><p><a class="footnote_backlink" href="#DOCF171"><sup>171</sup></a><a href="#Exercise-3_002e45">习题3.45</a>探讨了为什么存款和取款不再由账户自动串行化。</p>
+</div>
+<div id="FOOT172"><p><a class="footnote_backlink" href="#DOCF172"><sup>172</sup></a>术语“mutex”是<a id="index-mutual-exclusion"></a><em>互斥</em>的缩写。安排一种机制，使并发进程能够安全地共享资源，这个一般性问题称为互斥问题。我们的互斥量是<a id="index-semaphore"></a><em>信号量</em>机制的一个简单变体（见<a href="#Exercise-3_002e47">习题3.47</a>），该机制是在埃因霍温技术大学开发的“THE”多道程序设计系统中引入的，该系统以该大学荷兰语名称的首字母命名（<a href="References_zh.xhtml#Dijkstra-1968a">Dijkstra 1968a</a>）。获取和释放操作最初被称为P和V，来自荷兰语单词<em>passeren</em>（通过）和<em>vrijgeven</em>（释放），指的是铁路系统中使用的信号灯。Dijkstra的经典论述（<a href="References_zh.xhtml#g_t1968b">1968b</a>）是最早清晰阐述并发控制问题的著作之一，并展示了如何使用信号量来处理各种并发问题。</p>
+</div>
+<div id="FOOT173"><p><a class="footnote_backlink" href="#DOCF173"><sup>173</sup></a>在大多数分时操作系统中，被互斥量阻塞的进程不会像上面那样浪费时间“忙等”。相反，系统会在第一个进程等待时调度另一个进程运行，当互斥量变为可用时，被阻塞的进程会被唤醒。</p>
+</div>
+<div id="FOOT174"><p><a class="footnote_backlink" href="#DOCF174"><sup>174</sup></a>在单处理器的<abbr>MIT</abbr> Scheme中，它使用时间分片模型，<code>test-and-set!</code>可以实现如下：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">test-and-set! cell</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">without-interrupts
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> cell</span><span class="clo">)</span><span class="pln">
+         true
+         </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-car! cell true</span><span class="clo">)</span><span class="pln">
+                false</span><span class="clo">)))))</span></pre></div>
+
+<p><code>Without-interrupts</code>在其过程参数执行期间禁用时间分片中断。</p>
+</div>
+<div id="FOOT175"><p><a class="footnote_backlink" href="#DOCF175"><sup>175</sup></a>这类指令有许多变体——包括test-and-set、test-and-clear、swap、compare-and-exchange、load-reserve和store-conditional——它们的设计必须与机器的处理器-内存接口仔细匹配。这里出现的一个问题是，确定如果两个进程试图通过使用这样的指令在同一时刻获取同一资源会发生什么。这需要某种机制来决定哪个进程获得控制权。这种机制称为<a id="index-arbiter"></a><em>仲裁器</em>。仲裁器通常归结为某种硬件设备。不幸的是，可以证明，除非允许仲裁器花费任意长的时间来做决定，否则无法物理构造一个100%的时间都能正常工作的公平仲裁器。这里的基本现象最初是由十四世纪法国哲学家Jean Buridan在他对亚里士多德《<i>论天</i>》的评注中观察到的。Buridan认为，一只完全理性的狗被放在两个同样有吸引力的食物来源之间会饿死，因为它无法决定先去哪一个。</p>
+</div>
+<div id="FOOT176"><p><a class="footnote_backlink" href="#DOCF176"><sup>176</sup></a>通过给共享资源编号并按顺序获取来避免死锁的一般技术归功于<a href="References_zh.xhtml#Havender-_00281968_0029">Havender（1968）</a>。无法避免死锁的情况需要<a id="index-deadlock_002drecovery"></a><em>死锁恢复</em>方法，这需要让进程从死锁状态中“退出”并重试。死锁恢复机制广泛用于数据库管理系统中，这一主题在<a href="References_zh.xhtml#Gray-and-Reuter-1993">Gray和Reuter 1993</a>中有详细论述。</p>
+</div>
+<div id="FOOT177"><p><a class="footnote_backlink" href="#DOCF177"><sup>177</sup></a>一种替代串行化的方法称为<a id="index-barrier-synchronization"></a><em>屏障同步</em>。程序员允许并发进程随意执行，但建立某些同步点（“屏障”），在所有这些进程都到达屏障之前，任何进程都不能通过。现代处理器提供机器指令，允许程序员在需要一致性的地方建立同步点。例如，<abbr>PowerPC</abbr>为此包含了两条指令，称为<abbr>SYNC</abbr>和<abbr>EIEIO</abbr>（强制输入/输出按序执行）。</p>
+</div>
+<div id="FOOT178"><p><a class="footnote_backlink" href="#DOCF178"><sup>178</sup></a>这看起来可能是一种奇怪的观点，但确实有系统是这样工作的。例如，信用卡账户的跨国消费款项通常按国家分别结算，在不同国家发生的消费款项会定期对账。因此，账户余额在不同国家可能不同。</p>
+</div>
+<div id="FOOT179"><p><a class="footnote_backlink" href="#DOCF179"><sup>179</sup></a>对于分布式系统，这一视角由<a href="References_zh.xhtml#Lamport-_00281978_0029">Lamport（1978）</a>所追求，他展示了如何利用通信来建立“全局时钟”，从而可以用来确定分布式系统中事件的顺序。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="3_002e5_zh.xhtml#g_t3_002e5" accesskey="n" rel="next">3.5</a>, 上一节： <a href="3_002e3_zh.xhtml#g_t3_002e3" accesskey="p" rel="prev">3.3</a>, 上一级： <a href="#g_t3_002e4" accesskey="u" rel="prev">3.4</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

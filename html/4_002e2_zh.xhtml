@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：4.2</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 4.2" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 4.2" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-4_zh.xhtml#Chapter-4" rel="prev" title="Chapter 4" />
+<link href="4_002e3_zh.xhtml#g_t4_002e3" rel="next" title="4.3" />
+<link href="4_002e1_zh.xhtml#g_t4_002e1_002e7" rel="prev" title="4.1.7" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t4_002e2"></a>
+<nav class="header">
+<p>下一节： <a href="4_002e3_zh.xhtml#g_t4_002e3" accesskey="n" rel="next">4.3</a>, 上一节： <a href="4_002e1_zh.xhtml#g_t4_002e1" accesskey="p" rel="prev">4.1</a>, 上一级： <a href="Chapter-4_zh.xhtml#Chapter-4" accesskey="u" rel="prev">第4章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Variations-on-a-Scheme-_002d_002d_002d-Lazy-Evaluation"></a>
+<h3 class="section"><span class="secnum">4.2</span><span class="sectitle">Scheme 的变体——惰性求值</span></h3>
+
+<p>既然我们有了一个用 Lisp 程序表达的求值器，我们就可以仅仅通过修改求值器来试验语言设计中的替代选择。事实上，新语言常常是通过首先编写一个将新语言嵌入现有高级语言中的求值器而发明的。例如，如果我们希望与 Lisp 社区的另一位成员讨论对 Lisp 提议修改的某个方面，我们可以提供一个体现该修改的求值器。接收者随后可以用新的求值器进行实验，并以进一步修改的形式反馈意见。高级实现基础不仅使测试和调试求值器更容易；此外，这种嵌入使设计者能够从底层语言中攫取<a class="footnote_link" id="DOCF235" href="#FOOT235"><sup>235</sup></a>特性，正如我们嵌入的 Lisp 求值器使用底层 Lisp 的基本过程和控制结构一样。只有在后来（如果有的话），设计者才需要费心用低级语言或硬件构建完整的实现。在本节和下一节中，我们探讨 Scheme 的一些变体，它们提供了显著额外的表达能力。</p>
+
+<a id="g_t4_002e2_002e1"></a>
+<a id="Normal-Order-and-Applicative-Order"></a>
+<h4 class="subsection"><span class="secnum">4.2.1</span><span class="sectitle">正则序与应用序</span></h4>
+
+<p>在<a href="1_002e1_zh.xhtml#g_t1_002e1">1.1</a>中，我们开始讨论求值模型时，我们注意到 Scheme 是一种<a id="index-applicative_002dorder"></a> <em>应用序</em>语言，即，Scheme 过程的所有参数在过程应用时都会被求值。相比之下，<a id="index-normal_002dorder"></a> <em>正则序</em>语言将过程参数的求值延迟到实际需要参数值时。将过程参数的求值延迟到最后一刻（例如，直到基本操作需要它们时）称为<a id="index-lazy-evaluation"></a> <em>惰性求值</em>。<a class="footnote_link" id="DOCF236" href="#FOOT236"><sup>236</sup></a>考虑过程</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">try a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> a </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> b</span><span class="clo">))</span></pre></div>
+
+<p>在 Scheme 中求值<code>(try 0 (/ 1 0))</code>会产生错误。使用惰性求值，则不会有错误。求值该表达式将返回1，因为参数<code>(/ 1 0)</code>永远不会被求值。</p>
+<p>一个利用惰性求值的例子是过程<code>unless</code>的定义</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">unless condition 
+                usual-value 
+                exceptional-value</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> condition 
+      exceptional-value 
+      usual-value</span><span class="clo">))</span></pre></div>
+
+<p>它可用于如下表达式中</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">unless </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> b </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> 
+          </span><span class="opn">(</span><span class="pln">display </span><span class="str">"exception: returning 0"</span><span class="clo">)</span><span class="pln">
+          </span><span class="lit">0</span><span class="clo">))</span></pre></div>
+
+<p>这在应用序语言中行不通，因为在调用<code>unless</code>之前，通常值和异常值都会被求值（比较<a href="1_002e1_zh.xhtml#Exercise-1_002e6">习题1.6</a>）。惰性求值的一个优点是，某些过程，例如<code>unless</code>，即使对其某些参数的求值会产生错误或不会终止，也能进行有用的计算。</p>
+<p>如果在参数被求值之前进入过程体，我们说该过程在该参数上是<a id="index-non_002dstrict"></a> <em>非严格</em>的。如果在进入过程体之前参数被求值，我们说该过程在该参数上是<a id="index-strict"></a> <em>严格</em>的。<a class="footnote_link" id="DOCF237" href="#FOOT237"><sup>237</sup></a>在纯应用序语言中，所有过程在每个参数上都是严格的。在纯正则序语言中，所有复合过程在每个参数上都是非严格的，而基本过程可能是严格的或非严格的。还有一些语言（见<a href="#Exercise-4_002e31">习题4.31</a>）让程序员对他们定义的过程的严格性进行详细控制。</p>
+<p>一个可以有效地使其非严格的引人注目的例子是<code>cons</code>（或者，一般来说，几乎任何数据结构的构造函数）。即使元素的值未知，也可以进行有用的计算，将元素组合成数据结构并对所得数据结构进行操作。例如，在不知道表中各个元素值的情况下计算表的长度是完全合理的。我们将在<a href="#g_t4_002e2_002e3">4.2.3</a>中利用这一思想，将<a href="Chapter-3_zh.xhtml#Chapter-3">第3</a>章的流实现为由非严格<code>cons</code>序对构成的表。</p>
+<blockquote>
+<p><strong><a id="Exercise-4_002e25"></a>习题4.25：</strong>假设（在普通应用序 Scheme 中）我们如上所示定义<code>unless</code>，然后以<code>unless</code>为基础定义<code>factorial</code>如下</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">unless </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> n </span><span class="opn">(</span><span class="pln">factorial </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)))</span><span class="pln">
+          </span><span class="lit">1</span><span class="clo">))</span></pre></div>
+
+<p>如果我们尝试求值<code>(factorial 5)</code>会发生什么？我们的定义在正则序语言中能工作吗？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e26"></a>习题 4.26：</strong>Ben Bitdiddle 和 Alyssa P. Hacker 对惰性求值在实现诸如 <code>unless</code> 之类的东西时的重要性意见不一。Ben 指出，可以在应用序中将 <code>unless</code> 实现为一种特殊形式。Alyssa 反驳说，如果那样做，<code>unless</code> 就仅仅是语法，而不是一个可以与高阶过程结合使用的过程。请填写争论双方的细节。展示如何将 <code>unless</code> 实现为派生表达式（如 <code>cond</code> 或 <code>let</code>），并给出一个例子，说明在什么情况下将 <code>unless</code> 作为过程而不是特殊形式来使用可能是有用的。</p></blockquote>
+
+<a id="g_t4_002e2_002e2"></a>
+<a id="An-Interpreter-with-Lazy-Evaluation"></a>
+<h4 class="subsection"><span class="secnum">4.2.2</span><span class="sectitle">带惰性求值的解释器</span></h4>
+
+<p>在本节中，我们将实现一种正则序语言，它与 Scheme 相同，只是复合过程对每个参数都是非严格的。基本过程仍然是严格的。修改 <a href="4_002e1_zh.xhtml#g_t4_002e1_002e1">4.1.1</a> 的求值器，使其解释的语言以这种方式行为，并不困难。几乎所有需要的更改都集中在过程应用上。</p>
+<p>基本思想是，当应用一个过程时，解释器必须确定哪些参数需要求值，哪些需要延迟。被延迟的参数不求值；相反，它们被转换成称为 <a id="index-thunks"></a> <em>thunk</em> 的对象。<a class="footnote_link" id="DOCF238" href="#FOOT238"><sup>238</sup></a> thunk 必须包含在需要时产生参数值所需的信息，就像它在应用时已经被求值一样。因此，thunk 必须包含参数表达式以及正在求值过程应用的环境。</p>
+<p>对 thunk 中的表达式进行求值的过程称为 <a id="index-forcing"></a> <em>强制求值</em>。<a class="footnote_link" id="DOCF239" href="#FOOT239"><sup>239</sup></a> 一般来说，只有当 thunk 的值被需要时，它才会被强制求值：当它被传递给将使用 thunk 值的基本过程时；当它是条件表达式的谓词的值时；以及当它是即将作为过程被应用的运算符的值时。我们可以选择的一种设计是是否对 thunk 进行 <a id="index-memoize"></a> <em>记忆化</em>，就像我们在 <a href="3_002e5_zh.xhtml#g_t3_002e5_002e1">3.5.1</a> 中对延迟对象所做的那样。使用记忆化，thunk 第一次被强制求值时，它会存储计算出的值。后续的强制求值只是返回存储的值，而不重复计算。我们将让解释器进行记忆化，因为这对许多应用来说更高效。然而，这里有一些棘手的考虑。<a class="footnote_link" id="DOCF240" href="#FOOT240"><sup>240</sup></a></p>
+<a id="Modifying-the-evaluator"></a>
+<h5 class="subsubheading">修改求值器</h5>
+
+<p>惰性求值器与 <a href="4_002e1_zh.xhtml#g_t4_002e1">4.1</a> 中的求值器的主要区别在于 <code>eval</code> 和 <code>apply</code> 中对过程应用的处理。</p>
+<p><code>eval</code> 的 <code>application?</code> 子句变为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="pln">application? exp</span><span class="clo">)</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">apply </span><span class="opn">(</span><span class="pln">actual-value </span><span class="opn">(</span><span class="pln">operator exp</span><span class="clo">)</span><span class="pln"> env</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">operands exp</span><span class="clo">)</span><span class="pln">
+        env</span><span class="clo">))</span></pre></div>
+
+<p>这与 <a href="4_002e1_zh.xhtml#g_t4_002e1_002e1">4.1.1</a> 中 <code>eval</code> 的 <code>application?</code> 子句几乎相同。然而，对于惰性求值，我们使用运算对象表达式调用 <code>apply</code>，而不是使用对它们求值产生的参数。由于如果参数要被延迟，我们将需要环境来构造 thunk，因此我们也必须传递环境。我们仍然对运算符求值，因为 <code>apply</code> 需要实际要应用的过程，以便根据其类型（基本过程还是复合过程）进行分派并应用它。</p>
+<p>每当我们需要表达式的实际值时，我们使用</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">actual-value exp env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">force-it </span><span class="opn">(</span><span class="pln">eval exp env</span><span class="clo">)))</span></pre></div>
+
+<p>而不是仅仅使用 <code>eval</code>，这样如果表达式的值是一个 thunk，它将被强制求值。</p>
+<p>我们新版本的 <code>apply</code> 也与 <a href="4_002e1_zh.xhtml#g_t4_002e1_002e1">4.1.1</a> 中的版本几乎相同。区别在于 <code>eval</code> 传递的是未求值的运算对象表达式：对于基本过程（它们是严格的），我们在应用基本过程之前对所有参数求值；对于复合过程（它们是非严格的），我们在应用过程之前延迟所有参数。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">apply procedure arguments env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">primitive-procedure? procedure</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">apply-primitive-procedure
+          procedure
+          </span><span class="opn">(</span><span class="pln">list-of-arg-values 
+           arguments 
+           env</span><span class="clo">)))</span><span class="pln">  </span><span class="roman"><span class="com">; changed</span></span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">compound-procedure? procedure</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">eval-sequence
+          </span><span class="opn">(</span><span class="pln">procedure-body procedure</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">extend-environment
+           </span><span class="opn">(</span><span class="pln">procedure-parameters procedure</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">list-of-delayed-args 
+            arguments 
+            env</span><span class="clo">)</span><span class="pln">   </span><span class="roman"><span class="com">; changed</span></span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">procedure-environment procedure</span><span class="clo">))))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown procedure 
+                      type: APPLY"</span><span class="pln"> 
+                     procedure</span><span class="clo">))))</span></pre></div>
+
+<p>处理参数的过程与 <a href="4_002e1_zh.xhtml#g_t4_002e1_002e1">4.1.1</a> 中的 <code>list-of-values</code> 一样，只是 <code>list-of-delayed-args</code> 延迟参数而不是对它们求值，并且 <code>list-of-arg-values</code> 使用 <code>actual-value</code> 而不是 <code>eval</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list-of-arg-values exps env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">no-operands? exps</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">'</span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">actual-value 
+             </span><span class="opn">(</span><span class="pln">first-operand exps</span><span class="clo">)</span><span class="pln"> 
+             env</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">list-of-arg-values 
+             </span><span class="opn">(</span><span class="pln">rest-operands exps</span><span class="clo">)</span><span class="pln">
+             env</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list-of-delayed-args exps env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">no-operands? exps</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">'</span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">delay-it 
+             </span><span class="opn">(</span><span class="pln">first-operand exps</span><span class="clo">)</span><span class="pln"> 
+             env</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">list-of-delayed-args 
+             </span><span class="opn">(</span><span class="pln">rest-operands exps</span><span class="clo">)</span><span class="pln">
+             env</span><span class="clo">))))</span></pre></div>
+
+<p>我们必须修改求值器的另一个地方是 <code>if</code> 的处理，在那里我们必须使用 <code>actual-value</code> 而不是 <code>eval</code> 来获取谓词表达式的值，然后再测试它是真还是假：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">eval-if exp env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">true? </span><span class="opn">(</span><span class="pln">actual-value </span><span class="opn">(</span><span class="pln">if-predicate exp</span><span class="clo">)</span><span class="pln"> 
+                           env</span><span class="clo">))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">eval </span><span class="opn">(</span><span class="pln">if-consequent exp</span><span class="clo">)</span><span class="pln"> env</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">eval </span><span class="opn">(</span><span class="pln">if-alternative exp</span><span class="clo">)</span><span class="pln"> env</span><span class="clo">)))</span></pre></div>
+
+<p>最后，我们必须修改 <code>driver-loop</code> 过程（<a href="4_002e1_zh.xhtml#g_t4_002e1_002e4">4.1.4</a>），使用 <code>actual-value</code> 而不是 <code>eval</code>，这样如果延迟值被传播回读取-求值-打印循环，它将在被打印之前被强制求值。我们还将提示符改为表明这是惰性求值器：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> input-prompt  </span><span class="str">";;; L-Eval input:"</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> output-prompt </span><span class="str">";;; L-Eval value:"</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">driver-loop</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">prompt-for-input input-prompt</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">input </span><span class="opn">(</span><span class="pln">read</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">output </span><span class="opn">(</span><span class="pln">actual-value 
+                   input 
+                   the-global-environment</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">announce-output output-prompt</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">user-print output</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">driver-loop</span><span class="clo">))</span></pre></div>
+
+<p>完成这些更改后，我们可以启动求值器并测试它。成功求值 <a href="#g_t4_002e2_002e1">4.2.1</a> 中讨论的 <code>try</code> 表达式表明解释器正在执行惰性求值：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> the-global-environment 
+  </span><span class="opn">(</span><span class="pln">setup-environment</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">driver-loop</span><span class="clo">)</span><span class="pln">
+
+</span><i><span class="com">;;; L-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">try a b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> a </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> b</span><span class="clo">))</span><span class="pln">
+
+</span><i><span class="com">;;; L-Eval value:</span></i><span class="pln">
+</span><i><span class="pln">ok</span></i><span class="pln">
+
+</span><i><span class="com">;;; L-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">try </span><span class="lit">0</span><span class="pln"> </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+
+</span><i><span class="com">;;; L-Eval value:</span></i><span class="pln">
+</span><i><span class="lit">1</span></i>
+</pre></div>
+
+<a id="Representing-thunks"></a>
+<h5 class="subsubheading">表示 thunk</h5>
+
+<p>我们的求值器必须安排好在过程应用于参数时创建 thunk，并在以后强制求值这些 thunk。thunk 必须将表达式与环境打包在一起，以便以后可以产生参数。要强制求值 thunk，我们只需从 thunk 中提取表达式和环境，并在环境中对表达式求值。我们使用 <code>actual-value</code> 而不是 <code>eval</code>，这样如果表达式的值本身是一个 thunk，我们将强制求值它，依此类推，直到我们到达不是 thunk 的东西：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">force-it obj</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">thunk? obj</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">actual-value </span><span class="opn">(</span><span class="pln">thunk-exp obj</span><span class="clo">)</span><span class="pln"> 
+                    </span><span class="opn">(</span><span class="pln">thunk-env obj</span><span class="clo">))</span><span class="pln">
+      obj</span><span class="clo">))</span></pre></div>
+
+<p>将表达式与环境打包在一起的一种简单方法是创建一个包含表达式和环境的表。因此，我们如下创建 thunk：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">delay-it exp env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'thunk</span><span class="pln"> exp env</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">thunk? obj</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tagged-list? obj </span><span class="lit">'thunk</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">thunk-exp thunk</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cadr</span><span class="pln"> thunk</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">thunk-env thunk</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">caddr</span><span class="pln"> thunk</span><span class="clo">))</span></pre></div>
+
+<p>实际上，我们为解释器想要的并不完全是这个，而是经过记忆化的 thunk。当一个 thunk 被强制求值时，我们将通过用其值替换存储的表达式并更改 <code>thunk</code> 标签以便它可以被识别为已经求值，从而将其转换为已求值的 thunk。<a class="footnote_link" id="DOCF241" href="#FOOT241"><sup>241</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">evaluated-thunk? obj</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">tagged-list? obj </span><span class="lit">'evaluated-thunk</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">thunk-value evaluated-thunk</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="kwd">cadr</span><span class="pln"> evaluated-thunk</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">force-it obj</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">thunk? obj</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">result
+                </span><span class="opn">(</span><span class="pln">actual-value 
+                 </span><span class="opn">(</span><span class="pln">thunk-exp obj</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">thunk-env obj</span><span class="clo">))))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-car! obj </span><span class="lit">'evaluated-thunk</span><span class="clo">)</span><span class="pln">
+           </span><span class="com">;; </span><span class="roman"><span class="com">replace </span><code><span class="com">exp</span></code><span class="com"> with its value:</span></span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-car! </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> obj</span><span class="clo">)</span><span class="pln"> result</span><span class="clo">)</span><span class="pln"> 
+           </span><span class="com">;; </span><span class="roman"><span class="com">forget unneeded </span><code><span class="com">env</span></code><span class="com">:</span></span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-cdr! </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> obj</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="clo">))</span><span class="pln"> 
+           result</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">evaluated-thunk? obj</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">thunk-value obj</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> obj</span><span class="clo">)))</span></pre></div>
+
+<p>注意，同一个 <code>delay-it</code> 过程在有记忆化和无记忆化的情况下都能工作。</p>
+<blockquote>
+<p><strong><a id="Exercise-4_002e27"></a>习题4.27：</strong>假设我们向惰性求值器输入以下定义：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> count </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">id x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> count </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> count </span><span class="lit">1</span><span class="clo">))</span><span class="pln"> x</span><span class="clo">)</span></pre></div>
+
+<p>给出以下交互序列中缺失的值，并解释你的答案。<a class="footnote_link" id="DOCF242" href="#FOOT242"><sup>242</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> w </span><span class="opn">(</span><span class="pln">id </span><span class="opn">(</span><span class="pln">id </span><span class="lit">10</span><span class="clo">)))</span><span class="pln">
+
+</span><i><span class="com">;;; L-Eval input:</span></i><span class="pln">
+count
+
+</span><i><span class="com">;;; L-Eval value:</span></i><span class="pln">
+⟨</span><var><span class="pln">response</span></var><span class="pln">⟩
+
+</span><i><span class="com">;;; L-Eval input:</span></i><span class="pln">
+w
+
+</span><i><span class="com">;;; L-Eval value:</span></i><span class="pln">
+⟨</span><var><span class="pln">response</span></var><span class="pln">⟩
+
+</span><i><span class="com">;;; L-Eval input:</span></i><span class="pln">
+count
+
+</span><i><span class="com">;;; L-Eval value:</span></i><span class="pln">
+⟨</span><var><span class="pln">response</span></var><span class="pln">⟩</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e28"></a>习题4.28：</strong><code>Eval</code>使用<code>actual-value</code>而不是<code>eval</code>来在将运算符传递给<code>apply</code>之前对其求值，以强制求出运算符的值。给出一个例子，说明这种强制的必要性。</p>
+<p><strong><a id="Exercise-4_002e29"></a>习题4.29：</strong>展示一个程序，你预期它在没有记忆化的情况下运行比有记忆化时慢得多。另外，考虑以下交互，其中<code>id</code>过程如<a href="#Exercise-4_002e27">习题4.27</a>中所定义，且<code>count</code>从0开始：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">))</span><span class="pln">
+
+</span><i><span class="com">;;; L-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">id </span><span class="lit">10</span><span class="clo">))</span><span class="pln">
+
+</span><i><span class="com">;;; L-Eval value:</span></i><span class="pln">
+⟨</span><var><span class="pln">response</span></var><span class="pln">⟩
+
+</span><i><span class="com">;;; L-Eval input:</span></i><span class="pln">
+count
+
+</span><i><span class="com">;;; L-Eval value:</span></i><span class="pln">
+⟨</span><var><span class="pln">response</span></var><span class="pln">⟩</span></pre></div>
+
+<p>给出求值器记忆化和不记忆化时的响应。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e30"></a>习题4.30：</strong>Cy D. Fect，一位改过自新的C程序员，担心某些副作用可能永远不会发生，因为惰性求值器不会强制求值序列中的表达式。由于序列中除最后一个表达式外的其他表达式的值不会被使用（这些表达式只是为了其效果而存在，例如给变量赋值或打印），因此后续不可能使用这个值（例如，作为基本过程的参数）来导致它被强制求值。因此Cy认为，在求值序列时，我们必须强制求值序列中除最后一个表达式外的所有表达式。他提议修改<a href="4_002e1_zh.xhtml#g_t4_002e1_002e1">4.1.1</a>中的<code>eval-sequence</code>，改为使用<code>actual-value</code>而不是<code>eval</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">eval-sequence exps env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">last-exp? exps</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">eval </span><span class="opn">(</span><span class="pln">first-exp exps</span><span class="clo">)</span><span class="pln"> env</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">actual-value </span><span class="opn">(</span><span class="pln">first-exp exps</span><span class="clo">)</span><span class="pln"> 
+                       env</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">eval-sequence </span><span class="opn">(</span><span class="pln">rest-exps exps</span><span class="clo">)</span><span class="pln"> 
+                        env</span><span class="clo">))))</span></pre></div>
+
+<ol>
+<li>Ben Bitdiddle认为Cy错了。他向Cy展示了<code>for-each</code>过程，该过程在<a href="2_002e2_zh.xhtml#Exercise-2_002e23">习题2.23</a>中描述，它给出了一个带有副作用的序列的重要例子：<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">for-each proc items</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? items</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">'done</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="pln">proc </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> items</span><span class="clo">))</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">for-each proc 
+                       </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">)))))</span></pre></div>
+
+<p>他声称文本中的求值器（使用原始的<code>eval-sequence</code>）正确处理了这一点：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><i><span class="com">;;; L-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">for-each
+ </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">newline</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">display x</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">list </span><span class="lit">57</span><span class="pln"> </span><span class="lit">321</span><span class="pln"> </span><span class="lit">88</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">57</span></i><span class="pln">
+</span><i><span class="lit">321</span></i><span class="pln">
+</span><i><span class="lit">88</span></i><span class="pln">
+
+</span><i><span class="com">;;; L-Eval value:</span></i><span class="pln">
+</span><i><span class="pln">done</span></i>
+</pre></div>
+
+<p>解释为什么Ben关于<code>for-each</code>行为的说法是正确的。</p>
+</li><li>Cy同意Ben关于<code>for-each</code>例子的说法是正确的，但他说那不是他提议修改<code>eval-sequence</code>时所考虑的那种程序。他在惰性求值器中定义了以下两个过程：<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p1 x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x </span><span class="lit">'</span><span class="opn">(</span><span class="lit">2</span><span class="clo">)))</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p2 x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p e</span><span class="clo">)</span><span class="pln"> e x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">p </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x </span><span class="lit">'</span><span class="opn">(</span><span class="lit">2</span><span class="clo">)))))</span></pre></div>
+
+<p>使用原始的<code>eval-sequence</code>时，<code>(p1 1)</code>和<code>(p2 1)</code>的值是什么？使用Cy提议的<code>eval-sequence</code>修改后，值会是什么？</p>
+</li><li>Cy还指出，按照他的提议修改<code>eval-sequence</code>不会影响a部分中例子的行为。解释为什么这是真的。</li><li>你认为在惰性求值器中应该如何处理序列？你喜欢Cy的方法、文本中的方法，还是其他方法？</li></ol>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e31"></a>习题4.31：</strong>本节采用的方法有些令人不快，因为它对Scheme做了不兼容的修改。将惰性求值实现为<a id="index-upward_002dcompatible-extension"></a><em>向上兼容的扩展</em>可能更好，也就是说，使普通的Scheme程序能像以前一样工作。我们可以通过扩展过程声明的语法来做到这一点，让用户控制参数是否被延迟。顺便，我们也可以让用户在带记忆化和不带记忆化的延迟之间进行选择。例如，定义</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f a </span><span class="opn">(</span><span class="pln">b lazy</span><span class="clo">)</span><span class="pln"> c </span><span class="opn">(</span><span class="pln">d lazy-memo</span><span class="clo">))</span><span class="pln">
+  </span><span class="roman"><span class="pun">…</span></span><span class="clo">)</span></pre></div>
+
+<p>将定义<code>f</code>为一个接受四个参数的过程，其中第一个和第三个参数在过程被调用时求值，第二个参数被延迟，第四个参数既被延迟又被记忆化。因此，普通的过程定义将产生与普通Scheme相同的行为，而为每个复合过程的每个参数添加<code>lazy-memo</code>声明将产生本节中定义的惰性求值器的行为。设计并实现产生这种Scheme扩展所需的修改。你必须实现新的语法过程来处理<code>define</code>的新语法。你还必须安排<code>eval</code>或<code>apply</code>来确定参数何时被延迟，并相应地强制或延迟参数，并且你必须安排强制求值根据情况进行记忆化或不记忆化。</p></blockquote>
+
+<a id="g_t4_002e2_002e3"></a>
+<a id="Streams-as-Lazy-Lists"></a>
+<h4 class="subsection"><span class="secnum">4.2.3</span><span class="sectitle">流作为惰性表</span></h4>
+
+<p>在<a href="3_002e5_zh.xhtml#g_t3_002e5_002e1">3.5.1</a>中，我们展示了如何将流实现为延迟表。我们引入了特殊形式<code>delay</code>和<code>cons-stream</code>，它们允许我们构造一个计算流的<code>cdr</code>的“承诺”，而不实际履行该承诺直到以后。我们可以使用这种引入特殊形式的一般技术，每当我们需要对求值过程有更多控制时，但这很笨拙。一方面，特殊形式不像过程那样是一等对象，因此我们不能将其与高阶过程一起使用。<a class="footnote_link" id="DOCF243" href="#FOOT243"><sup>243</sup></a>此外，我们被迫将流创建为一种新的数据对象，类似于表但不完全相同，这要求我们重新实现许多普通的表操作（<code>map</code>、<code>append</code>等）以供流使用。</p>
+<p>使用惰性求值，流和表可以完全相同，因此不需要特殊形式或单独的表和流操作。我们只需要安排使得<code>cons</code>是非严格的。实现这一点的一种方法是扩展惰性求值器以允许非严格的基本过程，并将<code>cons</code>实现为其中之一。更简单的方法是回想（<a href="2_002e1_zh.xhtml#g_t2_002e1_002e3">2.1.3</a>）根本没有必要将<code>cons</code>实现为基本过程。相反，我们可以将序对表示为过程：<a class="footnote_link" id="DOCF244" href="#FOOT244"><sup>244</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">m</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">m x y</span><span class="clo">)))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p q</span><span class="clo">)</span><span class="pln"> p</span><span class="clo">)))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p q</span><span class="clo">)</span><span class="pln"> q</span><span class="clo">)))</span></pre></div>
+
+<p>根据这些基本操作，表操作的标准定义将适用于无限表（流）以及有限表，而流操作可以实现为表操作。以下是一些例子：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list-ref items n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> items</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">list-ref </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">map proc items</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? items</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">'</span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">proc </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> items</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">map proc </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">scale-list items factor</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x factor</span><span class="clo">))</span><span class="pln">
+       items</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-lists list1 list2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">null? list1</span><span class="clo">)</span><span class="pln"> list2</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">null? list2</span><span class="clo">)</span><span class="pln"> list1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> list1</span><span class="clo">)</span><span class="pln"> 
+                       </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> list2</span><span class="clo">))</span><span class="pln">
+                    </span><span class="opn">(</span><span class="pln">add-lists
+                     </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> list1</span><span class="clo">)</span><span class="pln"> 
+                     </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> list2</span><span class="clo">))))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> ones </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> ones</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> integers 
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-lists ones integers</span><span class="clo">)))</span><span class="pln">
+
+</span><i><span class="com">;;; L-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">list-ref integers </span><span class="lit">17</span><span class="clo">)</span><span class="pln">
+
+</span><i><span class="com">;;; L-Eval value:</span></i><span class="pln">
+</span><i><span class="lit">18</span></i>
+</pre></div>
+
+<p>注意，这些惰性表甚至比<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>的流还要惰性：表的<code>car</code>以及<code>cdr</code>都被延迟了。<a class="footnote_link" id="DOCF245" href="#FOOT245"><sup>245</sup></a>事实上，即使访问惰性序对的<code>car</code>或<code>cdr</code>也不必强制求值表元素的值。该值只有在真正需要时才会被强制求值——例如，用作基本过程的参数，或作为答案打印出来。</p>
+<p>惰性序对还有助于解决在<a href="3_002e5_zh.xhtml#g_t3_002e5_002e4">3.5.4</a>中处理流时出现的问题，在那里我们发现，为带回路的系统建立流模型可能需要我们在程序中额外添加显式的<code>delay</code>操作，超出<code>cons-stream</code>所提供的那些。使用惰性求值，过程的所有参数都被统一延迟。例如，我们可以按照最初在<a href="3_002e5_zh.xhtml#g_t3_002e5_002e4">3.5.4</a>中的意图，实现用于对表进行积分和解微分方程的过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">integral integrand initial-value dt</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> int
+    </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> initial-value
+          </span><span class="opn">(</span><span class="pln">add-lists </span><span class="opn">(</span><span class="pln">scale-list integrand dt</span><span class="clo">)</span><span class="pln"> 
+                     int</span><span class="clo">)))</span><span class="pln">
+  int</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">solve f y0 dt</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> y </span><span class="opn">(</span><span class="pln">integral dy y0 dt</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> dy </span><span class="opn">(</span><span class="pln">map f y</span><span class="clo">))</span><span class="pln">
+  y</span><span class="clo">)</span><span class="pln">
+
+</span><i><span class="com">;;; L-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">list-ref </span><span class="opn">(</span><span class="pln">solve </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1000</span><span class="clo">)</span><span class="pln">
+
+</span><i><span class="com">;;; L-Eval value:</span></i><span class="pln">
+</span><i><span class="lit">2.716924</span></i>
+</pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e32"></a>习题4.32：</strong>给出一些例子，说明<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>的流与本小节描述的“更惰性”的惰性表之间的区别。你如何利用这种额外的惰性？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e33"></a>习题4.33：</strong>Ben Bitdiddle通过求值下面这个表达式来测试上面给出的惰性表实现</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">car</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">a b c</span><span class="clo">))</span></pre></div>
+
+<p>令他惊讶的是，这产生了一个错误。经过一番思考，他意识到通过读入带引号表达式得到的“表”与由<code>cons</code>、<code>car</code>和<code>cdr</code>的新定义所操作的表不同。修改求值器对带引号表达式的处理，使得在驱动循环中键入的带引号表将产生真正的惰性表。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e34"></a>习题4.34：</strong>修改求值器的驱动循环，使得惰性序对和表能以某种合理的方式打印。（对于无限表你打算怎么办？）你可能还需要修改惰性序对的表示，以便求值器能够识别它们从而打印它们。</p></blockquote>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT235"><p><a class="footnote_backlink" href="#DOCF235"><sup>235</sup></a> Snarf：“抓取，尤指为了使用而抓取大型文档或文件，无论是否得到所有者的许可。” Snarf down：“Snarf，有时带有吸收、处理或理解的含义。”（这些定义是从<a href="References_zh.xhtml#Steele-et-al_002e-1983">Steele等人1983</a>中snarf来的。另见<a href="References_zh.xhtml#Raymond-1993">Raymond1993</a>。）</p>
+</div>
+<div id="FOOT236"><p><a class="footnote_backlink" href="#DOCF236"><sup>236</sup></a> “惰性”术语与“正则序”术语之间的区别有些模糊。一般来说，“惰性”指的是特定求值器的机制，而“正则序”指的是语言的语义，独立于任何特定的求值策略。但这不是一个严格的区分，这两个术语经常互换使用。</p>
+</div>
+<div id="FOOT237"><p><a class="footnote_backlink" href="#DOCF237"><sup>237</sup></a> “严格”与“非严格”术语本质上与“应用序”与“正则序”含义相同，只是它指的是单个过程和参数，而不是整个语言。在编程语言会议上，你可能会听到有人说：“正则序语言Hassle有某些严格的基本过程。其他过程通过惰性求值来接受它们的参数。”</p>
+</div>
+<div id="FOOT238"><p><a class="footnote_backlink" href="#DOCF238"><sup>238</sup></a> <a id="index-thunk"></a><em>thunk</em>一词是由一个非正式工作组发明的，该工作组当时正在讨论Algol60中按名调用的实现。他们观察到，对表达式的大部分分析（“思考”）可以在编译时完成；因此，在运行时，该表达式已经被“thunk”过了（<a href="References_zh.xhtml#Ingerman-et-al_002e-1960">Ingerman等人1960</a>）。</p>
+</div>
+<div id="FOOT239"><p><a class="footnote_backlink" href="#DOCF239"><sup>239</sup></a> 这类似于在<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>中引入的用于表示流的延迟对象上使用<code>force</code>。我们在这里所做的与我们在<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>中所做的之间的关键区别在于，我们正在将延迟和强制求值构建到求值器中，从而使这在语言中统一且自动。</p>
+</div>
+<div id="FOOT240"><p><a class="footnote_backlink" href="#DOCF240"><sup>240</sup></a> 惰性求值结合记忆化有时被称为<a id="index-call_002dby_002dneed-1"></a><em>按需调用</em>参数传递，与<a id="index-call_002dby_002dname-1"></a><em>按名调用</em>参数传递相对。（按名调用，在Algol60中引入，类似于非记忆化的惰性求值。）作为语言设计者，我们可以将求值器构建为记忆化的、非记忆化的，或者将此作为程序员的一个选项（<a href="#Exercise-4_002e31">习题4.31</a>）。正如你可能从<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>中预期的那样，这些选择在存在赋值时会引发既微妙又令人困惑的问题。（见<a href="#Exercise-4_002e27">习题4.27</a>和<a href="#Exercise-4_002e29">习题4.29</a>。）<a href="References_zh.xhtml#Clinger-_00281982_0029">Clinger（1982）</a>的一篇优秀文章试图澄清这里出现的多个维度的困惑。</p>
+</div>
+<div id="FOOT241"><p><a class="footnote_backlink" href="#DOCF241"><sup>241</sup></a> 注意，一旦表达式的值被计算出来，我们也会从thunk中擦除<code>env</code>。这对解释器返回的值没有影响。然而，它确实有助于节省空间，因为一旦不再需要，从thunk到<code>env</code>的引用被移除，就允许这个结构被<a id="index-garbage_002dcollected"></a><em>垃圾回收</em>并回收其空间，正如我们将在<a href="5_002e3_zh.xhtml#g_t5_002e3">5.3</a>中讨论的那样。</p>
+<p>类似地，我们本可以允许<a href="3_002e5_zh.xhtml#g_t3_002e5_002e1">3.5.1</a>的记忆化延迟对象中不需要的环境被垃圾回收，方法是让<code>memo-proc</code>做类似<code>(set! proc '())</code>的事情，在存储其值之后丢弃过程<code>proc</code>（其中包含求值<code>delay</code>时所处的环境）。</p>
+</div>
+<div id="FOOT242"><p><a class="footnote_backlink" href="#DOCF242"><sup>242</sup></a> 这个练习表明，惰性求值与副作用之间的交互可能非常令人困惑。这正是你可能从<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>的讨论中预期到的。</p>
+</div>
+<div id="FOOT243"><p><a class="footnote_backlink" href="#DOCF243"><sup>243</sup></a> 这正是<code>unless</code>过程的问题，如<a href="#Exercise-4_002e26">习题4.26</a>中那样。</p>
+</div>
+<div id="FOOT244"><p><a class="footnote_backlink" href="#DOCF244"><sup>244</sup></a> 这是<a href="2_002e1_zh.xhtml#Exercise-2_002e4">习题2.4</a>中描述的过程性表示。本质上，任何过程性表示（例如，消息传递实现）也同样可行。注意，我们只需在驱动循环中键入这些定义，就可以将它们安装到惰性求值器中。如果我们最初已将<code>cons</code>、<code>car</code>和<code>cdr</code>作为基本过程包含在全局环境中，它们将被重新定义。（另见<a href="#Exercise-4_002e33">习题4.33</a>和<a href="#Exercise-4_002e34">习题4.34</a>。）</p>
+</div>
+<div id="FOOT245"><p><a class="footnote_backlink" href="#DOCF245"><sup>245</sup></a> 这允许我们创建更一般的表结构的延迟版本，而不仅仅是序列。<a href="References_zh.xhtml#Hughes-1990">Hughes1990</a>讨论了“惰性树”的一些应用。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="4_002e3_zh.xhtml#g_t4_002e3" accesskey="n" rel="next">4.3</a>, 上一节： <a href="4_002e1_zh.xhtml#g_t4_002e1" accesskey="p" rel="prev">4.1</a>, 上一级： <a href="#g_t4_002e2" accesskey="u" rel="prev">4.2</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：总览</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: Top" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: Top" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="../index.xhtml" rel="prev" title="(dir)" />
+<link href="UTF_zh.xhtml#UTF" rel="next" title="UTF" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a>
+<h1 class="titlefont">计算机程序的<br />构造和解释</h1>
+
+<div class="subtitle"><abbr>第二版</abbr><br /> 非官方 Texinfo 格式 2.andresraba6.6</div><strong>Harold Abelson 和 Gerald Jay Sussman，与 Julie Sussman 合著，Alan J. Perlis 作序</strong><br /><p>©1996 麻省理工学院</p>
+
+<object style="width: 2.42ex; height: 2.42ex;" data="fig/icons/cc.std.svg" type="image/svg+xml">SVG</object>
+
+<object style="width: 2.42ex; height: 2.42ex;" data="fig/icons/by.std.svg" type="image/svg+xml">SVG</object>
+
+<object style="width: 2.42ex; height: 2.42ex;" data="fig/icons/sa.std.svg" type="image/svg+xml">SVG</object>
+
+<p>本作品根据 Creative Commons 署名-相同方式共享 4.0 国际许可协议（<a href="http://creativecommons.org/licenses/by-sa/4.0/"><abbr>CC BY-SA 4.0</abbr></a>）授权。基于 <a href="http://mitpress.mit.edu/sicp/">mitpress.mit.edu</a> 上的作品。</p>
+<p><abbr>麻省理工学院</abbr>出版社<br />马萨诸塞州剑桥<br />英国伦敦</p>
+<p>McGraw-Hill 图书公司<br /> 纽约、圣路易斯、旧金山、<br /> 蒙特利尔、多伦多</p>
+<p>本书是麻省理工学院电气工程与计算机科学系教师编写的系列教材之一，由<abbr>麻省理工学院</abbr>出版社根据与 McGraw-Hill 图书公司的联合制作与发行协议编辑制作。</p>
+<p>非官方 Texinfo 格式 <a href="http://sicpebook.wordpress.com">2.andresraba6.6</a>（2015年九月16日），基于 <a href="http://www.neilvandyke.org/sicp-texi/">2.neilvandyke4</a>（2007年一月10日）。</p>
+
+
+<a id="SEC_Overview"></a>
+<h2 class="shortcontents-heading">简目</h2>
+
+<div class="shortcontents">
+<ul class="no-bullet">
+<li><a id="stoc-Unofficial-Texinfo-Format" href="#toc-Unofficial-Texinfo-Format">非官方 Texinfo 格式</a></li>
+<li><a id="stoc-Dedication-1" href="#toc-Dedication-1">献词</a></li>
+<li><a id="stoc-Foreword-1" href="#toc-Foreword-1">序言</a></li>
+<li><a id="stoc-Preface-to-the-Second-Edition" href="#toc-Preface-to-the-Second-Edition">第二版前言</a></li>
+<li><a id="stoc-Preface-to-the-First-Edition" href="#toc-Preface-to-the-First-Edition">第一版前言</a></li>
+<li><a id="stoc-Acknowledgments-1" href="#toc-Acknowledgments-1">致谢</a></li>
+<li><a id="stoc-Building-Abstractions-with-Procedures" href="#toc-Building-Abstractions-with-Procedures">1 用过程构建抽象</a></li>
+<li><a id="stoc-Building-Abstractions-with-Data" href="#toc-Building-Abstractions-with-Data">2 用数据构建抽象</a></li>
+<li><a id="stoc-Modularity_002c-Objects_002c-and-State" href="#toc-Modularity_002c-Objects_002c-and-State">3 模块化、对象和状态</a></li>
+<li><a id="stoc-Metalinguistic-Abstraction" href="#toc-Metalinguistic-Abstraction">4 元语言抽象</a></li>
+<li><a id="stoc-Computing-with-Register-Machines" href="#toc-Computing-with-Register-Machines">5 用寄存器机器计算</a></li>
+<li><a id="stoc-References-1" href="#toc-References-1">参考文献</a></li>
+<li><a id="stoc-List-of-Exercises" href="#toc-List-of-Exercises">习题目录</a></li>
+<li><a id="stoc-List-of-Figures" href="#toc-List-of-Figures">插图目录</a></li>
+<li><a id="stoc-Term-Index-1" href="#toc-Term-Index-1">术语索引</a></li>
+<li><a id="stoc-Colophon-1" href="#toc-Colophon-1">版本说明</a></li>
+
+</ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+<a id="SEC_Contents"></a>
+<h2 class="contents-heading">目录</h2>
+
+<div class="contents">
+<ul class="no-bullet">
+<li><a id="toc-Unofficial-Texinfo-Format" href="UTF_zh.xhtml#UTF">非官方 Texinfo 格式</a></li>
+<li><a id="toc-Dedication-1" href="Dedication_zh.xhtml#Dedication">献词</a></li>
+<li><a id="toc-Foreword-1" href="Foreword_zh.xhtml#Foreword">序言</a></li>
+<li><a id="toc-Preface-to-the-Second-Edition" href="Preface_zh.xhtml#Preface">第二版前言</a></li>
+<li><a id="toc-Preface-to-the-First-Edition" href="Preface-1e_zh.xhtml#Preface-1e">第一版前言</a></li>
+<li><a id="toc-Acknowledgments-1" href="Acknowledgments_zh.xhtml#Acknowledgments">致谢</a></li>
+<li><a id="toc-Building-Abstractions-with-Procedures" href="Chapter-1_zh.xhtml#Chapter-1">1 用过程构建抽象</a><ul class="no-bullet">
+  <li><a id="toc-The-Elements-of-Programming" href="1_002e1_zh.xhtml#g_t1_002e1">1.1 程序设计的基本元素</a><ul class="no-bullet">
+    <li><a id="toc-Expressions" href="1_002e1_zh.xhtml#g_t1_002e1_002e1">1.1.1 表达式</a></li>
+    <li><a id="toc-Naming-and-the-Environment" href="1_002e1_zh.xhtml#g_t1_002e1_002e2">1.1.2 命名与环境</a></li>
+    <li><a id="toc-Evaluating-Combinations" href="1_002e1_zh.xhtml#g_t1_002e1_002e3">1.1.3 求值组合式</a></li>
+    <li><a id="toc-Compound-Procedures" href="1_002e1_zh.xhtml#g_t1_002e1_002e4">1.1.4 复合过程</a></li>
+    <li><a id="toc-The-Substitution-Model-for-Procedure-Application" href="1_002e1_zh.xhtml#g_t1_002e1_002e5">1.1.5 过程应用的代换模型</a></li>
+    <li><a id="toc-Conditional-Expressions-and-Predicates" href="1_002e1_zh.xhtml#g_t1_002e1_002e6">1.1.6 条件表达式和谓词</a></li>
+    <li><a id="toc-Example_003a-Square-Roots-by-Newton_0027s-Method" href="1_002e1_zh.xhtml#g_t1_002e1_002e7">1.1.7 示例：用牛顿法求平方根</a></li>
+    <li><a id="toc-Procedures-as-Black_002dBox-Abstractions" href="1_002e1_zh.xhtml#g_t1_002e1_002e8">1.1.8 过程作为黑箱抽象</a></li>
+  </ul></li>
+  <li><a id="toc-Procedures-and-the-Processes-They-Generate" href="1_002e2_zh.xhtml#g_t1_002e2">1.2 过程及其产生的计算过程</a><ul class="no-bullet">
+    <li><a id="toc-Linear-Recursion-and-Iteration" href="1_002e2_zh.xhtml#g_t1_002e2_002e1">1.2.1 线性递归与迭代</a></li>
+    <li><a id="toc-Tree-Recursion" href="1_002e2_zh.xhtml#g_t1_002e2_002e2">1.2.2 树形递归</a></li>
+    <li><a id="toc-Orders-of-Growth" href="1_002e2_zh.xhtml#g_t1_002e2_002e3">1.2.3 增长阶</a></li>
+    <li><a id="toc-Exponentiation" href="1_002e2_zh.xhtml#g_t1_002e2_002e4">1.2.4 求幂</a></li>
+    <li><a id="toc-Greatest-Common-Divisors" href="1_002e2_zh.xhtml#g_t1_002e2_002e5">1.2.5 最大公约数</a></li>
+    <li><a id="toc-Example_003a-Testing-for-Primality" href="1_002e2_zh.xhtml#g_t1_002e2_002e6">1.2.6 示例：检测素数</a></li>
+  </ul></li>
+  <li><a id="toc-Formulating-Abstractions-with-Higher_002dOrder-Procedures" href="1_002e3_zh.xhtml#g_t1_002e3">1.3 用高阶过程构造抽象</a><ul class="no-bullet">
+    <li><a id="toc-Procedures-as-Arguments" href="1_002e3_zh.xhtml#g_t1_002e3_002e1">1.3.1 作为参数的过程</a></li>
+    <li><a id="toc-Constructing-Procedures-Using-Lambda" href="1_002e3_zh.xhtml#g_t1_002e3_002e2">1.3.2 用 <code>Lambda</code></a> 构造过程</li>
+    <li><a id="toc-Procedures-as-General-Methods" href="1_002e3_zh.xhtml#g_t1_002e3_002e3">1.3.3 过程作为通用方法</a></li>
+    <li><a id="toc-Procedures-as-Returned-Values" href="1_002e3_zh.xhtml#g_t1_002e3_002e4">1.3.4 作为返回值的过程</a></li>
+  </ul></li>
+</ul></li>
+<li><a id="toc-Building-Abstractions-with-Data" href="Chapter-2_zh.xhtml#Chapter-2">2 用数据构建抽象</a><ul class="no-bullet">
+  <li><a id="toc-Introduction-to-Data-Abstraction" href="2_002e1_zh.xhtml#g_t2_002e1">2.1 数据抽象导论</a><ul class="no-bullet">
+    <li><a id="toc-Example_003a-Arithmetic-Operations-for-Rational-Numbers" href="2_002e1_zh.xhtml#g_t2_002e1_002e1">2.1.1 示例：有理数的算术运算</a></li>
+    <li><a id="toc-Abstraction-Barriers" href="2_002e1_zh.xhtml#g_t2_002e1_002e2">2.1.2 抽象屏障</a></li>
+    <li><a id="toc-What-Is-Meant-by-Data_003f" href="2_002e1_zh.xhtml#g_t2_002e1_002e3">2.1.3 数据意味着什么？</a></li>
+    <li><a id="toc-Extended-Exercise_003a-Interval-Arithmetic" href="2_002e1_zh.xhtml#g_t2_002e1_002e4">2.1.4 扩展练习：区间算术</a></li>
+  </ul></li>
+  <li><a id="toc-Hierarchical-Data-and-the-Closure-Property" href="2_002e2_zh.xhtml#g_t2_002e2">2.2 层次化数据和闭合性质</a><ul class="no-bullet">
+    <li><a id="toc-Representing-Sequences" href="2_002e2_zh.xhtml#g_t2_002e2_002e1">2.2.1 表示序列</a></li>
+    <li><a id="toc-Hierarchical-Structures" href="2_002e2_zh.xhtml#g_t2_002e2_002e2">2.2.2 层次结构</a></li>
+    <li><a id="toc-Sequences-as-Conventional-Interfaces" href="2_002e2_zh.xhtml#g_t2_002e2_002e3">2.2.3 序列作为约定接口</a></li>
+    <li><a id="toc-Example_003a-A-Picture-Language" href="2_002e2_zh.xhtml#g_t2_002e2_002e4">2.2.4 示例：图画语言</a></li>
+  </ul></li>
+  <li><a id="toc-Symbolic-Data" href="2_002e3_zh.xhtml#g_t2_002e3">2.3 符号数据</a><ul class="no-bullet">
+    <li><a id="toc-Quotation" href="2_002e3_zh.xhtml#g_t2_002e3_002e1">2.3.1 引用</a></li>
+    <li><a id="toc-Example_003a-Symbolic-Differentiation" href="2_002e3_zh.xhtml#g_t2_002e3_002e2">2.3.2 示例：符号求导</a></li>
+    <li><a id="toc-Example_003a-Representing-Sets" href="2_002e3_zh.xhtml#g_t2_002e3_002e3">2.3.3 实例：集合的表示</a></li>
+    <li><a id="toc-Example_003a-Huffman-Encoding-Trees" href="2_002e3_zh.xhtml#g_t2_002e3_002e4">2.3.4 示例：霍夫曼编码树</a></li>
+  </ul></li>
+  <li><a id="toc-Multiple-Representations-for-Abstract-Data" href="2_002e4_zh.xhtml#g_t2_002e4">2.4 抽象数据的多重表示</a><ul class="no-bullet">
+    <li><a id="toc-Representations-for-Complex-Numbers" href="2_002e4_zh.xhtml#g_t2_002e4_002e1">2.4.1 复数的表示</a></li>
+    <li><a id="toc-Tagged-data" href="2_002e4_zh.xhtml#g_t2_002e4_002e2">2.4.2 带标签数据</a></li>
+    <li><a id="toc-Data_002dDirected-Programming-and-Additivity" href="2_002e4_zh.xhtml#g_t2_002e4_002e3">2.4.3 数据导向的程序设计与可加性</a></li>
+  </ul></li>
+  <li><a id="toc-Systems-with-Generic-Operations" href="2_002e5_zh.xhtml#g_t2_002e5">2.5 带有通用操作的系统</a><ul class="no-bullet">
+    <li><a id="toc-Generic-Arithmetic-Operations" href="2_002e5_zh.xhtml#g_t2_002e5_002e1">2.5.1 通用算术操作</a></li>
+    <li><a id="toc-Combining-Data-of-Different-Types" href="2_002e5_zh.xhtml#g_t2_002e5_002e2">2.5.2 组合不同类型的数据</a></li>
+    <li><a id="toc-Example_003a-Symbolic-Algebra" href="2_002e5_zh.xhtml#g_t2_002e5_002e3">2.5.3 示例：符号代数</a></li>
+  </ul></li>
+</ul></li>
+<li><a id="toc-Modularity_002c-Objects_002c-and-State" href="Chapter-3_zh.xhtml#Chapter-3">3 模块化、对象和状态</a><ul class="no-bullet">
+  <li><a id="toc-Assignment-and-Local-State" href="3_002e1_zh.xhtml#g_t3_002e1">3.1 赋值和局部状态</a><ul class="no-bullet">
+    <li><a id="toc-Local-State-Variables" href="3_002e1_zh.xhtml#g_t3_002e1_002e1">3.1.1 局部状态变量</a></li>
+    <li><a id="toc-The-Benefits-of-Introducing-Assignment" href="3_002e1_zh.xhtml#g_t3_002e1_002e2">3.1.2 引入赋值的好处</a></li>
+    <li><a id="toc-The-Costs-of-Introducing-Assignment" href="3_002e1_zh.xhtml#g_t3_002e1_002e3">3.1.3 引入赋值的代价</a></li>
+  </ul></li>
+  <li><a id="toc-The-Environment-Model-of-Evaluation" href="3_002e2_zh.xhtml#g_t3_002e2">3.2 求值的环境模型</a><ul class="no-bullet">
+    <li><a id="toc-The-Rules-for-Evaluation" href="3_002e2_zh.xhtml#g_t3_002e2_002e1">3.2.1 求值规则</a></li>
+    <li><a id="toc-Applying-Simple-Procedures" href="3_002e2_zh.xhtml#g_t3_002e2_002e2">3.2.2 应用简单过程</a></li>
+    <li><a id="toc-Frames-as-the-Repository-of-Local-State" href="3_002e2_zh.xhtml#g_t3_002e2_002e3">3.2.3 框架作为局部状态的仓库</a></li>
+    <li><a id="toc-Internal-Definitions" href="3_002e2_zh.xhtml#g_t3_002e2_002e4">3.2.4 内部定义</a></li>
+  </ul></li>
+  <li><a id="toc-Modeling-with-Mutable-Data" href="3_002e3_zh.xhtml#g_t3_002e3">3.3 用可变数据建模</a><ul class="no-bullet">
+    <li><a id="toc-Mutable-List-Structure" href="3_002e3_zh.xhtml#g_t3_002e3_002e1">3.3.1 可变表结构</a></li>
+    <li><a id="toc-Representing-Queues" href="3_002e3_zh.xhtml#g_t3_002e3_002e2">3.3.2 表示队列</a></li>
+    <li><a id="toc-Representing-Tables" href="3_002e3_zh.xhtml#g_t3_002e3_002e3">3.3.3 表示表</a></li>
+    <li><a id="toc-A-Simulator-for-Digital-Circuits" href="3_002e3_zh.xhtml#g_t3_002e3_002e4">3.3.4 数字电路模拟器</a></li>
+    <li><a id="toc-Propagation-of-Constraints" href="3_002e3_zh.xhtml#g_t3_002e3_002e5">3.3.5 约束的传播</a></li>
+  </ul></li>
+  <li><a id="toc-Concurrency_003a-Time-Is-of-the-Essence" href="3_002e4_zh.xhtml#g_t3_002e4">3.4 并发：时间至关重要</a><ul class="no-bullet">
+    <li><a id="toc-The-Nature-of-Time-in-Concurrent-Systems" href="3_002e4_zh.xhtml#g_t3_002e4_002e1">3.4.1 并发系统中的时间本质</a></li>
+    <li><a id="toc-Mechanisms-for-Controlling-Concurrency" href="3_002e4_zh.xhtml#g_t3_002e4_002e2">3.4.2 控制并发的机制</a></li>
+  </ul></li>
+  <li><a id="toc-Streams" href="3_002e5_zh.xhtml#g_t3_002e5">3.5 流</a><ul class="no-bullet">
+    <li><a id="toc-Streams-Are-Delayed-Lists" href="3_002e5_zh.xhtml#g_t3_002e5_002e1">3.5.1 流是延迟的表</a></li>
+    <li><a id="toc-Infinite-Streams" href="3_002e5_zh.xhtml#g_t3_002e5_002e2">3.5.2 无穷流</a></li>
+    <li><a id="toc-Exploiting-the-Stream-Paradigm" href="3_002e5_zh.xhtml#g_t3_002e5_002e3">3.5.3 利用流范式</a></li>
+    <li><a id="toc-Streams-and-Delayed-Evaluation" href="3_002e5_zh.xhtml#g_t3_002e5_002e4">3.5.4 流与延迟求值</a></li>
+    <li><a id="toc-Modularity-of-Functional-Programs-and-Modularity-of-Objects" href="3_002e5_zh.xhtml#g_t3_002e5_002e5">3.5.5 函数式程序的模块化和对象的模块化</a></li>
+  </ul></li>
+</ul></li>
+<li><a id="toc-Metalinguistic-Abstraction" href="Chapter-4_zh.xhtml#Chapter-4">4元语言抽象</a><ul class="no-bullet">
+  <li><a id="toc-The-Metacircular-Evaluator" href="4_002e1_zh.xhtml#g_t4_002e1">4.1 元循环求值器</a><ul class="no-bullet">
+    <li><a id="toc-The-Core-of-the-Evaluator" href="4_002e1_zh.xhtml#g_t4_002e1_002e1">4.1.1 求值器的核心</a></li>
+    <li><a id="toc-Representing-Expressions" href="4_002e1_zh.xhtml#g_t4_002e1_002e2">4.1.2 表示表达式</a></li>
+    <li><a id="toc-Evaluator-Data-Structures" href="4_002e1_zh.xhtml#g_t4_002e1_002e3">4.1.3 求值器数据结构</a></li>
+    <li><a id="toc-Running-the-Evaluator-as-a-Program" href="4_002e1_zh.xhtml#g_t4_002e1_002e4">4.1.4 将求值器作为程序运行</a></li>
+    <li><a id="toc-Data-as-Programs" href="4_002e1_zh.xhtml#g_t4_002e1_002e5">4.1.5 数据作为程序</a></li>
+    <li><a id="toc-Internal-Definitions-1" href="4_002e1_zh.xhtml#g_t4_002e1_002e6">4.1.6 内部定义</a></li>
+    <li><a id="toc-Separating-Syntactic-Analysis-from-Execution" href="4_002e1_zh.xhtml#g_t4_002e1_002e7">4.1.7 将语法分析与执行分离</a></li>
+  </ul></li>
+  <li><a id="toc-Variations-on-a-Scheme-_002d_002d_002d-Lazy-Evaluation" href="4_002e2_zh.xhtml#g_t4_002e2">4.2 Scheme 的变体——惰性求值</a><ul class="no-bullet">
+    <li><a id="toc-Normal-Order-and-Applicative-Order" href="4_002e2_zh.xhtml#g_t4_002e2_002e1">4.2.1 正则序与应用序</a></li>
+    <li><a id="toc-An-Interpreter-with-Lazy-Evaluation" href="4_002e2_zh.xhtml#g_t4_002e2_002e2">4.2.2 带惰性求值的解释器</a></li>
+    <li><a id="toc-Streams-as-Lazy-Lists" href="4_002e2_zh.xhtml#g_t4_002e2_002e3">4.2.3 流作为惰性表</a></li>
+  </ul></li>
+  <li><a id="toc-Variations-on-a-Scheme-_002d_002d_002d-Nondeterministic-Computing" href="4_002e3_zh.xhtml#g_t4_002e3">4.3 Scheme的变体——非确定性计算</a><ul class="no-bullet">
+    <li><a id="toc-Amb-and-Search" href="4_002e3_zh.xhtml#g_t4_002e3_002e1">4.3.1 Amb与搜索</a></li>
+    <li><a id="toc-Examples-of-Nondeterministic-Programs" href="4_002e3_zh.xhtml#g_t4_002e3_002e2">4.3.2 非确定性程序的示例</a></li>
+    <li><a id="toc-Implementing-the-Amb-Evaluator" href="4_002e3_zh.xhtml#g_t4_002e3_002e3">4.3.3实现 <code>Amb</code> 求值器</a></li>
+  </ul></li>
+  <li><a id="toc-Logic-Programming" href="4_002e4_zh.xhtml#g_t4_002e4">4.4 逻辑程序设计</a><ul class="no-bullet">
+    <li><a id="toc-Deductive-Information-Retrieval" href="4_002e4_zh.xhtml#g_t4_002e4_002e1">4.4.1 演绎信息检索</a></li>
+    <li><a id="toc-How-the-Query-System-Works" href="4_002e4_zh.xhtml#g_t4_002e4_002e2">4.4.2 查询系统如何工作</a></li>
+    <li><a id="toc-Is-Logic-Programming-Mathematical-Logic_003f" href="4_002e4_zh.xhtml#g_t4_002e4_002e3">4.4.3 逻辑程序设计是数学逻辑吗？</a></li>
+    <li><a id="toc-Implementing-the-Query-System" href="4_002e4_zh.xhtml#g_t4_002e4_002e4">4.4.4 实现查询系统</a><ul class="no-bullet">
+      <li><a id="toc-The-Driver-Loop-and-Instantiation" href="4_002e4_zh.xhtml#g_t4_002e4_002e4_002e1">4.4.4.1 驱动循环与实例化</a></li>
+      <li><a id="toc-The-Evaluator" href="4_002e4_zh.xhtml#g_t4_002e4_002e4_002e2">4.4.4.2 求值器</a></li>
+      <li><a id="toc-Finding-Assertions-by-Pattern-Matching" href="4_002e4_zh.xhtml#g_t4_002e4_002e4_002e3">4.4.4.3 通过模式匹配查找断言</a></li>
+      <li><a id="toc-Rules-and-Unification" href="4_002e4_zh.xhtml#g_t4_002e4_002e4_002e4">4.4.4.4 规则与合一</a></li>
+      <li><a id="toc-Maintaining-the-Data-Base" href="4_002e4_zh.xhtml#g_t4_002e4_002e4_002e5">4.4.4.5 维护数据库</a></li>
+      <li><a id="toc-Stream-Operations" href="4_002e4_zh.xhtml#g_t4_002e4_002e4_002e6">4.4.4.6 流操作</a></li>
+      <li><a id="toc-Query-Syntax-Procedures" href="4_002e4_zh.xhtml#g_t4_002e4_002e4_002e7">4.4.4.7 查询语法过程</a></li>
+      <li><a id="toc-Frames-and-Bindings" href="4_002e4_zh.xhtml#g_t4_002e4_002e4_002e8">4.4.4.8 框架和绑定</a></li>
+    </ul></li>
+  </ul></li>
+</ul></li>
+<li><a id="toc-Computing-with-Register-Machines" href="Chapter-5_zh.xhtml#Chapter-5">5用寄存器机器进行计算</a><ul class="no-bullet">
+  <li><a id="toc-Designing-Register-Machines" href="5_002e1_zh.xhtml#g_t5_002e1">5.1 设计寄存器机器</a><ul class="no-bullet">
+    <li><a id="toc-A-Language-for-Describing-Register-Machines" href="5_002e1_zh.xhtml#g_t5_002e1_002e1">5.1.1 一种描述寄存器机器的语言</a></li>
+    <li><a id="toc-Abstraction-in-Machine-Design" href="5_002e1_zh.xhtml#g_t5_002e1_002e2">5.1.2 机器设计中的抽象</a></li>
+    <li><a id="toc-Subroutines" href="5_002e1_zh.xhtml#g_t5_002e1_002e3">5.1.3 子程序</a></li>
+    <li><a id="toc-Using-a-Stack-to-Implement-Recursion" href="5_002e1_zh.xhtml#g_t5_002e1_002e4">5.1.4 使用栈实现递归</a></li>
+    <li><a id="toc-Instruction-Summary" href="5_002e1_zh.xhtml#g_t5_002e1_002e5">5.1.5 指令摘要</a></li>
+  </ul></li>
+  <li><a id="toc-A-Register_002dMachine-Simulator" href="5_002e2_zh.xhtml#g_t5_002e2">5.2 寄存器机器模拟器</a><ul class="no-bullet">
+    <li><a id="toc-The-Machine-Model" href="5_002e2_zh.xhtml#g_t5_002e2_002e1">5.2.1 机器模型</a></li>
+    <li><a id="toc-The-Assembler" href="5_002e2_zh.xhtml#g_t5_002e2_002e2">5.2.2 汇编器</a></li>
+    <li><a id="toc-Generating-Execution-Procedures-for-Instructions" href="5_002e2_zh.xhtml#g_t5_002e2_002e3">5.2.3 为指令生成执行过程</a></li>
+    <li><a id="toc-Monitoring-Machine-Performance" href="5_002e2_zh.xhtml#g_t5_002e2_002e4">5.2.4 监控机器性能</a></li>
+  </ul></li>
+  <li><a id="toc-Storage-Allocation-and-Garbage-Collection" href="5_002e3_zh.xhtml#g_t5_002e3">5.3 存储分配和垃圾回收</a><ul class="no-bullet">
+    <li><a id="toc-Memory-as-Vectors" href="5_002e3_zh.xhtml#g_t5_002e3_002e1">5.3.1 内存作为向量</a></li>
+    <li><a id="toc-Maintaining-the-Illusion-of-Infinite-Memory" href="5_002e3_zh.xhtml#g_t5_002e3_002e2">5.3.2 维持无限内存的假象</a></li>
+  </ul></li>
+  <li><a id="toc-The-Explicit_002dControl-Evaluator" href="5_002e4_zh.xhtml#g_t5_002e4">5.4 显式控制求值器</a><ul class="no-bullet">
+    <li><a id="toc-The-Core-of-the-Explicit_002dControl-Evaluator" href="5_002e4_zh.xhtml#g_t5_002e4_002e1">5.4.1 显式控制求值器的核心</a></li>
+    <li><a id="toc-Sequence-Evaluation-and-Tail-Recursion" href="5_002e4_zh.xhtml#g_t5_002e4_002e2">5.4.2 序列求值与尾递归</a></li>
+    <li><a id="toc-Conditionals_002c-Assignments_002c-and-Definitions" href="5_002e4_zh.xhtml#g_t5_002e4_002e3">5.4.3 条件式、赋值和定义</a></li>
+    <li><a id="toc-Running-the-Evaluator" href="5_002e4_zh.xhtml#g_t5_002e4_002e4">5.4.4 运行求值器</a></li>
+  </ul></li>
+  <li><a id="toc-Compilation" href="5_002e5_zh.xhtml#g_t5_002e5">5.5 编译</a><ul class="no-bullet">
+    <li><a id="toc-Structure-of-the-Compiler" href="5_002e5_zh.xhtml#g_t5_002e5_002e1">5.5.1 编译器的结构</a></li>
+    <li><a id="toc-Compiling-Expressions" href="5_002e5_zh.xhtml#g_t5_002e5_002e2">5.5.2 编译表达式</a></li>
+    <li><a id="toc-Compiling-Combinations" href="5_002e5_zh.xhtml#g_t5_002e5_002e3">5.5.3 编译组合式</a></li>
+    <li><a id="toc-Combining-Instruction-Sequences" href="5_002e5_zh.xhtml#g_t5_002e5_002e4">5.5.4 组合指令序列</a></li>
+    <li><a id="toc-An-Example-of-Compiled-Code" href="5_002e5_zh.xhtml#g_t5_002e5_002e5">5.5.5 编译代码的一个例子</a></li>
+    <li><a id="toc-Lexical-Addressing" href="5_002e5_zh.xhtml#g_t5_002e5_002e6">5.5.6 词法寻址</a></li>
+    <li><a id="toc-Interfacing-Compiled-Code-to-the-Evaluator" href="5_002e5_zh.xhtml#g_t5_002e5_002e7">5.5.7 将编译代码连接到求值器</a></li>
+  </ul></li>
+</ul></li>
+<li><a id="toc-References-1" href="References_zh.xhtml#References">参考文献</a></li>
+<li><a id="toc-List-of-Exercises" href="Exercises_zh.xhtml#Exercises">习题目录</a></li>
+<li><a id="toc-List-of-Figures" href="Figures_zh.xhtml#Figures">插图目录</a></li>
+<li><a id="toc-Term-Index-1" href="Term-Index_zh.xhtml#Term-Index">术语索引</a></li>
+<li><a id="toc-Colophon-1" href="Colophon_zh.xhtml#Colophon">版本说明</a></li>
+
+</ul>
+</div>
+
+
+
+
+<a id="Top"></a>
+<nav class="header">
+<p>下一节： <a href="UTF_zh.xhtml#UTF" accesskey="n" rel="next">UTF</a>, 上一节： <a href="../index.xhtml" accesskey="p" rel="prev">(dir)</a>, 上一级： <a href="../index.xhtml" accesskey="u" rel="prev">(dir)</a> [<a href="#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<h1 class="node-heading">顶部</h1>
+
+
+
+<nav class="header">
+<p>下一节： <a href="UTF_zh.xhtml#UTF" accesskey="n" rel="next">UTF</a>, 上一节： <a href="../index.xhtml" accesskey="p" rel="prev">(dir)</a>, 上一级： <a href="../index.xhtml" accesskey="u" rel="prev">(dir)</a> [<a href="#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

@@ -1,0 +1,2884 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：1.2</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 1.2" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 1.2" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-1_zh.xhtml#Chapter-1" rel="prev" title="Chapter 1" />
+<link href="1_002e3_zh.xhtml#g_t1_002e3" rel="next" title="1.3" />
+<link href="1_002e1_zh.xhtml#g_t1_002e1_002e8" rel="prev" title="1.1.8" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t1_002e2"></a>
+<nav class="header">
+<p>下一节： <a href="1_002e3_zh.xhtml#g_t1_002e3" accesskey="n" rel="next">1.3</a>, 上一节： <a href="1_002e1_zh.xhtml#g_t1_002e1" accesskey="p" rel="prev">1.1</a>, 上一级： <a href="Chapter-1_zh.xhtml#Chapter-1" accesskey="u" rel="prev">第1章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Procedures-and-the-Processes-They-Generate"></a>
+<h3 class="section"><span class="secnum">1.2</span><span class="sectitle">过程及其产生的计算过程</span></h3>
+
+<p>我们现在已经考虑了编程的要素：我们使用了基本算术运算，组合了这些运算，并通过将它们定义为复合过程来抽象这些复合运算。但这还不足以让我们说我们知道如何编程。我们的情况类似于某人已经学会了国际象棋中棋子如何移动的规则，但对典型的开局、战术或策略一无所知。就像国际象棋新手一样，我们还不知道该领域中常见的用法模式。我们缺乏哪些走法值得走的知识（哪些过程值得定义）。我们缺乏预测走一步（执行一个过程）后果的经验。</p>
+<p>能够想象所考虑行动后果的能力对于成为专家程序员至关重要，就像在任何综合性的、创造性的活动中一样。例如，在成为专家摄影师的过程中，必须学会观察一个场景，并知道对于每种可能的曝光和显影条件选择，每个区域在照片上会显得多暗。只有这样，才能反向推理，规划取景、照明、曝光和显影以获得期望的效果。编程也是如此，我们正在规划一个计算过程要采取的行动路线，并通过程序控制该过程。要成为专家，我们必须学会想象各种类型过程所产生的计算过程。只有在我们发展了这样的技能之后，我们才能学会可靠地构造表现出期望行为的程序。</p>
+<p>过程是计算过程<a id="index-local-evolution"></a><em>局部演化</em>的一种模式。它规定了计算过程的每个阶段如何建立在前一阶段之上。对于局部演化已经由某个过程规定的计算过程，我们希望能够描述其整体行为，也就是<a id="index-global"></a><em>全局</em>行为。一般来说，这很难做到，但我们至少可以尝试描述计算过程演化的一些典型模式。</p>
+<p>在本节中，我们将考察由简单过程生成的计算过程的一些常见“形状”。我们还将研究这些计算过程消耗重要计算资源——时间和空间——的速率。我们将考虑的过程非常简单。它们的作用就像摄影中的测试图案：作为过度简化的原型模式，而不是本身具有实用价值的例子。</p>
+
+<a id="g_t1_002e2_002e1"></a>
+<a id="Linear-Recursion-and-Iteration"></a>
+<h4 class="subsection"><span class="secnum">1.2.1</span><span class="sectitle">线性递归与迭代</span></h4>
+
+<p>我们从考虑阶乘函数开始，其定义为<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>!</mo>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>⋅<!-- ⋅ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>2</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>⋯<!-- ⋯ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>3</mn>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mn>2</mn>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mn>1.</mn>
+  </mrow>
+</math> 计算阶乘有很多方法。一种方法是利用以下观察：对于任何正整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math>等于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>乘以<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo>!</mo>
+  </mrow>
+</math>：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>n</mi>
+  <mo>!</mo>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mo stretchy="false">[</mo>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>⋅<!-- ⋅ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>2</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>⋯<!-- ⋯ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>3</mn>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mn>2</mn>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">]</mo>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo>!</mo>
+    <mo>.</mo>
+  </mrow>
+</math> 因此，我们可以通过计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo>!</mo>
+  </mrow>
+</math>并将结果乘以<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>来计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math>。如果我们补充规定1!等于1，这个观察就直接转化为一个过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> 
+      </span><span class="lit">1</span><span class="pln"> 
+      </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> n </span><span class="opn">(</span><span class="pln">factorial </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)))))</span></pre></div>
+
+<p>我们可以使用<a href="1_002e1_zh.xhtml#g_t1_002e1_002e5">1.1.5</a>的代换模型来观察这个过程计算6!的过程，如<a href="#Figure-1_002e3">图1.3</a>所示。</p>
+<figure class="float">
+<a id="Figure-1_002e3"></a>
+<object style="width: 52.58ex; height: 31.43ex;" data="fig/chap1/Fig1.3d.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图1.3：</strong> 计算6!的线性递归计算过程。</p>
+</figcaption>
+</figure>
+
+<p>现在让我们从不同的角度来看待阶乘的计算。我们可以通过指定先1乘以2，然后将结果乘以3，再乘以4，依此类推直到达到<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，来描述计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math>的规则。更形式化地说，我们维护一个累计乘积，以及一个从1计数到<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>的计数器。我们可以通过说计数器和乘积根据以下规则同时从一步变化到下一步来描述计算</p>
+<div class="example">
+<pre class="example">product <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">←<!-- ← --></mo>
+</math> counter * product
+counter <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">←<!-- ← --></mo>
+</math> counter + 1
+</pre></div>
+
+<p>并规定当计数器超过<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>时，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math>是乘积的值。</p>
+<p>再一次，我们可以将我们的描述改写为计算阶乘的过程：<a class="footnote_link" id="DOCF29" href="#FOOT29"><sup>29</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial n</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">fact-iter </span><span class="lit">1</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> n</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fact-iter product counter max-count</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> counter max-count</span><span class="clo">)</span><span class="pln">
+      product
+      </span><span class="opn">(</span><span class="pln">fact-iter </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> counter product</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> counter </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+                 max-count</span><span class="clo">)))</span></pre></div>
+
+<p>和之前一样，我们可以使用代换模型来想象计算6!的过程，如<a href="#Figure-1_002e4">图1.4</a>所示。</p>
+<figure class="float">
+<a id="Figure-1_002e4"></a>
+<object style="width: 23.40ex; height: 23.31ex;" data="fig/chap1/Fig1.4d.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图1.4：</strong> 计算6!的线性迭代计算过程。</p>
+</figcaption>
+</figure>
+
+<p>比较这两个计算过程。从一个角度看，它们似乎几乎没有区别。两者都在相同的定义域上计算相同的数学函数，并且每个都需要与<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>成正比的步数来计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math>。实际上，两个计算过程甚至执行相同的乘法序列，得到相同的部分乘积序列。另一方面，当我们考虑两个计算过程的“形状”时，我们发现它们的演化方式截然不同。</p>
+<p>考虑第一个计算过程。代换模型揭示了一种先展开后收缩的形状，如<a href="#Figure-1_002e3">图1.3</a>中的箭头所示。展开发生在计算过程构建起一条<a id="index-deferred-operations"></a><em>延迟操作</em>链（在这种情况下，是一系列乘法）时。收缩发生在操作实际执行时。这种以延迟操作链为特征的计算过程类型称为<a id="index-recursive-process"></a><em>递归计算过程</em>。执行这个计算过程要求解释器跟踪稍后要执行的操作。在计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math>时，延迟乘法链的长度，以及因此跟踪它所需的信息量，随<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>线性增长（与<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>成正比），就像步数一样。这样的计算过程称为<a id="index-linear-recursive-process"></a><em>线性递归计算过程</em>。</p>
+<p>相比之下，第二个计算过程既不增长也不收缩。在每一步，对于任何 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，我们需要跟踪的只是变量 <code>product</code>、<code>counter</code> 和 <code>max-count</code> 的当前值。我们称这是一个<a id="index-iterative-process"></a><em>迭代计算过程</em>。一般来说，迭代计算过程是其状态可以用固定数量的<a id="index-state-variables"></a><em>状态变量</em>来概括的计算过程，再加上一个描述状态变量在计算过程从一个状态移动到另一个状态时应如何更新的固定规则，以及一个（可选的）结束测试，指定计算过程应终止的条件。在计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math> 时，所需的步数随 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 线性增长。这样的计算过程称为<a id="index-linear-iterative-process"></a><em>线性迭代计算过程</em>。</p>
+<p>这两个计算过程之间的对比还可以从另一个角度来看。在迭代的情况下，程序变量提供了计算过程在任意点的状态的完整描述。如果我们在步骤之间停止计算，要恢复计算，我们只需向解释器提供这三个程序变量的值。递归计算过程则不然。在这种情况下，存在一些额外的“隐藏”信息，由解释器维护而不包含在程序变量中，它指示在处理延迟操作链时“计算过程进行到了哪里”。链越长，必须维护的信息就越多。<a class="footnote_link" id="DOCF30" href="#FOOT30"><sup>30</sup></a></p>
+<p>在对比迭代和递归时，我们必须注意不要将递归<a id="index-process"></a><em>计算过程</em>的概念与递归<a id="index-procedure"></a><em>过程</em>的概念相混淆。当我们把一个过程描述为递归的时，我们指的是过程定义（直接或间接）引用过程本身这一语法事实。但当我们把一个计算过程描述为遵循某种模式，比如线性递归时，我们谈论的是计算过程如何演化，而不是过程如何编写的语法。我们提到像<code>fact-iter</code>这样的递归过程生成一个迭代计算过程，这似乎令人不安。然而，该计算过程确实是迭代的：它的状态完全由它的三个状态变量所捕获，解释器只需跟踪三个变量就能执行该计算过程。</p>
+<p>计算过程和过程之间的区别可能令人困惑的一个原因是，大多数常见语言（包括 Ada、Pascal 和 C）的实现方式使得对任何递归过程的解释都会消耗随过程调用次数增长的内存量，即使所描述的计算过程在原则上是迭代的。因此，这些语言只能借助特殊用途的“循环结构”如<code>do</code>、<code>repeat</code>、<code>until</code>、<code>for</code>和<code>while</code>来描述迭代计算过程。我们将在<a href="Chapter-5_zh.xhtml#Chapter-5">第5</a>章考虑的 Scheme 实现没有这个缺陷。即使迭代计算过程是由递归过程描述的，它也会在常量空间中执行迭代计算过程。具有这种性质的实现称为<a id="index-tail_002drecursive"></a><em>尾递归</em>。在尾递归实现中，迭代可以用普通的过程调用机制来表达，因此特殊的迭代结构仅作为语法糖有用。<a class="footnote_link" id="DOCF31" href="#FOOT31"><sup>31</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-1_002e9"></a>习题1.9：</strong>下面两个过程各自定义了一种用过程<code>inc</code>（将其参数增加1）和<code>dec</code>（将其参数减少1）来相加两个正整数的方法。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> a </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+      b 
+      </span><span class="opn">(</span><span class="pln">inc </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dec a</span><span class="clo">)</span><span class="pln"> b</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> a </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+      b 
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dec a</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">inc b</span><span class="clo">))))</span></pre></div>
+
+<p>使用代换模型，说明每个过程在求值<code>(+ 4 5)</code>时生成的计算过程。这些计算过程是迭代的还是递归的？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e10"></a>习题1.10：</strong>下面的过程计算一个称为 Ackermann 函数的数学函数。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">A x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> y </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> x </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> y</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> y </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pln">A </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> x </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">A x </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> y </span><span class="lit">1</span><span class="clo">))))))</span></pre></div>
+
+<p>下列表达式的值是什么？</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">A </span><span class="lit">1</span><span class="pln"> </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">A </span><span class="lit">2</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">A </span><span class="lit">3</span><span class="pln"> </span><span class="lit">3</span><span class="clo">)</span></pre></div>
+
+<p>考虑下列过程，其中<code>A</code>是上面定义的过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f n</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">A </span><span class="lit">0</span><span class="pln"> n</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">g n</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">A </span><span class="lit">1</span><span class="pln"> n</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">h n</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">A </span><span class="lit">2</span><span class="pln"> n</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">k n</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> n n</span><span class="clo">))</span></pre></div>
+
+<p>对于正整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，给出过程<code>f</code>、<code>g</code>和<code>h</code>所计算函数的简洁数学定义。例如，<code>(k n)</code>计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>5</mn>
+    <msup>
+      <mi>n</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+</math>。</p></blockquote>
+
+<a id="g_t1_002e2_002e2"></a>
+<a id="Tree-Recursion"></a>
+<h4 class="subsection"><span class="secnum">1.2.2</span><span class="sectitle">树形递归</span></h4>
+
+<p>另一种常见的计算模式称为<a id="index-tree-recursion"></a><em>树形递归</em>。作为一个例子，考虑计算斐波那契数列，其中每个数是前两个数之和：</p>
+<div style="text-align: center">0, 1, 1, 2, 3, 5, 8, 13, 21, ….
+</div>
+<p>一般来说，斐波那契数可以由以下规则定义<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtext>Fib</mtext>
+  <mo stretchy="false">(</mo>
+  <mi>n</mi>
+  <mo stretchy="false">)</mo>
+  <mspace width="thickmathspace"/>
+  <mo>=</mo>
+  <mspace width="thickmathspace"/>
+  <mrow>
+    <mo>{</mo>
+    <mtable columnalign="left left" rowspacing="4pt" columnspacing="1em">
+      <mtr>
+        <mtd>
+          <mn>0</mn>
+        </mtd>
+        <mtd>
+          <mspace width="thickmathspace"/>
+          <mtext>if</mtext>
+          <mspace width="thickmathspace"/>
+          <mspace width="thickmathspace"/>
+          <mi>n</mi>
+          <mo>=</mo>
+          <mn>0</mn>
+          <mo>,</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mspace width="thickmathspace"/>
+          <mtext>if</mtext>
+          <mspace width="thickmathspace"/>
+          <mspace width="thickmathspace"/>
+          <mi>n</mi>
+          <mo>=</mo>
+          <mn>1</mn>
+          <mo>,</mo>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mtext>Fib</mtext>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo>−<!-- − --></mo>
+          <mn>1</mn>
+          <mo stretchy="false">)</mo>
+          <mo>+</mo>
+          <mtext>Fib</mtext>
+          <mo stretchy="false">(</mo>
+          <mi>n</mi>
+          <mo>−<!-- − --></mo>
+          <mn>2</mn>
+          <mo stretchy="false">)</mo>
+        </mtd>
+        <mtd>
+          <mspace width="thickmathspace"/>
+          <mtext>otherwise</mtext>
+          <mo>.</mo>
+        </mtd>
+      </mtr>
+    </mtable>
+  </mrow>
+</math>我们可以立即将这个定义翻译成计算斐波那契数的递归过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">fib </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">2</span><span class="clo">))))))</span></pre></div>
+
+<p>考虑这个计算的模式。为了计算<code>(fib 5)</code>，我们计算<code>(fib 4)</code>和<code>(fib 3)</code>。为了计算<code>(fib 4)</code>，我们计算<code>(fib 3)</code>和<code>(fib 2)</code>。一般来说，演化的计算过程看起来像一棵树，如<a href="#Figure-1_002e5">图1.5</a>所示。注意，分支在每一层都分成两个（除了底部）；这反映了<code>fib</code>过程每次被调用时都调用自身两次这一事实。</p>
+<figure class="float">
+<a id="Figure-1_002e5"></a>
+<object style="width: 58.07ex; height: 36.18ex;" data="fig/chap1/Fig1.5d.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图1.5：</strong>计算<code>(fib 5)</code>时生成的树形递归计算过程。</p>
+</figcaption>
+</figure>
+
+<p>这个过程作为典型的树形递归具有教育意义，但用它计算 斐波那契数却很糟糕，因为它做了太多冗余计算。注意<a href="#Figure-1_002e5">图1.5</a>中，<code>(fib 3)</code>的整个计算——几乎一半的工作——被重复了。事实上，不难证明，该过程计算<code>(fib 1)</code>或<code>(fib 0)</code>的次数（即上述树中叶节点的数目，一般而言）恰好是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。为了了解这有多糟糕，可以证明<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的值随<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>呈指数增长。更确切地说（见<a href="#Exercise-1_002e13">习题1.13</a>），<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>是最接近<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>φ<!-- φ --></mi>
+      <mi>n</mi>
+    </msup>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msqrt>
+      <mn>5</mn>
+    </msqrt>
+  </mrow>
+</math>的整数，其中<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>φ<!-- φ --></mi>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mfrac>
+    <mrow>
+      <mn>1</mn>
+      <mo>+</mo>
+      <msqrt>
+        <mn>5</mn>
+      </msqrt>
+    </mrow>
+    <mn>2</mn>
+  </mfrac>
+  <mspace width="thinmathspace"/>
+  <mo>≈<!-- ≈ --></mo>
+  <mspace width="thinmathspace"/>
+  <mn>1.6180</mn>
+</math>是<a id="index-golden-ratio"></a><em>黄金分割比</em>，它满足方程<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msup>
+    <mi>φ<!-- φ --></mi>
+    <mn>2</mn>
+  </msup>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>φ<!-- φ --></mi>
+    <mo>+</mo>
+    <mn>1.</mn>
+  </mrow>
+</math>。因此，该计算过程所需的步数随输入呈指数增长。另一方面，所需的空间仅随输入线性增长，因为在计算的任何时刻，我们只需要记录树中位于我们上方的节点。一般而言，树形递归计算过程所需的步数与树中的节点数成正比，而所需的空间与树的最大深度成正比。</p>
+<p>我们也可以构造一个计算 斐波那契数的迭代计算过程。其思路是使用一对整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>，初始化为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib(1) = 1</mtext>
+  </mrow>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib(0) = 0</mtext>
+  </mrow>
+</math>，并反复应用同时变换</p>
+
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="left" rowspacing="4pt" columnspacing="1em">
+    <mtr>
+      <mtd>
+        <mi>a</mi>
+        <mspace width="thickmathspace"/>
+        <mo stretchy="false">←<!-- ← --></mo>
+        <mspace width="thickmathspace"/>
+        <mi>a</mi>
+        <mo>+</mo>
+        <mi>b</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>b</mi>
+        <mspace width="thickmathspace"/>
+        <mo stretchy="false">←<!-- ← --></mo>
+        <mspace width="thickmathspace"/>
+        <mi>a</mi>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>
+
+<p>不难证明，在应用此变换<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>次之后，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>将分别等于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。因此，我们可以使用以下过程迭代地计算 斐波那契数</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib n</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">fib-iter </span><span class="lit">1</span><span class="pln"> </span><span class="lit">0</span><span class="pln"> n</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib-iter a b count</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> count </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      b
+      </span><span class="opn">(</span><span class="pln">fib-iter </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln"> a </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> count </span><span class="lit">1</span><span class="clo">))))</span></pre></div>
+
+<p>这第二种计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的方法是一个线性迭代。两种方法所需步数的差异——一种与<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>成线性关系，另一种增长得和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>本身一样快——是巨大的，即使对于很小的输入也是如此。</p>
+<p>不应由此得出结论说树形递归计算过程是无用的。当我们考虑操作分层结构数据而非数的计算过程时，我们会发现树形递归是一种自然且强大的工具。<a class="footnote_link" id="DOCF32" href="#FOOT32"><sup>32</sup></a>但即使在数值运算中，树形递归计算过程也有助于我们理解和设计程序。例如，尽管第一个<code>fib</code>过程比第二个效率低得多，但它更直截了当，几乎只是将 斐波那契数列的定义翻译成 Lisp。要构造迭代算法，需要注意到计算可以重新表述为具有三个状态变量的迭代。</p>
+<a id="Example_003a-Counting-change"></a>
+<h5 class="subsubheading">示例：换零钱方式的计数</h5>
+
+<p>只需一点巧思，就能想出迭代式的斐波那契算法。相比之下，请考虑下面这个问题：给定半美元、二十五美分、十美分、五美分和一美分的硬币，把 $1.00 换成零钱共有多少种不同的方法？更一般地说，我们能否写出一个过程，计算将任意给定金额换成零钱的方法数？</p>
+<p>这个问题作为递归过程有一个简单的解法。假设我们将可用的硬币种类按某种顺序排列。那么以下关系成立：</p>
+<p>将金额<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>用<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>种硬币换成零钱的方式数等于</p>
+<ul>
+<li>将金额<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>用除第一种硬币外的所有硬币换成零钱的方式数，加上</li><li>将金额<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mo>−<!-- − --></mo>
+    <mi>d</mi>
+  </mrow>
+</math>用所有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>种硬币换成零钱的方式数，其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math>是第一种硬币的面额。</li></ul>
+
+<p>要理解为什么这是正确的，请注意，换零钱的方式可以分为两组：不使用任何第一种硬币的方式，以及使用第一种硬币的方式。因此，将某个金额换成零钱的总方式数等于不使用任何第一种硬币将该金额换成零钱的方式数，加上假设我们使用第一种硬币将该金额换成零钱的方式数。但后一个数目等于使用一枚第一种硬币后剩余金额换成零钱的方式数。</p>
+<p>因此，我们可以递归地将给定金额的换零钱问题归约为使用更少种类硬币的较小金额的换零钱问题。仔细考虑这个归约规则，并说服自己，如果我们指定以下退化情况，就可以用它来描述一个算法：<a class="footnote_link" id="DOCF33" href="#FOOT33"><sup>33</sup></a></p>
+<ul>
+<li>如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>恰好为0，我们应将其计为1种换零钱方式。</li><li>如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>小于0，我们应将其计为0种换零钱方式。</li><li>如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>为0，我们应将其计为0种换零钱方式。</li></ul>
+
+<p>我们可以轻松地将此描述翻译成一个递归过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">count-change amount</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cc amount </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cc amount kinds-of-coins</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> amount </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="kwd">or</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> amount </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+             </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> kinds-of-coins </span><span class="lit">0</span><span class="clo">))</span><span class="pln"> 
+         </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cc amount </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> kinds-of-coins </span><span class="lit">1</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">cc </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> amount </span><span class="opn">(</span><span class="pln">first-denomination 
+                           kinds-of-coins</span><span class="clo">))</span><span class="pln">
+                kinds-of-coins</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">first-denomination kinds-of-coins</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> kinds-of-coins </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> kinds-of-coins </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> kinds-of-coins </span><span class="lit">3</span><span class="clo">)</span><span class="pln"> </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> kinds-of-coins </span><span class="lit">4</span><span class="clo">)</span><span class="pln"> </span><span class="lit">25</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> kinds-of-coins </span><span class="lit">5</span><span class="clo">)</span><span class="pln"> </span><span class="lit">50</span><span class="clo">)))</span></pre></div>
+
+<p>（<code>first-denomination</code>过程以可用硬币种类数为输入，返回第一种硬币的面额。这里我们考虑硬币按从大到小的顺序排列，但任何顺序都可以。）我们现在可以回答关于换一美元零钱的原始问题了：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">count-change </span><span class="lit">100</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">292</span></i>
+</pre></div>
+
+<p><code>Count-change</code>生成一个树形递归计算过程，其冗余类似于我们第一个<code>fib</code>实现中的冗余。（计算那个292将需要相当长的时间。）另一方面，如何设计一个更好的算法来计算结果并不明显，我们将此问题留作挑战。树形递归计算过程可能效率极低，但通常易于指定和理解，这一观察促使人们提出，可以通过设计一个“智能编译器”来将树形递归过程转换为计算相同结果的更高效过程，从而兼得两者之长。<a class="footnote_link" id="DOCF34" href="#FOOT34"><sup>34</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-1_002e11"></a>习题1.11：</strong>函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>由以下规则定义：如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>&lt;</mo>
+    <mn>3</mn>
+  </mrow>
+</math>，则<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+    <mo>=</mo>
+    <mi>n</mi>
+  </mrow>
+</math>；如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>≥<!-- ≥ --></mo>
+    <mn>3</mn>
+  </mrow>
+</math>，则<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>2</mn>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>2</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>3</mn>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>3</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。编写一个通过递归计算过程计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>的过程。编写一个通过迭代计算过程计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>的过程。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e12"></a>习题1.12：</strong>以下数字模式称为<a id="index-Pascal_0027s-triangle"></a><em>帕斯卡三角形</em>。</p>
+<div class="example">
+<pre class="example">         1
+       1   1
+     1   2   1
+   1   3   3   1
+ 1   4   6   4   1
+       . . .
+</pre></div>
+
+<p>三角形边缘的数字都是1，三角形内部的每个数字都是其上方两个数字之和。<a class="footnote_link" id="DOCF35" href="#FOOT35"><sup>35</sup></a>编写一个通过递归计算过程计算帕斯卡三角形元素的过程。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e13"></a>习题1.13：</strong>证明<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>是最接近<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>φ<!-- φ --></mi>
+      <mi>n</mi>
+    </msup>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msqrt>
+      <mn>5</mn>
+    </msqrt>
+  </mrow>
+</math>的整数，其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>φ<!-- φ --></mi>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo>+</mo>
+    <msqrt>
+      <mn>5</mn>
+    </msqrt>
+    <mo stretchy="false">)</mo>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mn>2</mn>
+  </mrow>
+</math>。提示：令<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>ψ<!-- ψ --></mi>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo>−<!-- − --></mo>
+    <msqrt>
+      <mn>5</mn>
+    </msqrt>
+    <mo stretchy="false">)</mo>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mn>2</mn>
+  </mrow>
+</math>。使用归纳法和斐波那契数的定义（见<a href="#g_t1_002e2_002e2">1.2.2</a>）来证明<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msup>
+      <mi>φ<!-- φ --></mi>
+      <mi>n</mi>
+    </msup>
+    <mo>−<!-- − --></mo>
+    <msup>
+      <mi>ψ<!-- ψ --></mi>
+      <mi>n</mi>
+    </msup>
+    <mo stretchy="false">)</mo>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msqrt>
+      <mn>5</mn>
+    </msqrt>
+  </mrow>
+</math>。</p></blockquote>
+
+<a id="g_t1_002e2_002e3"></a>
+<a id="Orders-of-Growth"></a>
+<h4 class="subsection"><span class="secnum">1.2.3</span><span class="sectitle">增长阶</span></h4>
+
+<p>前面的例子说明，计算过程在消耗计算资源的速率上可能差别很大。描述这种差异的一种方便的方法是使用<a id="index-order-of-growth"></a><em>增长阶</em>的概念，以便在输入变得更大时获得计算过程所需资源的粗略度量。</p>
+<p>令 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 为一个度量问题规模的参数，并令 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>R</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 为计算过程对规模为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的问题所需的资源量。在我们之前的例子中，我们取 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 为要计算给定函数的那个数，但还有其他可能性。例如，如果我们的目标是计算一个数的平方根的近似值，我们可以取 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 为所需的精确位数。对于矩阵乘法，我们可以取 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 为矩阵的行数。一般来说，问题有许多属性，针对这些属性来分析给定的计算过程是可取的。类似地，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>R</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 可以度量所使用的内部存储寄存器的数量、执行的基本机器操作的次数，等等。在每次只能执行固定数量操作的计算机中，所需的时间将与所执行的基本机器操作的次数成正比。</p>
+<p>我们说 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>R</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 具有增长阶 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，记作 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>R</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>（读作“<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 的 theta”），如果存在与 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 无关的正常数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>k</mi>
+    <mn>1</mn>
+  </msub>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>k</mi>
+    <mn>2</mn>
+  </msub>
+</math>，使得对于任意足够大的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 值都有 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>k</mi>
+      <mn>1</mn>
+    </msub>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>≤<!-- ≤ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>R</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>≤<!-- ≤ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>k</mi>
+      <mn>2</mn>
+    </msub>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。（换句话说，对于大的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，值 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>R</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 被夹在 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>k</mi>
+      <mn>1</mn>
+    </msub>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>k</mi>
+      <mn>2</mn>
+    </msub>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 之间。）</p>
+<p>例如，对于 <a href="#g_t1_002e2_002e1">1.2.1</a> 中描述的用于计算阶乘的线性递归计算过程，步数按与输入 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 成比例的方式增长。因此，此计算过程所需的步数按 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 增长。我们还看到所需的空间按 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 增长。对于迭代式阶乘，步数仍然是 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，但空间是 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>——即常数。<a class="footnote_link" id="DOCF36" href="#FOOT36"><sup>36</sup></a> 树形递归的 斐波那契 计算需要 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <msup>
+      <mi>φ<!-- φ --></mi>
+      <mi>n</mi>
+    </msup>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 步和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 空间，其中 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>φ<!-- φ --></mi>
+</math> 是 <a href="#g_t1_002e2_002e2">1.2.2</a> 中描述的黄金分割比。</p>
+<p>增长阶仅提供对计算过程行为的粗略描述。例如，一个需要 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mn>2</mn>
+  </msup>
+</math> 步的计算过程、一个需要 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1000</mn>
+    <msup>
+      <mi>n</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+</math> 步的计算过程和一个需要 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>3</mn>
+    <msup>
+      <mi>n</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>10</mn>
+    <mi>n</mi>
+  </mrow>
+  <mo>+</mo>
+  <mn>17</mn>
+</math> 步的计算过程都具有 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <msup>
+      <mi>n</mi>
+      <mn>2</mn>
+    </msup>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 增长阶。另一方面，增长阶提供了一个有用的指示，说明当我们改变问题规模时，我们可以预期计算过程的行为如何变化。对于一个 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>（线性）计算过程，规模加倍将大致使所使用的资源量加倍。对于一个指数计算过程，问题规模每增加一个单位，资源使用量将乘以一个常数因子。在 <a href="#g_t1_002e2">1.2</a> 的剩余部分中，我们将考察两个增长阶为对数的算法，因此问题规模加倍只会使资源需求增加一个常数。</p>
+<blockquote>
+<p><strong><a id="Exercise-1_002e14"></a>习题 1.14：</strong> 画出由 <a href="#g_t1_002e2_002e2">1.2.2</a> 中的 <code>count-change</code> 过程为 11 美分找零时所生成的计算过程的树形图。当需要找零的金额增加时，此计算过程所使用的空间和步数的增长阶是什么？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e15"></a>习题 1.15：</strong> 一个角（以弧度指定）的正弦可以通过利用近似 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>sin</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>x</mi>
+    <mo>≈<!-- ≈ --></mo>
+    <mi>x</mi>
+  </mrow>
+</math>（如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 足够小）以及三角恒等式 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>sin</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>x</mi>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>3</mn>
+    <mi>sin</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mfrac>
+      <mi>x</mi>
+      <mn>3</mn>
+    </mfrac>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>−<!-- − --></mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>4</mn>
+    <msup>
+      <mi>sin</mi>
+      <mn>3</mn>
+    </msup>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mfrac>
+      <mi>x</mi>
+      <mn>3</mn>
+    </mfrac>
+  </mrow>
+</math> 来减小 sin 的自变量的大小，从而计算出来。（就本题而言，如果一个角的绝对值不大于 0.1 弧度，则认为它“足够小”。）这些思想体现在以下过程中：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cube x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x x</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cube x</span><span class="clo">))))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sine angle</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs angle</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0.1</span><span class="clo">))</span><span class="pln">
+       angle
+       </span><span class="opn">(</span><span class="pln">p </span><span class="opn">(</span><span class="pln">sine </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> angle </span><span class="lit">3.0</span><span class="clo">)))))</span></pre></div>
+
+<ol>
+<li>当求值 <code>(sine 12.15)</code> 时，过程 <code>p</code> 被应用了多少次？</li><li>当求值 <code>(sine a)</code> 时，由 <code>sine</code> 过程生成的计算过程所使用的空间和步数（作为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 的函数）的增长阶是什么？</li></ol>
+</blockquote>
+
+<a id="g_t1_002e2_002e4"></a>
+<a id="Exponentiation"></a>
+<h4 class="subsection"><span class="secnum">1.2.4</span><span class="sectitle">求幂</span></h4>
+
+<p>考虑计算给定数的幂的问题。我们希望有一个过程，它接受一个底数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> 和一个正整数指数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 作为参数，并计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>b</mi>
+    <mi>n</mi>
+  </msup>
+</math>。做到这一点的一种方式是通过递归定义 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="left" rowspacing="4pt" columnspacing="1em">
+    <mtr>
+      <mtd>
+        <msup>
+          <mi>b</mi>
+          <mi>n</mi>
+        </msup>
+        <mspace width="thinmathspace"/>
+        <mo>=</mo>
+        <mspace width="thinmathspace"/>
+        <mi>b</mi>
+        <mo>⋅<!-- ⋅ --></mo>
+        <msup>
+          <mi>b</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mi>n</mi>
+            <mo>−<!-- − --></mo>
+            <mn>1</mn>
+          </mrow>
+        </msup>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msup>
+          <mi>b</mi>
+          <mn>0</mn>
+        </msup>
+        <mspace width="thinmathspace"/>
+        <mo>=</mo>
+        <mspace width="thinmathspace"/>
+        <mn>1</mn>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>，这可以很容易地转化为过程</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expt b n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+      </span><span class="lit">1</span><span class="pln"> 
+      </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> b </span><span class="opn">(</span><span class="pln">expt b </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)))))</span></pre></div>
+
+<p>这是一个线性递归计算过程，需要 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 步和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 空间。正如阶乘一样，我们可以很容易地构造一个等价的线性迭代：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expt b n</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">expt-iter b n </span><span class="lit">1</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expt-iter b counter product</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> counter </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      product
+      </span><span class="opn">(</span><span class="pln">expt-iter b
+                 </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> counter </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> b product</span><span class="clo">))))</span></pre></div>
+
+<p>这个版本需要 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 步和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 空间。</p>
+<p>我们可以通过使用逐次平方来以更少的步数求幂。例如，与其将 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>b</mi>
+    <mn>8</mn>
+  </msup>
+</math> 计算为 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>b</mi>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mo stretchy="false">(</mo>
+    <mi>b</mi>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mo stretchy="false">(</mo>
+    <mi>b</mi>
+  </mrow>
+  <mo>⋅<!-- ⋅ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>b</mi>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mo stretchy="false">(</mo>
+    <mi>b</mi>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mo stretchy="false">(</mo>
+    <mi>b</mi>
+  </mrow>
+  <mo>⋅<!-- ⋅ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>b</mi>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mi>b</mi>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+    <mo>,</mo>
+  </mrow>
+</math>，我们可以用三次乘法来计算它：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="left" rowspacing="4pt" columnspacing="1em">
+    <mtr>
+      <mtd>
+        <msup>
+          <mi>b</mi>
+          <mn>2</mn>
+        </msup>
+        <mspace width="thinmathspace"/>
+        <mo>=</mo>
+        <mspace width="thinmathspace"/>
+        <mi>b</mi>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mi>b</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msup>
+          <mi>b</mi>
+          <mn>4</mn>
+        </msup>
+        <mspace width="thinmathspace"/>
+        <mo>=</mo>
+        <mspace width="thinmathspace"/>
+        <msup>
+          <mi>b</mi>
+          <mn>2</mn>
+        </msup>
+        <mo>⋅<!-- ⋅ --></mo>
+        <msup>
+          <mi>b</mi>
+          <mn>2</mn>
+        </msup>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msup>
+          <mi>b</mi>
+          <mn>8</mn>
+        </msup>
+        <mspace width="thinmathspace"/>
+        <mo>=</mo>
+        <mspace width="thinmathspace"/>
+        <msup>
+          <mi>b</mi>
+          <mn>4</mn>
+        </msup>
+        <mo>⋅<!-- ⋅ --></mo>
+        <msup>
+          <mi>b</mi>
+          <mn>4</mn>
+        </msup>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math> 这种方法对于指数是 2 的幂的情况效果很好。如果我们使用规则 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="left left" rowspacing="4pt" columnspacing="1em">
+    <mtr>
+      <mtd>
+        <msup>
+          <mi>b</mi>
+          <mi>n</mi>
+        </msup>
+        <mspace width="thinmathspace"/>
+        <mo>=</mo>
+        <mspace width="thinmathspace"/>
+        <mo stretchy="false">(</mo>
+        <msup>
+          <mi>b</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mi>n</mi>
+            <mrow class="MJX-TeXAtom-ORD">
+              <mo>/</mo>
+            </mrow>
+            <mn>2</mn>
+          </mrow>
+        </msup>
+        <msup>
+          <mo stretchy="false">)</mo>
+          <mn>2</mn>
+        </msup>
+      </mtd>
+      <mtd>
+        <mtext>if</mtext>
+        <mspace width="thickmathspace"/>
+        <mi>n</mi>
+        <mspace width="thickmathspace"/>
+        <mtext>is even</mtext>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msup>
+          <mi>b</mi>
+          <mi>n</mi>
+        </msup>
+        <mspace width="thinmathspace"/>
+        <mo>=</mo>
+        <mspace width="thinmathspace"/>
+        <mi>b</mi>
+        <mo>⋅<!-- ⋅ --></mo>
+        <msup>
+          <mi>b</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mi>n</mi>
+            <mo>−<!-- − --></mo>
+            <mn>1</mn>
+          </mrow>
+        </msup>
+      </mtd>
+      <mtd>
+        <mtext>if</mtext>
+        <mspace width="thickmathspace"/>
+        <mi>n</mi>
+        <mspace width="thickmathspace"/>
+        <mtext>is odd</mtext>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>，我们也可以利用逐次平方来一般地求幂。我们可以将此方法表示为一个过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fast-expt b n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">even? n</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">fast-expt b </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> n </span><span class="lit">2</span><span class="clo">))))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> b </span><span class="opn">(</span><span class="pln">fast-expt b </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))))))</span></pre></div>
+
+<p>其中用于测试一个整数是否为偶数的谓词是根据基本过程 <code>remainder</code> 定义的：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">even? n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">remainder n </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">))</span></pre></div>
+
+<p>由 <code>fast-expt</code> 演化的计算过程在空间和步数上都随 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 对数增长。要看到这一点，请注意使用 <code>fast-expt</code> 计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mn>2</mn>
+      <mi>n</mi>
+    </mrow>
+  </msup>
+</math> 只比计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>b</mi>
+    <mi>n</mi>
+  </msup>
+</math> 多一次乘法。因此，我们所能计算的指数的大小（大约）随着我们被允许进行的每一次新乘法而加倍。于是，对于指数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 所需的乘法次数大约以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的以 2 为底的对数的速度增长。该计算过程具有 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 增长。<a class="footnote_link" id="DOCF37" href="#FOOT37"><sup>37</sup></a></p>
+<p>随着 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 变大，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 增长与 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 增长之间的差异变得惊人。例如，对于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> = 1000，<code>fast-expt</code> 只需要 14 次乘法。<a class="footnote_link" id="DOCF38" href="#FOOT38"><sup>38</sup></a> 也可以利用逐次平方的思想来设计一种以对数步数求幂的迭代算法（见 <a href="#Exercise-1_002e16">习题 1.16</a>），尽管正如迭代算法常见的情况那样，这并不像递归算法那样直截了当地写出来。<a class="footnote_link" id="DOCF39" href="#FOOT39"><sup>39</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-1_002e16"></a>习题1.16：</strong>设计一个过程，它演化出一个迭代的求幂计算过程，该过程使用逐次平方，并且像<code>fast-expt</code>那样使用对数步数。（提示：利用<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msup>
+      <mi>b</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>n</mi>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mo>/</mo>
+        </mrow>
+        <mn>2</mn>
+      </mrow>
+    </msup>
+    <msup>
+      <mo stretchy="false">)</mo>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msup>
+      <mi>b</mi>
+      <mn>2</mn>
+    </msup>
+    <msup>
+      <mo stretchy="false">)</mo>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>n</mi>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mo>/</mo>
+        </mrow>
+        <mn>2</mn>
+      </mrow>
+    </msup>
+  </mrow>
+</math>这一观察，在指数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>和底数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>之外，再保留一个附加的状态变量<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>，并以这样的方式定义状态变换：乘积<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <msup>
+      <mi>b</mi>
+      <mi>n</mi>
+    </msup>
+  </mrow>
+</math>在状态之间保持不变。在计算过程开始时，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>取为1，而答案由计算过程结束时的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>值给出。一般来说，定义一个在状态之间保持不变的<a id="index-invariant-quantity"></a><em>不变量</em>的技术，是思考迭代算法设计的一种强大方式。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e17"></a>习题1.17：</strong>本节中的求幂算法基于通过重复乘法来执行求幂。以类似的方式，人们可以通过重复加法来执行整数乘法。下面的乘法过程（其中假定我们的语言只能做加法，不能做乘法）类似于<code>expt</code>过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> b </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">0</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> b </span><span class="lit">1</span><span class="clo">)))))</span></pre></div>
+
+<p>这个算法所需的步数与<code>b</code>成线性关系。现在假设我们在加法之外，还包括将整数翻倍的运算<code>double</code>，以及将一个（偶数）整数除以2的运算<code>halve</code>。使用这些运算，设计一个类似于<code>fast-expt</code>的乘法过程，它使用对数步数。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e18"></a>习题1.18：</strong>利用<a href="#Exercise-1_002e16">习题1.16</a>和<a href="#Exercise-1_002e17">习题1.17</a>的结果，设计一个过程，它生成一个迭代计算过程，用加法、翻倍和减半来乘两个整数，并且使用对数步数。<a class="footnote_link" id="DOCF40" href="#FOOT40"><sup>40</sup></a></p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e19"></a>习题1.19：</strong>有一种巧妙的算法可以在对数步数内计算斐波那契数。回想<a href="#g_t1_002e2_002e2">1.2.2</a>的<code>fib-iter</code>计算过程中状态变量<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>的变换：<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo stretchy="false">←<!-- ← --></mo>
+  <mi>a</mi>
+  <mo>+</mo>
+  <mi>b</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+  <mo stretchy="false">←<!-- ← --></mo>
+  <mi>a</mi>
+</math>。称这个变换为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>，并观察到从1和0开始，将<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>重复应用<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>次，产生序对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。换句话说，斐波那契数是通过从序对（1，0）开始应用变换<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math>次幂<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>T</mi>
+    <mi>n</mi>
+  </msup>
+</math>而产生的。现在考虑<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>是变换族<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>T</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>p</mi>
+      <mi>q</mi>
+    </mrow>
+  </msub>
+</math>中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>p</mi>
+    <mo>=</mo>
+    <mn>0</mn>
+  </mrow>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>q</mi>
+    <mo>=</mo>
+    <mn>1</mn>
+  </mrow>
+</math>的特殊情况，其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>T</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>p</mi>
+      <mi>q</mi>
+    </mrow>
+  </msub>
+</math>根据<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+  <mo stretchy="false">←<!-- ← --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>b</mi>
+    <mi>q</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mi>q</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mi>p</mi>
+  </mrow>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+  <mo stretchy="false">←<!-- ← --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>b</mi>
+    <mi>p</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mi>q</mi>
+  </mrow>
+</math>变换序对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>a</mi>
+    <mo>,</mo>
+    <mi>b</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。证明如果我们应用这样的变换<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>T</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>p</mi>
+      <mi>q</mi>
+    </mrow>
+  </msub>
+</math>两次，其效果等同于使用一个相同形式的单一变换<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>T</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <msup>
+        <mi>p</mi>
+        <mo>′</mo>
+      </msup>
+      <msup>
+        <mi>q</mi>
+        <mo>′</mo>
+      </msup>
+    </mrow>
+  </msub>
+</math>，并用<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math>计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>p</mi>
+    <mo>′</mo>
+  </msup>
+  <mspace width="negativethinmathspace"/>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>q</mi>
+    <mo>′</mo>
+  </msup>
+  <mspace width="negativethinmathspace"/>
+</math>。这给了我们一种显式的方法来平方这些变换，因此我们可以像<code>fast-expt</code>过程那样，使用逐次平方来计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>T</mi>
+    <mi>n</mi>
+  </msup>
+</math>。将所有这些放在一起，完成下面的过程，它运行在对数步数内：<a class="footnote_link" id="DOCF41" href="#FOOT41"><sup>41</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fib-iter </span><span class="lit">1</span><span class="pln"> </span><span class="lit">0</span><span class="pln"> </span><span class="lit">0</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> n</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib-iter a b p q count</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> count </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+         b</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">even? count</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">fib-iter a
+                   b
+                   ⟨</span><span class="pun">??</span><span class="pln">⟩  </span><span class="com">;compute </span><var><span class="com">p'</span></var><span class="pln">
+                   ⟨</span><span class="pun">??</span><span class="pln">⟩  </span><span class="com">;compute </span><var><span class="com">q'</span></var><span class="pln">
+                   </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> count </span><span class="lit">2</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">fib-iter </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> b q</span><span class="clo">)</span><span class="pln"> 
+                      </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a q</span><span class="clo">)</span><span class="pln"> 
+                      </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a p</span><span class="clo">))</span><span class="pln">
+                   </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> b p</span><span class="clo">)</span><span class="pln"> 
+                      </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a q</span><span class="clo">))</span><span class="pln">
+                   p
+                   q
+                   </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> count </span><span class="lit">1</span><span class="clo">)))))</span></pre></div>
+</blockquote>
+
+<a id="g_t1_002e2_002e5"></a>
+<a id="Greatest-Common-Divisors"></a>
+<h4 class="subsection"><span class="secnum">1.2.5</span><span class="sectitle">最大公约数</span></h4>
+
+<p>两个整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>的最大公约数（<abbr>GCD</abbr>）定义为能同时整除<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>而无余数的最大整数。例如，16和28的<abbr>GCD</abbr>是4。在<a href="Chapter-2_zh.xhtml#Chapter-2">第2</a>章中，当我们研究如何实现有理数算术时，我们将需要能够计算<abbr>GCD</abbr>，以便将有理数化为最简形式。（要将有理数化为最简形式，我们必须将分子和分母都除以它们的<abbr>GCD</abbr>。例如，16/28化为4/7。）求两个整数的<abbr>GCD</abbr>的一种方法是将它们分解并寻找公因子，但有一个著名算法要高效得多。</p>
+<p>该算法的思想基于以下观察：如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+</math>是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>除以<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>的余数，那么<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>的公约数恰好与<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+</math>的公约数相同。因此，我们可以使用等式</p>
+<div class="example">
+<pre class="example">GCD(a,b) = GCD(b,r)
+</pre></div>
+
+<p>来逐步将计算<abbr>GCD</abbr>的问题归约为计算越来越小的整数对的<abbr>GCD</abbr>的问题。例如，</p>
+<div class="example">
+<pre class="example">GCD(206,40) = GCD(40,6)
+            = GCD(6,4)
+            = GCD(4,2)
+            = GCD(2,0) = 2
+</pre></div>
+
+<p>将<abbr>GCD</abbr>(206, 40)归约为<abbr>GCD</abbr>(2, 0)，即2。可以证明，从任意两个正整数开始并反复进行这种归约，最终总会产生一个第二个数为0的序对。那么<abbr>GCD</abbr>就是该序对中的另一个数。这种计算<abbr>GCD</abbr>的方法被称为<a id="index-Euclid_0027s-Algorithm"></a><em>欧几里得算法</em>。<a class="footnote_link" id="DOCF42" href="#FOOT42"><sup>42</sup></a></p>
+<p>很容易将欧几里得算法表示为一个过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">gcd a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> b </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      a
+      </span><span class="opn">(</span><span class="pln">gcd b </span><span class="opn">(</span><span class="pln">remainder a b</span><span class="clo">))))</span></pre></div>
+
+<p>这生成一个迭代计算过程，其步数随所涉及数字的对数增长。</p>
+<p>欧几里得算法所需步数具有对数增长这一事实，与斐波那契数有着有趣的关系：</p>
+<blockquote>
+<p><strong>拉梅定理：</strong>如果欧几里得算法需要<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>步来计算某一序对的<abbr>GCD</abbr>，那么该序对中较小的数必定大于或等于第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>k</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math>个斐波那契数。<a class="footnote_link" id="DOCF43" href="#FOOT43"><sup>43</sup></a></p></blockquote>
+
+<p>我们可以用这个定理来得到欧几里得算法的增长阶估计。设<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>为该过程两个输入中较小的那个。如果计算过程需要<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>步，那么必有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+  <mo>≥<!-- ≥ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>k</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>≈<!-- ≈ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>φ<!-- φ --></mi>
+      <mi>k</mi>
+    </msup>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msqrt>
+      <mn>5</mn>
+    </msqrt>
+  </mrow>
+</math>。因此步数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>随<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>的对数（以<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>φ<!-- φ --></mi>
+</math>为底）增长。所以，增长阶为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。</p>
+<blockquote>
+<p><strong><a id="Exercise-1_002e20"></a>习题 1.20：</strong>一个过程所生成的计算过程当然依赖于解释器所使用的规则。作为一个例子，考虑上面给出的迭代式 <code>gcd</code> 过程。假设我们按照 <a href="1_002e1_zh.xhtml#g_t1_002e1_002e5">1.1.5</a> 中讨论的那样，用正则序求值来解释这个过程。（<code>if</code> 的正则序求值规则在 <a href="1_002e1_zh.xhtml#Exercise-1_002e5">习题 1.5</a> 中描述。）使用代换法（针对正则序），展示求值 <code>(gcd 206 40)</code> 时生成的计算过程，并指出实际执行的 <code>remainder</code> 运算。在 <code>(gcd 206 40)</code> 的正则序求值中实际执行了多少次 <code>remainder</code> 运算？在应用序求值中呢？</p></blockquote>
+
+<a id="g_t1_002e2_002e6"></a>
+<a id="Example_003a-Testing-for-Primality"></a>
+<h4 class="subsection"><span class="secnum">1.2.6</span><span class="sectitle">示例：检测素数</span></h4>
+
+<p>本节描述两种检查整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是否为素数的方法，一种的增长阶为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <msqrt>
+      <mi>n</mi>
+    </msqrt>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，另一种是“概率”算法，增长阶为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。本节末尾的练习给出了基于这些算法的编程项目。</p>
+<a id="Searching-for-divisors"></a>
+<h5 class="subsubheading">寻找因子</h5>
+
+<p>自古以来，数学家们就对与素数有关的问题着迷，许多人致力于研究确定数是否为素数的方法。检验一个数是否为素数的一种方法是找出该数的因子。下面的程序找出给定数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的最小整数因子（大于 1）。它以一种直接的方式做到这一点，即从 2 开始，用连续的整数测试 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是否能被整除。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">smallest-divisor n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">find-divisor n </span><span class="lit">2</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">find-divisor n test-divisor</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">&gt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square test-divisor</span><span class="clo">)</span><span class="pln"> n</span><span class="clo">)</span><span class="pln"> 
+         n</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">divides? test-divisor n</span><span class="clo">)</span><span class="pln"> 
+         test-divisor</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pln">find-divisor 
+               n 
+               </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> test-divisor </span><span class="lit">1</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">divides? a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">remainder b a</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">))</span></pre></div>
+
+<p>我们可以如下检验一个数是否为素数：<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是素数当且仅当 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是它自己的最小因子。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">prime? n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="opn">(</span><span class="pln">smallest-divisor n</span><span class="clo">)))</span></pre></div>
+
+<p><code>find-divisor</code> 的终止测试基于这样一个事实：如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 不是素数，那么它必定有一个小于或等于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msqrt>
+    <mi>n</mi>
+  </msqrt>
+</math> 的因子。<a class="footnote_link" id="DOCF44" href="#FOOT44"><sup>44</sup></a> 这意味着算法只需测试 1 到 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msqrt>
+    <mi>n</mi>
+  </msqrt>
+</math> 之间的因子。因此，确定 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 为素数所需的步数将具有增长阶 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <msqrt>
+      <mi>n</mi>
+    </msqrt>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。</p>
+<a id="The-Fermat-test"></a>
+<h5 class="subsubheading">费马检验</h5>
+
+<p><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 素性检验基于数论中一个称为费马小定理的结果。<a class="footnote_link" id="DOCF45" href="#FOOT45"><sup>45</sup></a></p>
+<blockquote>
+<p><strong>费马小定理：</strong> 如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是一个素数，而 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 是任何小于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的正整数，那么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math> 次幂与 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 模 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 同余。</p></blockquote>
+
+<p>（如果两个数除以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 时余数相同，就称它们<a id="index-congruent-modulo"></a><em>模</em><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>同余。一个数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 除以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的余数也称为 <a id="index-remainder-of"></a><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> <a id="index-modulo"></a><em>模</em><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> <em>的余数</em>，或者简称为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> <a id="index-modulo-1"></a><em>模</em><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>。）</p>
+<p>如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 不是素数，那么一般来说，大多数数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mo>&lt;</mo>
+    <mi>n</mi>
+  </mrow>
+</math> 都不会满足上述关系。这引出了以下检验素性的算法：给定一个数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，随机选取一个数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mo>&lt;</mo>
+    <mi>n</mi>
+  </mrow>
+</math> 并计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>a</mi>
+    <mi>n</mi>
+  </msup>
+</math> 模 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的余数。如果结果不等于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>，那么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 肯定不是素数。如果结果等于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>，那么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 很可能是素数。现在再随机选取另一个数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 并用同样的方法检验。如果它也满足该等式，那么我们可以更加确信 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是素数。通过尝试越来越多的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 值，我们可以增加对结果的信心。这个算法被称为费马检验。</p>
+<p>为了实现费马检验，我们需要一个计算一个数的幂模另一个数的过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expmod base exp m</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> exp </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">even? exp</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">remainder 
+          </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">expmod base </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> exp </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> m</span><span class="clo">))</span><span class="pln">
+          m</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">remainder 
+          </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> base </span><span class="opn">(</span><span class="pln">expmod base </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> exp </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> m</span><span class="clo">))</span><span class="pln">
+          m</span><span class="clo">))))</span></pre></div>
+
+<p>这与 <a href="#g_t1_002e2_002e4">1.2.4</a> 中的 <code>fast-expt</code> 过程非常相似。它使用逐次平方，因此步数随指数呈对数增长。<a class="footnote_link" id="DOCF46" href="#FOOT46"><sup>46</sup></a></p>
+<p>费马检验通过随机选取一个介于 1 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math> 之间（含两端）的数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>，并检查 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math> 次幂模 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的余数是否等于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 来进行。随机数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 使用过程 <code>random</code> 选取，我们假定它在 Scheme 中作为基本过程提供。<code>Random</code> 返回一个小于其整数输入的非负整数。因此，要获得介于 1 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math> 之间的随机数，我们以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math> 为输入调用 <code>random</code>，并将结果加上 1：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fermat-test n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">try-it a</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expmod a n n</span><span class="clo">)</span><span class="pln"> a</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">try-it </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">random </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)))))</span></pre></div>
+
+<p>下面的过程按参数指定的次数运行检验。如果每次检验都成功，其值为真，否则为假。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fast-prime? n times</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> times </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> true</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">fermat-test n</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">fast-prime? n </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> times </span><span class="lit">1</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> false</span><span class="clo">)))</span></pre></div>
+
+<a id="Probabilistic-methods"></a>
+<h5 class="subsubheading">概率方法</h5>
+
+<p>费马检验在性质上与大多数熟悉的算法不同，后者计算出的答案是保证正确的。在这里，得到的答案只是可能正确。更准确地说，如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 未能通过费马检验，我们可以确定 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 不是素数。但是 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 通过检验这一事实，虽然是一个极强的迹象，仍然不能保证 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是素数。我们想说的是，对于任何数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，如果我们进行足够多次检验并发现 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 总是通过检验，那么我们的素性检验中出错的概率可以做到任意小。</p>
+<p>不幸的是，这个断言并不完全正确。确实存在能骗过费马检验的数：那些不是素数，却具有如下性质的数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>：对于所有整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mo>&lt;</mo>
+    <mi>n</mi>
+  </mrow>
+</math>，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>a</mi>
+    <mi>n</mi>
+  </msup>
+</math> 与 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 模 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 同余。这样的数极其罕见，因此费马检验在实践中相当可靠。<a class="footnote_link" id="DOCF47" href="#FOOT47"><sup>47</sup></a></p>
+<p>有一些费马测试的变体是不会被欺骗的。在这些测试中，与费马方法一样，人们通过选择一个随机整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mo>&lt;</mo>
+    <mi>n</mi>
+  </mrow>
+</math> 并检查某个依赖于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 的条件来测试整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的素性。（关于这种测试的一个例子，参见 <a href="#Exercise-1_002e28">习题 1.28</a>。）另一方面，与费马测试不同，人们可以证明，对于任何 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，除非 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是素数，否则该条件对大多数整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mo>&lt;</mo>
+    <mi>n</mi>
+  </mrow>
+</math> 不成立。因此，如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 在随机选择某个 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 时通过了测试，那么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是素数的概率比一半还大。如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 在随机选择两个 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 时通过了测试，那么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是素数的概率大于 4 分之 3。通过用越来越多随机选择的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 值运行测试，我们可以使错误的概率小到我们想要的任何程度。</p>
+<p>对于那些可以证明出错概率变得任意小的测试，其存在激发了人们对这类算法的兴趣，这类算法后来被称为 <a id="index-probabilistic-algorithms"></a><em>概率算法</em>。这一领域有大量的研究活动，概率算法已被富有成效地应用于许多领域。<a class="footnote_link" id="DOCF48" href="#FOOT48"><sup>48</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-1_002e21"></a>习题 1.21：</strong> 使用 <code>smallest-divisor</code> 过程找出以下每个数的最小因子：199、1999、19999。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e22"></a>习题 1.22：</strong> 大多数 Lisp 实现都包含一个称为 <code>runtime</code> 的基本过程，它返回一个整数，指定系统已经运行的时间（例如，以微秒为单位测量）。下面的 <code>timed-prime-test</code> 过程，当用一个整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 调用时，打印 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 并检查 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是否为素数。如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是素数，该过程打印三个星号，后跟执行测试所用的时间。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">timed-prime-test n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">newline</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">start-prime-test n </span><span class="opn">(</span><span class="pln">runtime</span><span class="clo">)))</span></pre></div>
+
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">start-prime-test n start-time</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">prime? n</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">report-prime </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">runtime</span><span class="clo">)</span><span class="pln"> 
+                       start-time</span><span class="clo">))))</span></pre></div>
+
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">report-prime elapsed-time</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display </span><span class="str">" *** "</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display elapsed-time</span><span class="clo">))</span></pre></div>
+
+<p>使用这个过程，编写一个过程 <code>search-for-primes</code>，它检查指定范围内连续奇整数的素性。使用你的过程找出大于 1000 的三个最小素数；大于 10,000 的；大于 100,000 的；大于 1,000,000 的。注意测试每个素数所需的时间。由于测试算法的增长阶为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <msqrt>
+      <mi>n</mi>
+    </msqrt>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，你应该预期测试 10,000 附近的素数所需时间大约是测试 1000 附近的素数的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msqrt>
+    <mn>10</mn>
+  </msqrt>
+</math> 倍。你的计时数据证实了这一点吗？100,000 和 1,000,000 的数据在多大程度上支持 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <msqrt>
+      <mi>n</mi>
+    </msqrt>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 预测？你的结果是否与以下观念相容：你机器上的程序运行时间与计算所需的步数成正比？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e23"></a>习题 1.23：</strong> 本节开头展示的 <code>smallest-divisor</code> 过程做了许多不必要的测试：在它检查完该数是否能被 2 整除之后，再检查它是否能被任何更大的偶数整除就没有意义了。这表明用于 <code>test-divisor</code> 的值不应该是 2、3、4、5、6、…，而应该是 2、3、5、7、9、…。为了实现这一改变，定义一个过程 <code>next</code>，如果其输入等于 2 则返回 3，否则返回其输入加 2。修改 <code>smallest-divisor</code> 过程以使用 <code>(next test-divisor)</code> 而不是 <code>(+ test-divisor 1)</code>。在 <code>timed-prime-test</code> 中纳入这个修改版的 <code>smallest-divisor</code> 后，对 <a href="#Exercise-1_002e22">习题 1.22</a> 中找到的 12 个素数中的每一个运行测试。由于这一修改将测试步数减半，你应该预期它运行速度大约快一倍。这一预期得到证实了吗？如果没有，两种算法速度的观测比率是多少，你如何解释它与 2 不同这一事实？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e24"></a>习题 1.24：</strong> 修改 <a href="#Exercise-1_002e22">习题 1.22</a> 的 <code>timed-prime-test</code> 过程以使用 <code>fast-prime?</code>（费马方法），并测试你在该练习中找到的 12 个素数中的每一个。由于费马测试具有 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 增长，你预期测试 1,000,000 附近的素数所需时间与测试 1000 附近的素数所需时间相比如何？你的数据证实了这一点吗？你能解释你发现的任何差异吗？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e25"></a>习题 1.25：</strong> Alyssa P. Hacker 抱怨说我们在编写 <code>expmod</code> 时做了很多额外的工作。她说，毕竟，既然我们已经知道如何求幂，我们本可以简单地写成</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expmod base exp m</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">remainder </span><span class="opn">(</span><span class="pln">fast-expt base exp</span><span class="clo">)</span><span class="pln"> m</span><span class="clo">))</span></pre></div>
+
+<p>她正确吗？这个过程能同样好地用于我们的快速素数测试器吗？解释一下。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e26"></a>习题 1.26：</strong> Louis Reasoner 在做 <a href="#Exercise-1_002e24">习题 1.24</a> 时遇到了很大困难。他的 <code>fast-prime?</code> 测试似乎比他的 <code>prime?</code> 测试运行得更慢。Louis 把他的朋友 Eva Lu Ator 叫来帮忙。当他们检查 Louis 的代码时，他们发现他把 <code>expmod</code> 过程重写为使用显式乘法，而不是调用 <code>square</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expmod base exp m</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> exp </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">even? exp</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">remainder 
+          </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expmod base </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> exp </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> m</span><span class="clo">)</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">expmod base </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> exp </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> m</span><span class="clo">))</span><span class="pln">
+          m</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">remainder 
+          </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> base 
+             </span><span class="opn">(</span><span class="pln">expmod base </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> exp </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> m</span><span class="clo">))</span><span class="pln">
+          m</span><span class="clo">))))</span></pre></div>
+
+<p>“我看不出那会有什么不同，”Louis 说。“我看得出。”<!-- /@w --> Eva 说。“通过那样写这个过程，你已经把 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 计算过程变成了 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 计算过程。”解释一下。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e27"></a>习题 1.27：</strong> 证明 <a href="#Footnote-47">脚注 47</a> 中列出的 Carmichael 数确实能欺骗费马测试。也就是说，编写一个过程，它接受一个整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 并测试对于每个 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mo>&lt;</mo>
+    <mi>n</mi>
+  </mrow>
+</math>，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>a</mi>
+    <mi>n</mi>
+  </msup>
+</math> 是否模 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 同余于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>，并在给定的 Carmichael 数上尝试你的过程。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e28"></a>习题 1.28：</strong>费马测试的一种无法被欺骗的变体称为<a id="index-Miller_002dRabin-test"></a> <em>Miller-Rabin 测试</em>（<a href="References_zh.xhtml#Miller-1976">Miller 1976</a>；<a href="References_zh.xhtml#Rabin-1980">Rabin 1980</a>）。它从费马小定理的另一种形式出发，该定理指出，如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>是素数，且<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>是小于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>的任意正整数，那么<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>次幂与1模<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>同余。要用 Miller-Rabin 测试来检验数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>的素性，我们随机选取一个数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mo>&lt;</mo>
+    <mi>n</mi>
+  </mrow>
+</math>，并使用<code>expmod</code>过程计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>次幂模<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>。然而，每当我们在<code>expmod</code>中执行平方步骤时，我们检查是否发现了“1模<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>的非平凡平方根”，即一个不等于1或<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math>的数，其平方模<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>等于1。可以证明，如果这样的1的非平凡平方根存在，那么<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>不是素数。还可以证明，如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>是一个非素数的奇数，那么对于至少一半的数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mo>&lt;</mo>
+    <mi>n</mi>
+  </mrow>
+</math>，以这种方式计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>a</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>n</mi>
+      <mo>−<!-- − --></mo>
+      <mn>1</mn>
+    </mrow>
+  </msup>
+</math>将揭示1模<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>的一个非平凡平方根。（这就是 Miller-Rabin 测试无法被欺骗的原因。）修改<code>expmod</code>过程，使其在发现1的非平凡平方根时发出信号，并以此实现一个类似于<code>fermat-test</code>的 Miller-Rabin 测试过程。通过测试各种已知的素数和非素数来检查你的过程。提示：使<code>expmod</code>发出信号的一种方便方法是让它返回0。</p></blockquote>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT29"><p><a class="footnote_backlink" href="#DOCF29"><sup>29</sup></a>在真实的程序中，我们可能会使用上一节介绍的块结构来隐藏<code>fact-iter</code>的定义：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">iter product counter</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> counter n</span><span class="clo">)</span><span class="pln">
+        product
+        </span><span class="opn">(</span><span class="pln">iter </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> counter product</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> counter </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">iter </span><span class="lit">1</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))</span></pre></div>
+
+<p>我们在这里避免这样做，以便尽量减少需要同时考虑的事情。</p>
+</div>
+<div id="FOOT30"><p><a class="footnote_backlink" href="#DOCF30"><sup>30</sup></a>当我们在<a href="Chapter-5_zh.xhtml#Chapter-5">第5</a>章讨论寄存器机器上过程的实现时，我们将看到任何迭代计算过程都可以“在硬件中”实现为一台具有固定寄存器组且没有辅助存储器的机器。相比之下，实现递归计算过程需要一台使用称为<a id="index-stack"></a> <em>栈</em>的辅助数据结构的机器。</p>
+</div>
+<div id="FOOT31"><p><a class="footnote_backlink" href="#DOCF31"><sup>31</sup></a>尾递归长期以来一直被认为是一种编译器优化技巧。尾递归的连贯语义基础由 Carl <a href="References_zh.xhtml#Hewitt-_00281977_0029">Hewitt（1977）</a>提供，他根据我们将在<a href="Chapter-3_zh.xhtml#Chapter-3">第3</a>章讨论的计算的“消息传递”模型解释了它。受此启发，Gerald Jay Sussman 和 Guy Lewis Steele Jr.（见<a href="References_zh.xhtml#Steele-and-Sussman-1975">Steele 和 Sussman 1975</a>）为 Scheme 构造了一个尾递归解释器。Steele 后来展示了尾递归如何是编译过程调用的自然方式的结果（<a href="References_zh.xhtml#Steele-1977">Steele 1977</a>）。Scheme 的<abbr>IEEE</abbr>标准要求 Scheme 实现是尾递归的。</p>
+</div>
+<div id="FOOT32"><p><a class="footnote_backlink" href="#DOCF32"><sup>32</sup></a>这一点的一个例子在<a href="1_002e1_zh.xhtml#g_t1_002e1_002e3">1.1.3</a>中有所暗示。解释器本身使用树形递归计算过程来求值表达式。</p>
+</div>
+<div id="FOOT33"><p><a class="footnote_backlink" href="#DOCF33"><sup>33</sup></a>例如，详细推演归约规则如何应用于用一美分和五美分硬币为10美分找零的问题。</p>
+</div>
+<div id="FOOT34"><p><a class="footnote_backlink" href="#DOCF34"><sup>34</sup></a>应对冗余计算的一种方法是做出安排，使得在计算值时自动构造一个值表。每次要求我们将过程应用于某个参数时，我们首先查看该值是否已经存储在表中，如果是，则避免执行冗余计算。这种策略称为<a id="index-tabulation"></a> <em>制表</em>或<a id="index-memoization"></a> <em>记忆化</em>，可以以直接的方式实现。制表有时可以用来将需要指数步数的计算过程（如<code>count-change</code>）转换为空间和时间需求随输入线性增长的计算过程。参见<a href="3_002e3_zh.xhtml#Exercise-3_002e27">习题3.27</a>。</p>
+</div>
+<div id="FOOT35"><p><a class="footnote_backlink" href="#DOCF35"><sup>35</sup></a>帕斯卡三角形的元素称为<a id="index-binomial-coefficients"></a> <em>二项式系数</em>，因为第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>n</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mtext>th</mtext>
+      </mrow>
+    </msup>
+  </mrow>
+</math>行由<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mi>y</mi>
+    <msup>
+      <mo stretchy="false">)</mo>
+      <mi>n</mi>
+    </msup>
+  </mrow>
+</math>展开式中各项的系数组成。这种计算系数的模式出现在 Blaise Pascal 关于概率论的1653年的开创性著作<cite>Traité du triangle arithmétique</cite>中。根据<a href="References_zh.xhtml#Knuth-_00281973_0029">Knuth（1973）</a>，同样的模式出现在中国数学家朱世杰于1303年出版的<cite>Szu-yuen Yü-chien</cite>（“四元玉鉴”）中，出现在十二世纪波斯诗人兼数学家 Omar Khayyam 的著作中，以及出现在十二世纪印度数学家 Bháscara Áchárya 的著作中。</p>
+</div>
+<div id="FOOT36"><p><a class="footnote_backlink" href="#DOCF36"><sup>36</sup></a>这些陈述掩盖了大量的过度简化。例如，如果我们将计算过程步骤计为“机器操作”，我们就是在假设执行例如一次乘法所需的机器操作数与要相乘的数的大小无关，如果数足够大，这是错误的。类似的评论也适用于空间估计。就像计算过程的设计和描述一样，计算过程的分析可以在不同的抽象层次上进行。</p>
+</div>
+<div id="FOOT37"><p><a class="footnote_backlink" href="#DOCF37"><sup>37</sup></a>更准确地说，所需的乘法次数等于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>以2为底的对数减去1，再加上<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>的二进制表示中一的个数。这个总数总是小于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>以2为底的对数的两倍。阶记号定义中的任意常数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>k</mi>
+    <mn>1</mn>
+  </msub>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>k</mi>
+    <mn>2</mn>
+  </msub>
+</math>意味着，对于对数增长的计算过程，取对数时所用的底数并不重要，所以所有这样的计算过程都记作<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。</p>
+</div>
+<div id="FOOT38"><p><a class="footnote_backlink" href="#DOCF38"><sup>38</sup></a>你可能想知道为什么有人会关心将数提升到1000次幂。参见<a href="#g_t1_002e2_002e6">1.2.6</a>。</p>
+</div>
+<div id="FOOT39"><p><a class="footnote_backlink" href="#DOCF39"><sup>39</sup></a> 这个迭代算法非常古老。它出现在 Áchárya Pingala 所著的<cite>Chandah-sutra</cite>中，该书成书于<abbr>公元前</abbr>200年之前。关于此方法以及其他求幂方法的完整讨论和分析，请参见<a href="References_zh.xhtml#Knuth-1981">Knuth 1981</a>，第4.6.3节。</p>
+</div>
+<div id="FOOT40"><p><a class="footnote_backlink" href="#DOCF40"><sup>40</sup></a> 这个算法，有时被称为乘法的“俄罗斯农民方法”，非常古老。其使用实例见于莱因德纸草书，这是现存最古老的两份数学文献之一，大约成书于<abbr>公元前</abbr>1700年（并且是从一份更古老的文献抄写而来），作者是一位名叫 A’h-mose 的埃及抄写员。</p>
+</div>
+<div id="FOOT41"><p><a class="footnote_backlink" href="#DOCF41"><sup>41</sup></a> 这个练习是由 Joe Stoy 根据<a href="References_zh.xhtml#Kaldewaij-1990">Kaldewaij 1990</a>中的一个例子向我们建议的。</p>
+</div>
+<div id="FOOT42"><p><a class="footnote_backlink" href="#DOCF42"><sup>42</sup></a> 欧几里得算法之所以如此称呼，是因为它出现在欧几里得的<cite>Elements</cite>中（第7卷，约<abbr>公元前</abbr>300年）。根据<a href="References_zh.xhtml#Knuth-_00281973_0029">Knuth（1973）</a>，它可以被认为是已知最古老的非平凡算法。古埃及的乘法方法（<a href="#Exercise-1_002e18">习题1.18</a>）肯定更古老，但正如 Knuth 所解释的，欧几里得算法是已知最古老的被作为通用算法提出的算法，而不是作为一组说明性例子。</p>
+</div>
+<div id="FOOT43"><p><a class="footnote_backlink" href="#DOCF43"><sup>43</sup></a> 这个定理是由加布里埃尔·拉梅于1845年证明的，他是一位法国数学家和工程师，主要以对数学物理的贡献而闻名。为了证明这个定理，我们考虑序对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>a</mi>
+      <mi>k</mi>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>b</mi>
+      <mi>k</mi>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mi>k</mi>
+    </msub>
+    <mo>≥<!-- ≥ --></mo>
+    <msub>
+      <mi>b</mi>
+      <mi>k</mi>
+    </msub>
+  </mrow>
+</math>，对于这些序对，欧几里得算法在<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>步后终止。证明基于这样一个论断：如果在归约过程中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>a</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>k</mi>
+        <mo>+</mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>b</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>k</mi>
+        <mo>+</mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo stretchy="false">→<!-- → --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>a</mi>
+      <mi>k</mi>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>b</mi>
+      <mi>k</mi>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo stretchy="false">→<!-- → --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>a</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>k</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>b</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>k</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>是三个相继的序对，那么我们必须有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>k</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>≥<!-- ≥ --></mo>
+  <msub>
+    <mi>b</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>k</mi>
+      <mo>−<!-- − --></mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math>。为了验证这个论断，考虑归约步骤是由应用变换<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>k</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo>=</mo>
+    <msub>
+      <mi>b</mi>
+      <mi>k</mi>
+    </msub>
+  </mrow>
+</math>，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>b</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>k</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo>=</mo>
+  </mrow>
+</math><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mi>k</mi>
+  </msub>
+</math>除以<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mi>k</mi>
+  </msub>
+</math>的余数来定义的。第二个等式意味着对于某个正整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math>，有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>q</mi>
+    <msub>
+      <mi>b</mi>
+      <mi>k</mi>
+    </msub>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>b</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>k</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+  </mrow>
+</math>。并且由于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>q</mi>
+</math>必须至少为1，我们有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>q</mi>
+    <msub>
+      <mi>b</mi>
+      <mi>k</mi>
+    </msub>
+  </mrow>
+  <mo>+</mo>
+  <msub>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>k</mi>
+      <mo>−<!-- − --></mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>≥<!-- ≥ --></mo>
+  <msub>
+    <mi>b</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>k</mi>
+      <mo>−<!-- − --></mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math>。但在前一个归约步骤中我们有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>k</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>k</mi>
+  </msub>
+</math>。因此，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>k</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>a</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>≥<!-- ≥ --></mo>
+  <msub>
+    <mi>b</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>k</mi>
+      <mo>−<!-- − --></mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math>。这验证了该论断。现在我们可以通过对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>，即算法终止所需的步数，进行归纳来证明这个定理。对于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>k</mi>
+    <mo>=</mo>
+    <mn>1</mn>
+  </mrow>
+</math>，结果是成立的，因为这仅仅要求<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>至少与<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo>=</mo>
+    <mn>1</mn>
+  </mrow>
+</math>一样大。现在，假设对于所有小于或等于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>的整数结果都成立，并确立<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>k</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+  </mrow>
+</math>的结果。设<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>a</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>k</mi>
+        <mo>+</mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>b</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>k</mi>
+        <mo>+</mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo stretchy="false">→<!-- → --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>a</mi>
+      <mi>k</mi>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>b</mi>
+      <mi>k</mi>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo stretchy="false">→<!-- → --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>a</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>k</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>b</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>k</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>为归约过程中的相继序对。根据我们的归纳假设，我们有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>k</mi>
+      <mo>−<!-- − --></mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>≥<!-- ≥ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>k</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>≥<!-- ≥ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>k</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。因此，应用我们刚刚证明的论断以及斐波那契数的定义，得到<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>k</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>≥<!-- ≥ --></mo>
+  <msub>
+    <mi>b</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>+</mo>
+  <msub>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>k</mi>
+      <mo>−<!-- − --></mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>≥<!-- ≥ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>k</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>k</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>k</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，这就完成了拉梅定理的证明。</p>
+</div>
+<div id="FOOT44"><p><a class="footnote_backlink" href="#DOCF44"><sup>44</sup></a> 如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math>是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>的因子，那么<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mspace width="thinmathspace"/>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mspace width="thinmathspace"/>
+    <mi>d</mi>
+  </mrow>
+</math>也是。但<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mspace width="thinmathspace"/>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mspace width="thinmathspace"/>
+    <mi>d</mi>
+  </mrow>
+</math>不可能都大于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msqrt>
+    <mi>n</mi>
+  </msqrt>
+</math>。</p>
+</div>
+<div id="FOOT45"><p><a class="footnote_backlink" href="#DOCF45"><sup>45</sup></a> Pierre de Fermat（1601-1665）被认为是现代数论的奠基人。他获得了许多重要的数论结果，但他通常只宣布结果，而不提供证明。费马小定理是在他1640年写的一封信中陈述的。第一个发表的证明由 Euler 在1736年给出（并且在 Leibniz 未发表的手稿中发现了一个更早的、相同的证明）。费马最著名的结果——被称为费马大定理——是在1637年草草写在他那本<cite>Arithmetic</cite>（由三世纪希腊数学家 Diophantus 所著）的副本中的，并附有评论“我发现了一个真正非凡的证明，但这个页边空白太小，写不下。”寻找费马大定理的证明成为数论中最著名的挑战之一。完整的解答最终由普林斯顿大学的 Andrew Wiles 在1995年给出。</p>
+</div>
+<div id="FOOT46"><p><a class="footnote_backlink" href="#DOCF46"><sup>46</sup></a> 在指数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>e</mi>
+</math>大于1的情况下的归约步骤基于以下事实：对于任意整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math>，我们可以通过分别计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>模<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math>的余数和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>模<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math>的余数，将它们相乘，然后对结果取模<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math>的余数，来求得<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>乘以<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>模<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math>的余数。例如，在<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>e</mi>
+</math>为偶数的情况下，我们计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>b</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>e</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mo>/</mo>
+      </mrow>
+      <mn>2</mn>
+    </mrow>
+  </msup>
+</math>模<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math>的余数，将其平方，然后取模<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math>的余数。这项技术很有用，因为它意味着我们可以在进行计算时，永远不必处理远大于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>m</mi>
+</math>的数。（比较<a href="#Exercise-1_002e25">习题1.25</a>。）</p>
+</div>
+<div id="FOOT47"><p><a class="footnote_backlink" href="#DOCF47"><sup>47</sup></a> <a id="Footnote-47"></a>能骗过费马测试的数被称为<a id="index-Carmichael-numbers"></a> <em>Carmichael 数</em>，除了它们极其罕见之外，人们对它们知之甚少。在100,000,000以下有255个 Carmichael 数。最小的几个是561、1105、1729、2465、2821和6601。在测试随机选取的非常大的数的素性时，碰巧遇到一个能骗过费马测试的值的概率，小于宇宙辐射导致计算机在执行“正确”算法时出错的概率。认为一个算法因第一个原因而不适用，但不因第二个原因而不适用，这说明了数学与工程之间的区别。</p>
+</div>
+<div id="FOOT48"><p><a class="footnote_backlink" href="#DOCF48"><sup>48</sup></a>概率素数检测最引人注目的应用之一是在密码学领域。虽然目前从计算上说，还无法实际完成对任意200位数的因数分解，但利用费马测试，只需几秒就能检测这样一个数的素性。这一事实构成了<a href="References_zh.xhtml#Rivest-et-al_002e-_00281977_0029">Rivest 等人（1977）</a>提出的一种构造“不可破解密码”的技术的基础。由此产生的<a id="index-RSA-algorithm"></a><em>RSA 算法</em>已成为广泛用于增强电子通信安全性的技术。由于这一进展及其他相关进展，素数研究如今在密码学、电子资金转账和信息检索中有了重要的实际应用，而它曾被视为“纯”数学课题的典范，似乎只值得为研究本身而研究。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="1_002e3_zh.xhtml#g_t1_002e3" accesskey="n" rel="next">1.3</a>, 上一节： <a href="1_002e1_zh.xhtml#g_t1_002e1" accesskey="p" rel="prev">1.1</a>, 上一级： <a href="#g_t1_002e2" accesskey="u" rel="prev">1.2</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

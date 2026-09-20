@@ -1,0 +1,2458 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：2.2</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 2.2" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 2.2" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-2_zh.xhtml#Chapter-2" rel="prev" title="Chapter 2" />
+<link href="2_002e3_zh.xhtml#g_t2_002e3" rel="next" title="2.3" />
+<link href="2_002e1_zh.xhtml#g_t2_002e1_002e4" rel="prev" title="2.1.4" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t2_002e2"></a>
+<nav class="header">
+<p>下一节： <a href="2_002e3_zh.xhtml#g_t2_002e3" accesskey="n" rel="next">2.3</a>, 上一节： <a href="2_002e1_zh.xhtml#g_t2_002e1" accesskey="p" rel="prev">2.1</a>, 上一级： <a href="Chapter-2_zh.xhtml#Chapter-2" accesskey="u" rel="prev">第2章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Hierarchical-Data-and-the-Closure-Property"></a>
+<h3 class="section"><span class="secnum">2.2</span><span class="sectitle">层次化数据和闭合性质</span></h3>
+
+<p>正如我们所见，序对提供了一种基本的“粘合剂”，我们可以用它来构造复合数据对象。<a href="#Figure-2_002e2">图 2.2</a> 展示了可视化序对的标准方式——在本例中，是由 <code>(cons 1 2)</code> 形成的序对。在这种称为 <a id="index-box_002dand_002dpointer-notation"></a> <em>盒指针表示法</em> 的表示中，每个对象都显示为指向一个盒子的 <a id="index-pointer"></a> <em>指针</em>。基本对象的盒子包含该对象的表示。例如，表示数的盒子包含一个数码。序对的盒子实际上是一个双盒子，左边部分包含（指向该序对的 <code>car</code>的指针），右边部分包含 <code>cdr</code>。</p>
+<figure class="float">
+<a id="Figure-2_002e2"></a>
+<object style="width: 21.76ex; height: 11.83ex;" data="fig/chap2/Fig2.2e.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 2.2：</strong> <code>(cons 1 2)</code> 的盒指针表示。</p>
+</figcaption>
+</figure>
+
+<p>我们已经看到，<code>cons</code>不仅可以用来组合数字，还可以用来组合序对。（你在做<a href="2_002e1_zh.xhtml#Exercise-2_002e2">习题2.2</a>和<a href="2_002e1_zh.xhtml#Exercise-2_002e3">习题2.3</a>时用到了这个事实，或者本应该用到。）因此，序对提供了一种通用的构建块，我们可以用它构造各种数据结构。<a href="#Figure-2_002e3">图2.3</a>展示了两种使用序对组合数字1、2、3和4的方法。</p>
+<figure class="float">
+<a id="Figure-2_002e3"></a>
+<object style="width: 55.60ex; height: 28.41ex;" data="fig/chap2/Fig2.3e.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.3：</strong> 使用序对组合1、2、3和4的两种方法。</p>
+</figcaption>
+</figure>
+
+<p>创建其元素也是序对的序对的能力，是表结构作为表示工具之所以重要的本质所在。我们将这种能力称为<a id="index-closure-property"></a><em>闭合性质</em>，即<code>cons</code>的闭合性质。一般来说，如果使用某个操作组合事物所得到的结果本身还能用同一个操作来组合，那么用于组合数据对象的操作就满足闭合性质。<a class="footnote_link" id="DOCF72" href="#FOOT72"><sup>72</sup></a>闭合性是任何组合手段具有威力的关键，因为它允许我们创建<a id="index-hierarchical"></a><em>层次</em>结构——这种结构由部分组成，而部分本身又由部分组成，如此等等。</p>
+<p>从<a href="Chapter-1_zh.xhtml#Chapter-1">第1章</a>一开始，我们就已经在处理过程时必不可少地使用了闭合性，因为除了最简单的程序之外，所有程序都依赖于组合式的元素本身也可以是组合式这一事实。在本节中，我们讨论闭合性对复合数据的影响。我们描述一些使用序对表示序列和树的常规技术，并展示一种图形语言，它以生动的方式说明了闭合性。<a class="footnote_link" id="DOCF73" href="#FOOT73"><sup>73</sup></a></p>
+
+<a id="g_t2_002e2_002e1"></a>
+<a id="Representing-Sequences"></a>
+<h4 class="subsection"><span class="secnum">2.2.1</span><span class="sectitle">表示序列</span></h4>
+
+<p>我们可以用序对构建的有用结构之一是<a id="index-sequence"></a><em>序列</em>——一种有序的数据对象集合。当然，用序对表示序列有许多方法。一种特别直接的表示方法如<a href="#Figure-2_002e4">图2.4</a>所示，其中序列1、2、3、4被表示为一串序对。每个序对的<code>car</code>是链中对应的项，而序对的<code>cdr</code>是链中的下一个序对。最后一个序对的<code>cdr</code>指向一个不是序对的特殊值，从而表示序列的结束；在盒指针图中它表示为一条对角线，在程序中它表示为变量<code>nil</code>的值。整个序列由嵌套的<code>cons</code>操作构造而成：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">1</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">2</span><span class="pln">
+            </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">3</span><span class="pln">
+                  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> nil</span><span class="clo">))))</span></pre></div>
+
+<figure class="float">
+<a id="Figure-2_002e4"></a>
+<object style="width: 48.95ex; height: 11.83ex;" data="fig/chap2/Fig2.4e.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.4：</strong> 序列1、2、3、4表示为一串序对。</p>
+</figcaption>
+</figure>
+
+<p>这种由嵌套的<code>cons</code>形成的序对序列称为<a id="index-list"></a><em>表</em>，而 Scheme 提供了一种称为<code>list</code>的基本操作来帮助构造表。<a class="footnote_link" id="DOCF74" href="#FOOT74"><sup>74</sup></a>上面的序列可以用<code>(list 1 2 3 4)</code>产生。一般来说，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">list ⟨</span><var><span class="pln">a</span><span class="pun">₁</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">a</span><span class="pun">₂</span></var><span class="pln">⟩ </span><span class="roman"><span class="pun">…</span></span><span class="pln"> ⟨</span><var><span class="pln">a</span><span class="pun">ₙ</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>等价于</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> ⟨</span><var><span class="pln">a</span><span class="pun">₁</span></var><span class="pln">⟩
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> ⟨</span><var><span class="pln">a</span><span class="pun">₂</span></var><span class="pln">⟩
+            </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="roman"><span class="pun">…</span></span><span class="pln">
+                  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> ⟨</span><var><span class="pln">a</span><span class="pun">ₙ</span></var><span class="pln">⟩
+                        nil</span><span class="clo">)</span><span class="roman"><span class="pun">…</span></span><span class="clo">)))</span></pre></div>
+
+<p>Lisp 系统通常通过打印元素序列并将它们括在圆括号中来打印表。因此，<a href="#Figure-2_002e4">图2.4</a>中的数据对象打印为<code>(1 2 3 4)</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> one-through-four </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">))</span><span class="pln">
+
+one-through-four
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>注意不要将表达式<code>(list 1 2 3 4)</code>与表<code>(1 2 3 4)</code>混淆，后者是求值该表达式所得到的结果。试图求值表达式<code>(1 2 3 4)</code>时，当解释器试图将过程<code>1</code>应用于参数<code>2</code>、<code>3</code>、<code>4</code>时，会发出错误信号。</p>
+<p>我们可以把<code>car</code>看作选择表中的第一项，把<code>cdr</code>看作选择由除第一项之外的所有项组成的子表。嵌套应用<code>car</code>和<code>cdr</code>可以用来提取表中的第二项、第三项以及后续项。<a class="footnote_link" id="DOCF75" href="#FOOT75"><sup>75</sup></a>构造函数<code>cons</code>构造一个像原来那样的表，但在开头增加了一项。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">car</span><span class="pln"> one-through-four</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">1</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> one-through-four</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> one-through-four</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">2</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">10</span><span class="pln"> one-through-four</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">10</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> one-through-four</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">5</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>用于终止序对链的<code>nil</code>的值，可以看作一个没有元素的序列，即<a id="index-empty-list"></a><em>空表</em>。单词<a id="index-nil"></a><em>nil</em>是拉丁词<em>nihil</em>的缩略，意思是“无”。<a class="footnote_link" id="DOCF76" href="#FOOT76"><sup>76</sup></a></p>
+<a id="List-operations"></a>
+<h5 class="subsubheading">表操作</h5>
+
+<p>使用序对将元素序列表示为表，伴随着一些常规编程技术，即通过连续“<code>cdr</code>向下”遍历表来操作表。例如，过程<code>list-ref</code>以一个表和一个数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>为参数，返回表中的第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math>项。习惯上，表的元素从0开始编号。计算<code>list-ref</code>的方法如下：</p>
+<ul>
+<li>对于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>=</mo>
+    <mn>0</mn>
+  </mrow>
+</math>，<code>list-ref</code>应返回表的<code>car</code>。</li><li>否则，<code>list-ref</code>应返回表的<code>cdr</code>的第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>项。</li></ul>
+
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list-ref items n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> items</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">list-ref </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">)</span><span class="pln"> 
+                </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> squares 
+  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">9</span><span class="pln"> </span><span class="lit">16</span><span class="pln"> </span><span class="lit">25</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">list-ref squares </span><span class="lit">3</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">16</span></i>
+</pre></div>
+
+<p>我们经常需要<code>cdr</code>向下遍历整个表。为了帮助做到这一点，Scheme 包含一个基本谓词<code>null?</code>，它测试其参数是否为空表。过程<code>length</code>返回表中项的个数，它说明了这种典型的使用模式：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">length items</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? items</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">0</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">length </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> odds
+  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">7</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">length odds</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">4</span></i>
+</pre></div>
+
+<p>过程<code>length</code>实现了一个简单的递归方案。归约步骤是：</p>
+<ul>
+<li>任何表的<code>length</code>是1加上表的<code>cdr</code>的<code>length</code>。</li></ul>
+
+<p>这一步骤连续应用，直到达到基本情况：</p>
+<ul>
+<li>空表的<code>length</code>是0。</li></ul>
+
+<p>我们也可以用迭代风格计算<code>length</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">length items</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">length-iter a count</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? a</span><span class="clo">)</span><span class="pln">
+        count
+        </span><span class="opn">(</span><span class="pln">length-iter </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> a</span><span class="clo">)</span><span class="pln"> 
+                     </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> count</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">length-iter items </span><span class="lit">0</span><span class="clo">))</span></pre></div>
+
+<p>另一种常规编程技术是在<code>cdr</code>向下遍历表的同时“<code>cons</code>向上”构造答案表，如过程<code>append</code>所示，它接受两个表作为参数，并将它们的元素组合成一个新表：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">append squares odds</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">9</span><span class="pln"> </span><span class="lit">16</span><span class="pln"> </span><span class="lit">25</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">7</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">append odds squares</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">7</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">9</span><span class="pln"> </span><span class="lit">16</span><span class="pln"> </span><span class="lit">25</span><span class="clo">)</span></i>
+</pre></div>
+
+<p><code>Append</code>也是用递归方案实现的。要<code>append</code>表<code>list1</code>和<code>list2</code>，请执行以下操作：</p>
+<ul>
+<li>如果<code>list1</code>是空表，那么结果就是<code>list2</code>。</li><li>否则，将<code>list1</code>的<code>cdr</code>与<code>list2</code>用<code>append</code>连接，并将<code>list1</code>的<code>car</code>用<code>cons</code>添加到结果前面：</li></ul>
+
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">append list1 list2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? list1</span><span class="clo">)</span><span class="pln">
+      list2
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> list1</span><span class="clo">)</span><span class="pln"> 
+            </span><span class="opn">(</span><span class="pln">append </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> list1</span><span class="clo">)</span><span class="pln"> 
+                    list2</span><span class="clo">))))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e17"></a>习题2.17：</strong> 定义一个过程<code>last-pair</code>，它返回只包含给定（非空）表的最后一个元素的表：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">last-pair </span><span class="opn">(</span><span class="pln">list </span><span class="lit">23</span><span class="pln"> </span><span class="lit">72</span><span class="pln"> </span><span class="lit">149</span><span class="pln"> </span><span class="lit">34</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">34</span><span class="clo">)</span></i>
+</pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e18"></a>习题2.18：</strong> 定义一个过程<code>reverse</code>，它接受一个表作为参数，并返回一个包含相同元素但顺序相反的表：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">reverse </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">9</span><span class="pln"> </span><span class="lit">16</span><span class="pln"> </span><span class="lit">25</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">25</span><span class="pln"> </span><span class="lit">16</span><span class="pln"> </span><span class="lit">9</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span></i>
+</pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e19"></a>习题 2.19：</strong>考虑<a href="1_002e2_zh.xhtml#g_t1_002e2_002e2">1.2.2</a>中的换零钱程序。如果能够轻松地改变程序所使用的货币，那将会很好，例如，这样我们就可以计算换开一英镑的方式数。按照程序现在的写法，关于货币的知识一部分分布在过程<code>first-denomination</code>中，一部分分布在过程<code>count-change</code>中（它知道有五种美国硬币）。如果能够提供一个用于换零钱的硬币表，那将会更好。</p>
+<p>我们想要重写过程<code>cc</code>，使其第二个参数是一个要使用的硬币面额的表，而不是一个指定使用哪些硬币的整数。然后我们就可以用表来定义每种货币：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> us-coins 
+  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">50</span><span class="pln"> </span><span class="lit">25</span><span class="pln"> </span><span class="lit">10</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> uk-coins 
+  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">100</span><span class="pln"> </span><span class="lit">50</span><span class="pln"> </span><span class="lit">20</span><span class="pln"> </span><span class="lit">10</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">0.5</span><span class="clo">))</span></pre></div>
+
+<p>然后我们可以按如下方式调用<code>cc</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">cc </span><span class="lit">100</span><span class="pln"> us-coins</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">292</span></i>
+</pre></div>
+
+<p>要做到这一点，需要对程序<code>cc</code>稍作修改。它仍然具有相同的形式，但它将以不同的方式访问其第二个参数，如下所示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cc amount coin-values</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> amount </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="kwd">or</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> amount </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+             </span><span class="opn">(</span><span class="pln">no-more? coin-values</span><span class="clo">))</span><span class="pln"> 
+         </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+         </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cc 
+             amount
+             </span><span class="opn">(</span><span class="pln">except-first-denomination 
+              coin-values</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">cc 
+             </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> amount
+                </span><span class="opn">(</span><span class="pln">first-denomination 
+                 coin-values</span><span class="clo">))</span><span class="pln">
+             coin-values</span><span class="clo">)))))</span></pre></div>
+
+<p>用表结构上的基本操作来定义过程<code>first-denomination</code>、<code>except-first-denomination</code>和<code>no-more?</code>。表<code>coin-values</code>的顺序是否影响<code>cc</code>产生的结果？为什么或为什么不？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e20"></a>习题 2.20：</strong>过程<code>+</code>、<code>*</code>和<code>list</code>接受任意数量的参数。定义这类过程的一种方式是使用带有<a id="index-dotted_002dtail-notation"></a><em>点尾表示法</em>的<code>define</code>。在过程定义中，如果参数表在最后一个参数名之前有一个点，则表明当调用该过程时，初始参数（如果有的话）将像通常那样以初始实参为值，但最后一个参数的值将是包含任何剩余实参的<a id="index-list-2"></a><em>表</em>。例如，给定定义</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f x y </span><span class="pun">.</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> ⟨</span><var><span class="pln">body</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>过程<code>f</code>可以用两个或更多参数调用。如果我们求值</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">f </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">6</span><span class="clo">)</span></pre></div>
+
+<p>那么在<code>f</code>的主体中，<code>x</code>将是1，<code>y</code>将是2，而<code>z</code>将是表<code>(3 4 5 6)</code>。给定定义</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">g </span><span class="pun">.</span><span class="pln"> w</span><span class="clo">)</span><span class="pln"> ⟨</span><var><span class="pln">body</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>过程<code>g</code>可以用零个或更多参数调用。如果我们求值</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">g </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">6</span><span class="clo">)</span></pre></div>
+
+<p>那么在<code>g</code>的主体中，<code>w</code>将是表<code>(1 2 3 4 5
+6)</code>。<a class="footnote_link" id="DOCF77" href="#FOOT77"><sup>77</sup></a></p>
+<p>使用这种表示法编写一个过程<code>same-parity</code>，它接受一个或多个整数，并返回一个表，其中包含所有与第一个参数具有相同奇偶性的实参。例如，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">same-parity </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">6</span><span class="pln"> </span><span class="lit">7</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">7</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">same-parity </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">6</span><span class="pln"> </span><span class="lit">7</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">2</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">6</span><span class="clo">)</span></i>
+</pre></div>
+</blockquote>
+
+<a id="Mapping-over-lists"></a>
+<h5 class="subsubheading">对表进行映射</h5>
+
+<p>一个极其有用的操作是对表中的每个元素应用某种变换，并生成结果表。例如，下面的过程将表中的每个数按给定因子缩放：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">scale-list items factor</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? items</span><span class="clo">)</span><span class="pln">
+      nil
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> items</span><span class="clo">)</span><span class="pln"> factor</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">scale-list </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">)</span><span class="pln"> 
+                        factor</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">scale-list </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span><span class="pln"> </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">10</span><span class="pln"> </span><span class="lit">20</span><span class="pln"> </span><span class="lit">30</span><span class="pln"> </span><span class="lit">40</span><span class="pln"> </span><span class="lit">50</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>我们可以抽象出这个一般概念，并将其捕获为一种用高阶过程表达的常见模式，就像在<a href="1_002e3_zh.xhtml#g_t1_002e3">1.3</a>中那样。这里的高阶过程称为<code>map</code>。<code>Map</code>接受一个单参数过程和一个表作为参数，并返回一个表，其中包含将该过程应用于表中每个元素所产生的结果：<a class="footnote_link" id="DOCF78" href="#FOOT78"><sup>78</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">map proc items</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? items</span><span class="clo">)</span><span class="pln">
+      nil
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">proc </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> items</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">map proc </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">map abs </span><span class="opn">(</span><span class="pln">list </span><span class="lit">-10</span><span class="pln"> </span><span class="lit">2.5</span><span class="pln"> </span><span class="lit">-11.6</span><span class="pln"> </span><span class="lit">17</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">10</span><span class="pln"> </span><span class="lit">2.5</span><span class="pln"> </span><span class="lit">11.6</span><span class="pln"> </span><span class="lit">17</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">))</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">9</span><span class="pln"> </span><span class="lit">16</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>现在我们可以用<code>map</code>给出<code>scale-list</code>的新定义：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">scale-list items factor</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x factor</span><span class="clo">))</span><span class="pln">
+       items</span><span class="clo">))</span></pre></div>
+
+<p><code>Map</code>是一个重要的构造，不仅因为它捕获了一种常见模式，而且因为它在处理表时建立了一个更高的抽象层次。在<code>scale-list</code>的原始定义中，程序的递归结构将注意力引向对表的逐元素处理。用<code>map</code>定义<code>scale-list</code>抑制了那个层次的细节，并强调缩放将元素表变换为结果表。两个定义之间的区别不在于计算机执行不同的计算过程（它并没有），而在于我们以不同的方式思考该计算过程。实际上，<code>map</code>有助于建立一个抽象屏障，将变换表的过程的实现与如何提取和组合表元素的细节隔离开来。就像<a href="2_002e1_zh.xhtml#Figure-2_002e1">图2.1</a>中所示的屏障一样，这种抽象使我们能够灵活地改变序列实现的低层细节，同时保留将序列变换为序列的操作的概念框架。<a href="#g_t2_002e2_002e3">2.2.3</a>节扩展了这种将序列用作组织程序的框架的用法。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e21"></a>习题 2.21：</strong>过程<code>square-list</code>接受一个数字表作为参数，并返回这些数字的平方的表。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">square-list </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">9</span><span class="pln"> </span><span class="lit">16</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>下面是<code>square-list</code>的两个不同定义。通过填写缺失的表达式来完成这两个定义：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square-list items</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? items</span><span class="clo">)</span><span class="pln">
+      nil
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> ⟨</span><span class="pun">??</span><span class="pln">⟩ ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square-list items</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">map ⟨</span><span class="pun">??</span><span class="pln">⟩ ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e22"></a>习题 2.22：</strong>Louis Reasoner 试图重写<a href="#Exercise-2_002e21">习题 2.21</a>的第一个<code>square-list</code>过程，使其演化出一个迭代计算过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square-list items</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">iter things answer</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? things</span><span class="clo">)</span><span class="pln">
+        answer
+        </span><span class="opn">(</span><span class="pln">iter </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> things</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> things</span><span class="clo">))</span><span class="pln">
+                    answer</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">iter items nil</span><span class="clo">))</span></pre></div>
+
+<p>不幸的是，以这种方式定义<code>square-list</code>产生的答案表与期望的顺序相反。为什么？</p>
+<p>然后 Louis 试图通过交换<code>cons</code>的参数来修复他的错误：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square-list items</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">iter things answer</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? things</span><span class="clo">)</span><span class="pln">
+        answer
+        </span><span class="opn">(</span><span class="pln">iter </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> things</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> answer
+                    </span><span class="opn">(</span><span class="pln">square 
+                     </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> things</span><span class="clo">))))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">iter items nil</span><span class="clo">))</span></pre></div>
+
+<p>这也不起作用。解释原因。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e23"></a>习题 2.23：</strong>过程<code>for-each</code>与<code>map</code>类似。它接受一个过程和一个元素表作为参数。然而，<code>for-each</code>不是形成结果表，而只是从左到右依次将过程应用于每个元素。将过程应用于元素所返回的值根本不被使用——<code>for-each</code>与执行动作（例如打印）的过程一起使用。例如，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">for-each 
+ </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">newline</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">display x</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">list </span><span class="lit">57</span><span class="pln"> </span><span class="lit">321</span><span class="pln"> </span><span class="lit">88</span><span class="clo">))</span><span class="pln">
+
+</span><i><span class="lit">57</span></i><span class="pln">
+</span><i><span class="lit">321</span></i><span class="pln">
+</span><i><span class="lit">88</span></i>
+</pre></div>
+
+<p>调用<code>for-each</code>所返回的值（上面未展示）可以是任意的东西，例如真。给出<code>for-each</code>的一个实现。</p></blockquote>
+
+<a id="g_t2_002e2_002e2"></a>
+<a id="Hierarchical-Structures"></a>
+<h4 class="subsection"><span class="secnum">2.2.2</span><span class="sectitle">层次结构</span></h4>
+
+<p>用表表示序列的方式自然地推广到表示其元素本身也可以是序列的序列。例如，我们可以将由下式构造的对象<code>((1 2) 3 4)</code></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">))</span></pre></div>
+
+<p>视为一个包含三个项的表，其中第一项本身就是一个表，<code>(1 2)</code>。事实上，解释器打印结果的形式也表明了这一点。<a href="#Figure-2_002e5">图2.5</a>展示了用序对表示该结构的方式。</p>
+<figure class="float">
+<a id="Figure-2_002e5"></a>
+<object style="width: 51.89ex; height: 25.73ex;" data="fig/chap2/Fig2.5e.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 2.5：</strong>由<code>(cons (list 1 2) (list 3 4))</code>形成的结构。</p>
+</figcaption>
+</figure>
+
+<p>另一种思考元素为序列的序列的方式是将其视为<a id="index-trees"></a><em>树</em>。序列的元素是树的分支，而本身是序列的元素则是子树。<a href="#Figure-2_002e6">图 2.6</a>展示了<a href="#Figure-2_002e5">图 2.5</a>中的结构作为树来看的样子。</p>
+<figure class="float">
+<a id="Figure-2_002e6"></a>
+<object style="width: 15.02ex; height: 17.01ex;" data="fig/chap2/Fig2.6b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 2.6：</strong><a href="#Figure-2_002e5">图 2.5</a>中的表结构作为树来看的样子。</p>
+</figcaption>
+</figure>
+
+<p>递归是处理树结构的自然工具，因为我们通常可以将对树的操作归约为对其分支的操作，而这些操作又依次归约为对分支的分支的操作，如此下去，直到到达树的叶子。作为一个例子，比较<a href="#g_t2_002e2_002e1">2.2.1</a>中的<code>length</code>过程与<code>count-leaves</code>过程，后者返回一棵树的叶子总数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)))</span></pre></div>
+
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">length x</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">3</span></i>
+</pre></div>
+
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">count-leaves x</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">4</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">list x x</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(((</span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span><span class="pln"> </span><span class="opn">((</span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">))</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">length </span><span class="opn">(</span><span class="pln">list x x</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">2</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">count-leaves </span><span class="opn">(</span><span class="pln">list x x</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">8</span></i>
+</pre></div>
+
+<p>为了实现<code>count-leaves</code>，回想计算<code>length</code>的递归方案：</p>
+<ul>
+<li>表<code>x</code>的<code>Length</code>是1加上<code>x</code>的<code>cdr</code>的<code>length</code>。</li><li>空表的<code>Length</code>是0。</li></ul>
+
+<p><code>Count-leaves</code>类似。空表的值相同：</p>
+<ul>
+<li>空表的<code>Count-leaves</code>是0。</li></ul>
+
+<p>但在归约步骤中，当我们剥去表的<code>car</code>时，必须考虑到<code>car</code>本身可能是一棵树，其叶子需要计数。因此，适当的归约步骤是</p>
+<ul>
+<li>树<code>x</code>的<code>Count-leaves</code>是<code>x</code>的<code>car</code>的<code>count-leaves</code>加上<code>x</code>的<code>cdr</code>的<code>count-leaves</code>。</li></ul>
+
+<p>最后，通过取<code>car</code>我们到达实际的叶子，因此我们需要另一个基本情况：</p>
+<ul>
+<li>叶子的<code>Count-leaves</code>是1。</li></ul>
+
+<p>为了帮助编写树上的递归过程，Scheme 提供了基本谓词<code>pair?</code>，它测试其参数是否为一个序对。以下是完整的过程：<a class="footnote_link" id="DOCF79" href="#FOOT79"><sup>79</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">count-leaves x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">null? x</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">not </span><span class="opn">(</span><span class="pln">pair? x</span><span class="clo">))</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">count-leaves </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">count-leaves </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">))))))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e24"></a>习题 2.24：</strong>假设我们求值表达式<code>(list 1 (list 2 (list 3 4)))</code>。给出解释器打印的结果、相应的盒指针结构，以及将其解释为树的结果（如<a href="#Figure-2_002e6">图 2.6</a>中那样）。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e25"></a>习题 2.25：</strong>给出<code>car</code>和<code>cdr</code>的组合，从以下每个表中选出7：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="opn">(</span><span class="lit">5</span><span class="pln"> </span><span class="lit">7</span><span class="clo">)</span><span class="pln"> </span><span class="lit">9</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">((</span><span class="lit">7</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="lit">2</span><span class="pln"> </span><span class="opn">(</span><span class="lit">3</span><span class="pln"> </span><span class="opn">(</span><span class="lit">4</span><span class="pln"> </span><span class="opn">(</span><span class="lit">5</span><span class="pln"> </span><span class="opn">(</span><span class="lit">6</span><span class="pln"> </span><span class="lit">7</span><span class="clo">))))))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e26"></a>习题 2.26：</strong>假设我们定义<code>x</code>和<code>y</code>为两个表：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> y </span><span class="opn">(</span><span class="pln">list </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">6</span><span class="clo">))</span></pre></div>
+
+<p>解释器在求值以下每个表达式时打印的结果是什么：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">append x y</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">list x y</span><span class="clo">)</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e27"></a>习题 2.27：</strong>修改你在<a href="#Exercise-2_002e18">习题 2.18</a>中的<code>reverse</code>过程，以产生一个<code>deep-reverse</code>过程，它接受一个表作为参数，并返回其元素被反转且所有子表也被深度反转的表作为值。例如，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x 
+  </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)))</span><span class="pln">
+
+x
+</span><i><span class="opn">((</span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">))</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">reverse x</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">((</span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">))</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">deep-reverse x</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">((</span><span class="lit">4</span><span class="pln"> </span><span class="lit">3</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">2</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))</span></i>
+</pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e28"></a>习题 2.28：</strong>编写一个过程<code>fringe</code>，它接受一棵树（表示为表）作为参数，并返回一个表，其元素是树的所有叶子，按从左到右的顺序排列。例如，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x 
+  </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">fringe x</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">fringe </span><span class="opn">(</span><span class="pln">list x x</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span></i>
+</pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e29"></a>习题 2.29：</strong>一个二元活动雕塑由两个分支组成，一个左分支和一个右分支。每个分支是一根一定长度的杆，从上面悬挂一个重物或另一个二元活动雕塑。我们可以使用复合数据来表示一个二元活动雕塑，通过从两个分支构造它（例如，使用<code>list</code>）：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-mobile left right</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list left right</span><span class="clo">))</span></pre></div>
+
+<p>一个分支由一个<code>length</code>（必须是数字）和一个<code>structure</code>构成，后者可以是一个数字（表示一个简单重物）或另一个活动雕塑：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-branch length structure</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list length structure</span><span class="clo">))</span></pre></div>
+
+<ol>
+<li>编写相应的选择函数<code>left-branch</code>和<code>right-branch</code>，它们返回活动雕塑的分支，以及<code>branch-length</code>和<code>branch-structure</code>，它们返回分支的组成部分。</li><li>使用你的选择函数，定义一个过程<code>total-weight</code>，它返回活动雕塑的总重量。</li><li>如果一个活动雕塑的左上分支施加的力矩等于右上分支施加的力矩（即，如果左杆的长度乘以悬挂在该杆上的重量等于右侧相应的乘积），并且悬挂在其分支上的每个子活动雕塑都是平衡的，则称该活动雕塑是<a id="index-balanced"></a><em>平衡的</em>。设计一个谓词来测试一个二元活动雕塑是否平衡。</li><li>假设我们改变活动雕塑的表示，使得构造函数为<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-mobile left right</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> left right</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-branch length structure</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> length structure</span><span class="clo">))</span></pre></div>
+
+<p>你需要改变多少程序才能转换到新的表示？</p>
+</li></ol>
+</blockquote>
+
+<a id="Mapping-over-trees"></a>
+<h5 class="subsubheading">树上的映射</h5>
+
+<p>正如<code>map</code>是处理序列的强大抽象一样，<code>map</code>与递归一起是处理树的强大抽象。例如，<code>scale-tree</code>过程类似于<a href="#g_t2_002e2_002e1">2.2.1</a>中的<code>scale-list</code>，它接受一个数字因子和一棵叶子为数字的树作为参数。它返回一棵形状相同的树，其中每个数字都乘以该因子。<code>scale-tree</code>的递归方案类似于<code>count-leaves</code>的方案：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">scale-tree tree factor</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">null? tree</span><span class="clo">)</span><span class="pln"> nil</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">not </span><span class="opn">(</span><span class="pln">pair? tree</span><span class="clo">))</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> tree factor</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+         </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">scale-tree </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> tree</span><span class="clo">)</span><span class="pln"> 
+                           factor</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">scale-tree </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> tree</span><span class="clo">)</span><span class="pln"> 
+                           factor</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">scale-tree </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> 
+                  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">2</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span><span class="pln"> 
+                  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">6</span><span class="pln"> </span><span class="lit">7</span><span class="clo">))</span><span class="pln">
+            </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+
+</span><i><span class="opn">(</span><span class="lit">10</span><span class="pln"> </span><span class="opn">(</span><span class="lit">20</span><span class="pln"> </span><span class="opn">(</span><span class="lit">30</span><span class="pln"> </span><span class="lit">40</span><span class="clo">)</span><span class="pln"> </span><span class="lit">50</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">60</span><span class="pln"> </span><span class="lit">70</span><span class="clo">))</span></i>
+</pre></div>
+
+<p>实现<code>scale-tree</code>的另一种方法是将树视为子树的序列并使用<code>map</code>。我们在序列上映射，依次缩放每个子树，并返回结果表。在基本情况中，即树是叶子时，我们简单地乘以因子：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">scale-tree tree factor</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sub-tree</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pair? sub-tree</span><span class="clo">)</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">scale-tree sub-tree factor</span><span class="clo">)</span><span class="pln">
+             </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> sub-tree factor</span><span class="clo">)))</span><span class="pln">
+       tree</span><span class="clo">))</span></pre></div>
+
+<p>许多树操作可以通过序列操作和递归的类似组合来实现。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e30"></a>习题 2.30：</strong>定义一个过程<code>square-tree</code>，类似于<a href="#Exercise-2_002e21">习题 2.21</a>中的<code>square-list</code>过程。也就是说，<code>square-tree</code>的行为应如下：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">square-tree
+ </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">list </span><span class="lit">2</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">)</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">list </span><span class="lit">6</span><span class="pln"> </span><span class="lit">7</span><span class="clo">)))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="lit">4</span><span class="pln"> </span><span class="opn">(</span><span class="lit">9</span><span class="pln"> </span><span class="lit">16</span><span class="clo">)</span><span class="pln"> </span><span class="lit">25</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="lit">36</span><span class="pln"> </span><span class="lit">49</span><span class="clo">))</span></i>
+</pre></div>
+
+<p>直接定义<code>square-tree</code>（即，不使用任何高阶过程），也通过使用<code>map</code>和递归来定义。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e31"></a>习题 2.31：</strong>抽象你对<a href="#Exercise-2_002e30">习题 2.30</a>的答案，以产生一个过程<code>tree-map</code>，使得<code>square-tree</code>可以定义为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square-tree tree</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">tree-map square tree</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e32"></a>习题 2.32：</strong>我们可以将一个集合表示为一个由互不相同的元素组成的表，并且我们可以将该集合的所有子集表示为一个表的表。例如，如果集合是<code>(1 2 3)</code>，那么所有子集的集合是<code>(() (3) (2) (2 3) (1) (1 3) (1 2) (1 2 3))</code>。完成以下生成集合的所有子集的过程的定义，并给出清晰的解释说明它为什么有效：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">subsets s</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? s</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">list nil</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">rest </span><span class="opn">(</span><span class="pln">subsets </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> s</span><span class="clo">))))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">append rest </span><span class="opn">(</span><span class="pln">map ⟨</span><span class="pun">??</span><span class="pln">⟩ rest</span><span class="clo">)))))</span></pre></div>
+</blockquote>
+
+<a id="g_t2_002e2_002e3"></a>
+<a id="Sequences-as-Conventional-Interfaces"></a>
+<h4 class="subsection"><span class="secnum">2.2.3</span><span class="sectitle">序列作为约定接口</span></h4>
+
+<p>在处理复合数据时，我们强调了数据抽象如何使我们能够设计程序而不陷入数据表示的细节，以及抽象如何为我们保留了尝试其他表示的灵活性。在本节中，我们介绍另一种处理数据结构的强大设计原则——使用<a id="index-conventional-interfaces-1"></a><em>约定接口</em>。</p>
+<p>在<a href="1_002e3_zh.xhtml#g_t1_002e3">1.3</a>中，我们看到了作为高阶过程实现的程序抽象如何捕捉处理数值数据的程序中的常见模式。我们为处理复合数据制定类似操作的能力，关键取决于我们操纵数据结构的方式。例如，考虑以下过程，它类似于<a href="#g_t2_002e2_002e2">2.2.2</a>中的<code>count-leaves</code>过程，该过程接受一棵树作为参数，并计算其中为奇数的叶子的平方和：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum-odd-squares tree</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">null? tree</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">not </span><span class="opn">(</span><span class="pln">pair? tree</span><span class="clo">))</span><span class="pln">
+         </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">odd? tree</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square tree</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum-odd-squares 
+                  </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> tree</span><span class="clo">))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">sum-odd-squares 
+                  </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> tree</span><span class="clo">))))))</span></pre></div>
+
+<p>从表面上看，这个过程与下面这个非常不同，后者构造一个包含所有偶数斐波那契数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>k</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的表，其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>小于或等于给定的整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">even-fibs n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">next k</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> k n</span><span class="clo">)</span><span class="pln">
+        nil
+        </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">f </span><span class="opn">(</span><span class="pln">fib k</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">even? f</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> f </span><span class="opn">(</span><span class="pln">next </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> k </span><span class="lit">1</span><span class="clo">)))</span><span class="pln">
+              </span><span class="opn">(</span><span class="pln">next </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> k </span><span class="lit">1</span><span class="clo">))))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">next </span><span class="lit">0</span><span class="clo">))</span></pre></div>
+
+<p>尽管这两个过程在结构上非常不同，但对这两个计算的更抽象描述揭示了大量的相似性。第一个程序</p>
+<ul>
+<li>枚举一棵树的叶子；</li><li>过滤它们，选出奇数；</li><li>对每个选中的求平方；并且</li><li>使用<code>+</code>累加结果，从0开始。</li></ul>
+
+<p>第二个程序</p>
+<ul>
+<li>枚举从0到<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>的整数；</li><li>计算每个整数的斐波那契数；</li><li>过滤它们，选出偶数；并且</li><li>使用<code>cons</code>累加结果，从空表开始。</li></ul>
+
+<p>信号处理工程师会自然而然地用流经级联阶段的信号来概念化这些计算过程，每个阶段实现程序计划的一部分，如<a href="#Figure-2_002e7">图2.7</a>所示。在<code>sum-odd-squares</code>中，我们从一个<a id="index-enumerator"></a><em>枚举器</em>开始，它生成一个由给定树的叶子组成的“信号”。这个信号通过一个<a id="index-filter-1"></a><em>过滤器</em>，它消除除奇数元素之外的所有元素。得到的信号又通过一个<a id="index-map"></a><em>映射</em>，这是一个“转换器”，将<code>square</code>过程应用于每个元素。映射的输出然后被送入一个<a id="index-accumulator"></a><em>累加器</em>，它使用<code>+</code>组合元素，从初始的0开始。<code>even-fibs</code>的计划是类似的。</p>
+<figure class="float">
+<a id="Figure-2_002e7"></a>
+<object style="width: 57.93ex; height: 16.23ex;" data="fig/chap2/Fig2.7e.std.svg" type="image/svg+xml">SVG</object> 
+
+<figcaption class="float-caption">
+<p><strong>图2.7：</strong>过程<code>sum-odd-squares</code>（上）和<code>even-fibs</code>（下）的信号流计划揭示了两个程序之间的共性。</p>
+</figcaption>
+</figure>
+
+<p>不幸的是，上面的两个过程定义未能展示这种信号流结构。例如，如果我们检查<code>sum-odd-squares</code>过程，我们发现枚举部分由<code>null?</code>和<code>pair?</code>测试实现，部分由过程的树形递归结构实现。类似地，累加部分在测试中，部分在递归中使用的加法中。一般来说，两个过程中都没有与信号流描述中的元素相对应的独立部分。我们的两个过程以不同的方式分解计算，将枚举分散在程序中，并与映射、过滤和累加混合在一起。如果我们能够组织程序，使信号流结构在我们编写的过程中显现出来，这将增加所得代码的概念清晰度。</p>
+<a id="Sequence-Operations"></a>
+<h5 class="subsubheading">序列操作</h5>
+
+<p>组织程序以更清晰地反映信号流结构的关键是专注于从一个阶段流到下一个阶段的“信号”。如果我们将这些信号表示为表，那么我们可以使用表操作来实现每个阶段的处理。例如，我们可以使用<a href="#g_t2_002e2_002e1">2.2.1</a>中的<code>map</code>过程来实现信号流图的映射阶段：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">map square </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">9</span><span class="pln"> </span><span class="lit">16</span><span class="pln"> </span><span class="lit">25</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>过滤一个序列以仅选择满足给定谓词的那些元素，可以通过以下方式实现</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">filter predicate sequence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">null? sequence</span><span class="clo">)</span><span class="pln"> nil</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">predicate </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> sequence</span><span class="clo">))</span><span class="pln">
+         </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> sequence</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">filter predicate 
+                       </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> sequence</span><span class="clo">))))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">  </span><span class="opn">(</span><span class="pln">filter predicate 
+                       </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> sequence</span><span class="clo">)))))</span></pre></div>
+
+<p>例如，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">filter odd? </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>累加可以通过以下方式实现</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">accumulate op initial sequence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? sequence</span><span class="clo">)</span><span class="pln">
+      initial
+      </span><span class="opn">(</span><span class="pln">op </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> sequence</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">accumulate op 
+                      initial 
+                      </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> sequence</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">accumulate </span><span class="pun">+</span><span class="pln"> </span><span class="lit">0</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">15</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">accumulate </span><span class="pun">*</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">120</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">accumulate </span><span class="kwd">cons</span><span class="pln"> nil </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>实现信号流图所剩下的全部工作就是枚举要处理的元素序列。对于<code>even-fibs</code>，我们需要生成给定范围内的整数序列，我们可以如下进行：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">enumerate-interval low high</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> low high</span><span class="clo">)</span><span class="pln">
+      nil
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> low 
+            </span><span class="opn">(</span><span class="pln">enumerate-interval 
+             </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> low </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> 
+             high</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">enumerate-interval </span><span class="lit">2</span><span class="pln"> </span><span class="lit">7</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">6</span><span class="pln"> </span><span class="lit">7</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>要枚举一棵树的叶子，我们可以使用<a class="footnote_link" id="DOCF80" href="#FOOT80"><sup>80</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">enumerate-tree tree</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">null? tree</span><span class="clo">)</span><span class="pln"> nil</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">not </span><span class="opn">(</span><span class="pln">pair? tree</span><span class="clo">))</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list tree</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pln">append 
+               </span><span class="opn">(</span><span class="pln">enumerate-tree </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> tree</span><span class="clo">))</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">enumerate-tree </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> tree</span><span class="clo">))))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">enumerate-tree </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">2</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">))</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>现在我们可以像信号流图中那样重新表述<code>sum-odd-squares</code>和<code>even-fibs</code>。对于<code>sum-odd-squares</code>，我们枚举树的叶子序列，过滤以仅保留序列中的奇数，对每个元素求平方，并对结果求和：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum-odd-squares tree</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate 
+   </span><span class="pun">+</span><span class="pln">
+   </span><span class="lit">0</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">map square
+        </span><span class="opn">(</span><span class="pln">filter odd?
+                </span><span class="opn">(</span><span class="pln">enumerate-tree tree</span><span class="clo">)))))</span></pre></div>
+
+<p>对于<code>even-fibs</code>，我们枚举从0到<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>的整数，为每个整数生成斐波那契数，过滤得到的序列以仅保留偶数元素，并将结果累加到一个表中：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">even-fibs n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate 
+   </span><span class="kwd">cons</span><span class="pln">
+   nil
+   </span><span class="opn">(</span><span class="pln">filter even?
+           </span><span class="opn">(</span><span class="pln">map fib
+                </span><span class="opn">(</span><span class="pln">enumerate-interval </span><span class="lit">0</span><span class="pln"> n</span><span class="clo">)))))</span></pre></div>
+
+<p>将程序表达为序列操作的价值在于，这有助于我们进行模块化的程序设计，即通过组合相对独立的部件来构造设计。我们可以通过提供标准组件库以及用于以灵活方式连接组件的约定接口来鼓励模块化设计。</p>
+<p>模块化构造是控制工程设计复杂性的有力策略。例如，在实际的信号处理应用中，设计者经常通过级联从标准化的滤波器和转换器系列中选择的元件来构建系统。类似地，序列操作为我们提供了一组标准程序元素的库，我们可以混合和匹配这些元素。例如，我们可以在一个构造前 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+  </mrow>
+</math> 个 斐波那契数的平方的表的程序中重用来自 <code>sum-odd-squares</code> 和 <code>even-fibs</code> 过程的片段：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list-fib-squares n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate 
+   </span><span class="kwd">cons</span><span class="pln">
+   nil
+   </span><span class="opn">(</span><span class="pln">map square
+        </span><span class="opn">(</span><span class="pln">map fib
+             </span><span class="opn">(</span><span class="pln">enumerate-interval </span><span class="lit">0</span><span class="pln"> n</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">list-fib-squares </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">0</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">9</span><span class="pln"> </span><span class="lit">25</span><span class="pln"> </span><span class="lit">64</span><span class="pln"> </span><span class="lit">169</span><span class="pln"> </span><span class="lit">441</span><span class="pln"> </span><span class="lit">1156</span><span class="pln"> </span><span class="lit">3025</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>我们可以重新排列这些片段，并将它们用于计算一个序列中奇数的平方的乘积：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">product-of-squares-of-odd-elements
+   sequence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate 
+   </span><span class="pun">*</span><span class="pln">
+   </span><span class="lit">1</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">map square </span><span class="opn">(</span><span class="pln">filter odd? sequence</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">product-of-squares-of-odd-elements 
+ </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">225</span></i>
+</pre></div>
+
+<p>我们也可以用序列操作来表述传统的数据处理应用。假设我们有一个人员记录的序列，我们想要找到薪水最高的程序员的薪水。假设我们有一个选择函数 <code>salary</code> 返回一条记录的薪水，以及一个谓词 <code>programmer?</code> 测试一条记录是否是程序员的。那么我们可以写</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">salary-of-highest-paid-programmer
+   records</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate 
+   max
+   </span><span class="lit">0</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">map salary
+        </span><span class="opn">(</span><span class="pln">filter programmer? records</span><span class="clo">))))</span></pre></div>
+
+<p>这些例子仅仅暗示了可以表示为序列操作的广泛操作范围。<a class="footnote_link" id="DOCF81" href="#FOOT81"><sup>81</sup></a></p>
+<p>序列，在这里实现为表，作为一种约定接口，允许我们组合处理模块。此外，当我们统一地将结构表示为序列时，我们将程序中的数据结构依赖局部化到少数几个序列操作中。通过改变这些操作，我们可以试验序列的替代表示，同时保持程序的整体设计不变。我们将在 <a href="3_002e5_zh.xhtml#g_t3_002e5">3.5</a> 中利用这一能力，那时我们将序列处理范式推广到允许无限序列。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e33"></a>习题 2.33：</strong> 填写缺失的表达式，以完成以下一些基本表操作作为累积的定义：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">map p sequence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">)</span><span class="pln"> 
+              nil sequence</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">append seq1 seq2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate </span><span class="kwd">cons</span><span class="pln"> ⟨</span><span class="pun">??</span><span class="pln">⟩ ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">length sequence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate ⟨</span><span class="pun">??</span><span class="pln">⟩ </span><span class="lit">0</span><span class="pln"> sequence</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e34"></a>习题 2.34：</strong> 在给定值 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 处计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 的多项式可以表述为累积。我们使用一个称为 <a id="index-Horner_0027s-rule"></a> <em>Horner 法则</em> 的著名算法来计算多项式 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mi>n</mi>
+    </msub>
+    <msup>
+      <mi>x</mi>
+      <mi>n</mi>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>n</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <msup>
+      <mi>x</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>n</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mo>⋯<!-- ⋯ --></mo>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mn>1</mn>
+    </msub>
+    <mi>x</mi>
+  </mrow>
+  <mo>+</mo>
+  <msub>
+    <mi>a</mi>
+    <mn>0</mn>
+  </msub>
+</math>，该算法将计算结构化为 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mo>…<!-- … --></mo>
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>a</mi>
+      <mi>n</mi>
+    </msub>
+    <mi>x</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>n</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo stretchy="false">)</mo>
+    <mi>x</mi>
+  </mrow>
+  <mo>+</mo>
+  <mo>⋯<!-- ⋯ --></mo>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mn>1</mn>
+    </msub>
+    <mo stretchy="false">)</mo>
+    <mi>x</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mn>0</mn>
+    </msub>
+    <mo>.</mo>
+  </mrow>
+</math> 换句话说，我们从 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mi>n</mi>
+  </msub>
+</math> 开始，乘以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>，加上 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>n</mi>
+      <mo>−<!-- − --></mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+</math>，乘以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>，依此类推，直到我们到达 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mn>0</mn>
+  </msub>
+</math>。<a class="footnote_link" id="DOCF82" href="#FOOT82"><sup>82</sup></a></p>
+<p>填写以下模板，以产生一个使用 Horner 法则计算多项式的过程。假设多项式的系数排列在一个序列中，从 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mn>0</mn>
+  </msub>
+</math> 到 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mi>n</mi>
+  </msub>
+</math>。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">horner-eval x coefficient-sequence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate 
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">this-coeff higher-terms</span><span class="clo">)</span><span class="pln">
+     ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+   </span><span class="lit">0</span><span class="pln">
+   coefficient-sequence</span><span class="clo">))</span></pre></div>
+
+<p>例如，要在 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo>=</mo>
+    <mn>2</mn>
+  </mrow>
+</math> 处计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1</mn>
+    <mo>+</mo>
+    <mn>3</mn>
+    <mi>x</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>5</mn>
+    <msup>
+      <mi>x</mi>
+      <mn>3</mn>
+    </msup>
+    <mo>+</mo>
+    <msup>
+      <mi>x</mi>
+      <mn>5</mn>
+    </msup>
+  </mrow>
+</math>，你会求值</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">horner-eval </span><span class="lit">2</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">0</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">0</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e35"></a>习题 2.35：</strong> 将 <a href="#g_t2_002e2_002e2">2.2.2</a> 中的 <code>count-leaves</code> 重新定义为累积：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">count-leaves t</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate ⟨</span><span class="pun">??</span><span class="pln">⟩ ⟨</span><span class="pun">??</span><span class="pln">⟩ </span><span class="opn">(</span><span class="pln">map ⟨</span><span class="pun">??</span><span class="pln">⟩ ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">)))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e36"></a>习题 2.36：</strong> 过程 <code>accumulate-n</code> 与 <code>accumulate</code> 类似，除了它接受一个序列的序列作为第三个参数，这些序列都假定具有相同数量的元素。它将指定的累积过程应用于组合所有序列的第一个元素、所有序列的第二个元素，等等，并返回结果的序列。例如，如果 <code>s</code> 是一个包含四个序列的序列，<code>((1 2 3) (4 5 6) (7 8 9) (10 11
+12)),</code> 那么 <code>(accumulate-n + 0 s)</code> 的值应该是序列 <code>(22 26 30)</code>。填写以下 <code>accumulate-n</code> 定义中缺失的表达式：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">accumulate-n op init seqs</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> seqs</span><span class="clo">))</span><span class="pln">
+      nil
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">accumulate op init ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">accumulate-n op init ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">))))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e37"></a>习题 2.37：</strong> 假设我们将向量 <b>v</b> = <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>v</mi>
+    <mi>i</mi>
+  </msub>
+  <mo stretchy="false">)</mo>
+</mrow>
+</math> 表示为数的序列，将矩阵 <b>m</b> = <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>m</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>i</mi>
+      <mi>j</mi>
+    </mrow>
+  </msub>
+  <mo stretchy="false">)</mo>
+</mrow>
+</math> 表示为向量的序列（矩阵的行）。例如，矩阵 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow>
+    <mo>(</mo>
+    <mtable rowspacing="4pt" columnspacing="1em">
+      <mtr>
+        <mtd>
+          <mn>1</mn>
+        </mtd>
+        <mtd>
+          <mn>2</mn>
+        </mtd>
+        <mtd>
+          <mn>3</mn>
+        </mtd>
+        <mtd>
+          <mn>4</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>4</mn>
+        </mtd>
+        <mtd>
+          <mn>5</mn>
+        </mtd>
+        <mtd>
+          <mn>6</mn>
+        </mtd>
+        <mtd>
+          <mn>6</mn>
+        </mtd>
+      </mtr>
+      <mtr>
+        <mtd>
+          <mn>6</mn>
+        </mtd>
+        <mtd>
+          <mn>7</mn>
+        </mtd>
+        <mtd>
+          <mn>8</mn>
+        </mtd>
+        <mtd>
+          <mn>9</mn>
+        </mtd>
+      </mtr>
+    </mtable>
+    <mo>)</mo>
+  </mrow>
+</math> 表示为序列 <code>((1 2 3 4) (4 5 6 6) (6 7 8 9))</code>。使用这种表示，我们可以使用序列操作简洁地表达基本的矩阵和向量操作。这些操作（在任何关于矩阵代数的书中都有描述）如下：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+<mtable columnalign="right left" rowspacing=".5em" columnspacing="thickmathspace">
+  <mtr>
+    <mtd>
+      <mtext>(dot-product v w)</mtext>
+    </mtd>
+    <mtd>
+      <mtext>returns the sum</mtext>
+      <mspace width="thickmathspace"/>
+      <msub>
+        <mi mathvariant="normal">Σ<!-- Σ --></mi>
+        <mi>i</mi>
+      </msub>
+      <msub>
+        <mi>v</mi>
+        <mi>i</mi>
+      </msub>
+      <msub>
+        <mi>w</mi>
+        <mi>i</mi>
+      </msub>
+      <mo>;</mo>
+    </mtd>
+  </mtr>
+  <mtr>
+    <mtd>
+      <mtext>(matrix-*-vector m v)</mtext>
+    </mtd>
+    <mtd>
+      <mtext>returns the vector</mtext>
+      <mspace width="thickmathspace"/>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi mathvariant="bold">t</mi>
+      </mrow>
+      <mo>,</mo>
+    </mtd>
+  </mtr>
+  <mtr>
+    <mtd/>
+    <mtd>
+      <mtext>where</mtext>
+      <mspace width="thickmathspace"/>
+      <msub>
+        <mi>t</mi>
+        <mi>i</mi>
+      </msub>
+      <mo>=</mo>
+      <msub>
+        <mi mathvariant="normal">Σ<!-- Σ --></mi>
+        <mi>j</mi>
+      </msub>
+      <msub>
+        <mi>m</mi>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mi>i</mi>
+          <mi>j</mi>
+        </mrow>
+      </msub>
+      <msub>
+        <mi>v</mi>
+        <mi>j</mi>
+      </msub>
+      <mo>;</mo>
+    </mtd>
+  </mtr>
+  <mtr>
+    <mtd>
+      <mtext>(matrix-*-matrix m n)</mtext>
+    </mtd>
+    <mtd>
+      <mtext>returns the matrix</mtext>
+      <mspace width="thickmathspace"/>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi mathvariant="bold">p</mi>
+      </mrow>
+      <mo>,</mo>
+    </mtd>
+  </mtr>
+  <mtr>
+    <mtd/>
+    <mtd>
+      <mtext>where</mtext>
+      <mspace width="thickmathspace"/>
+      <msub>
+        <mi>p</mi>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mi>i</mi>
+          <mi>j</mi>
+        </mrow>
+      </msub>
+      <mo>=</mo>
+      <msub>
+        <mi mathvariant="normal">Σ<!-- Σ --></mi>
+        <mi>k</mi>
+      </msub>
+      <msub>
+        <mi>m</mi>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mi>i</mi>
+          <mi>k</mi>
+        </mrow>
+      </msub>
+      <msub>
+        <mi>n</mi>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mi>k</mi>
+          <mi>j</mi>
+        </mrow>
+      </msub>
+      <mo>;</mo>
+    </mtd>
+  </mtr>
+  <mtr>
+    <mtd>
+      <mtext>(transpose m)</mtext>
+    </mtd>
+    <mtd>
+      <mtext>returns the matrix</mtext>
+      <mspace width="thickmathspace"/>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi mathvariant="bold">n</mi>
+      </mrow>
+      <mo>,</mo>
+    </mtd>
+  </mtr>
+  <mtr>
+    <mtd/>
+    <mtd>
+      <mtext>where</mtext>
+      <mspace width="thickmathspace"/>
+      <msub>
+        <mi>n</mi>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mi>i</mi>
+          <mi>j</mi>
+        </mrow>
+      </msub>
+      <mo>=</mo>
+      <msub>
+        <mi>m</mi>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mi>j</mi>
+          <mi>i</mi>
+        </mrow>
+      </msub>
+      <mo>.</mo>
+    </mtd>
+  </mtr>
+</mtable>
+</math> 我们可以将点积定义为<a class="footnote_link" id="DOCF83" href="#FOOT83"><sup>83</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dot-product v w</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate </span><span class="pun">+</span><span class="pln"> </span><span class="lit">0</span><span class="pln"> </span><span class="opn">(</span><span class="pln">map </span><span class="pun">*</span><span class="pln"> v w</span><span class="clo">)))</span></pre></div>
+
+<p>填写以下过程中缺失的表达式，以计算其他矩阵操作。（过程 <code>accumulate-n</code> 定义在 <a href="#Exercise-2_002e36">习题 2.36</a> 中。）</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">matrix-</span><span class="pun">*-</span><span class="pln">vector m v</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">map ⟨</span><span class="pun">??</span><span class="pln">⟩ m</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">transpose mat</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate-n ⟨</span><span class="pun">??</span><span class="pln">⟩ ⟨</span><span class="pun">??</span><span class="pln">⟩ mat</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">matrix-</span><span class="pun">*-</span><span class="pln">matrix m n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">cols </span><span class="opn">(</span><span class="pln">transpose n</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">map ⟨</span><span class="pun">??</span><span class="pln">⟩ m</span><span class="clo">)))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e38"></a>习题 2.38：</strong> 过程 <code>accumulate</code> 也称为 <code>fold-right</code>，因为它将序列的第一个元素与组合所有右边元素的结果组合起来。还有一个 <code>fold-left</code>，它与 <code>fold-right</code> 类似，除了它以相反的方向组合元素：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fold-left op initial sequence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">iter result rest</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? rest</span><span class="clo">)</span><span class="pln">
+        result
+        </span><span class="opn">(</span><span class="pln">iter </span><span class="opn">(</span><span class="pln">op result </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> rest</span><span class="clo">))</span><span class="pln">
+              </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> rest</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">iter initial sequence</span><span class="clo">))</span></pre></div>
+
+<p>以下表达式的值是什么</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">fold-right </span><span class="pun">/</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">fold-left  </span><span class="pun">/</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">fold-right list nil </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">fold-left  list nil </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="clo">))</span></pre></div>
+
+<p>给出一个 <code>op</code> 应满足的性质，以保证 <code>fold-right</code> 和 <code>fold-left</code> 对任何序列都产生相同的值。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e39"></a>习题 2.39：</strong> 用 <a href="#Exercise-2_002e38">习题 2.38</a> 中的 <code>fold-right</code> 和 <code>fold-left</code> 完成以下 <code>reverse</code>（<a href="#Exercise-2_002e18">习题 2.18</a>）的定义：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reverse sequence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fold-right 
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">)</span><span class="pln"> nil sequence</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reverse sequence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fold-left 
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">)</span><span class="pln"> nil sequence</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+<a id="Nested-Mappings"></a>
+<h5 class="subsubheading">嵌套映射</h5>
+
+<p>我们可以扩展序列范式，以包含许多通常用嵌套循环表达的计算。<a class="footnote_link" id="DOCF84" href="#FOOT84"><sup>84</sup></a> 考虑这个问题：给定一个正整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，找到所有不同的正整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>j</mi>
+</math> 的有序对，其中 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1</mn>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>j</mi>
+  </mrow>
+  <mo>&lt;</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>n</mi>
+  </mrow>
+</math>，使得 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>+</mo>
+    <mi>j</mi>
+  </mrow>
+</math> 是素数。例如，如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是 6，那么这些对如下：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="center center center center center center center center" rowspacing="4pt" columnspacing="1em" rowlines="none solid" columnlines="solid none none none none none none">
+    <mtr>
+      <mtd>
+        <mi>i</mi>
+      </mtd>
+      <mtd>
+        <mn>2</mn>
+      </mtd>
+      <mtd>
+        <mn>3</mn>
+      </mtd>
+      <mtd>
+        <mn>4</mn>
+      </mtd>
+      <mtd>
+        <mn>4</mn>
+      </mtd>
+      <mtd>
+        <mn>5</mn>
+      </mtd>
+      <mtd>
+        <mn>6</mn>
+      </mtd>
+      <mtd>
+        <mn>6</mn>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>j</mi>
+      </mtd>
+      <mtd>
+        <mn>1</mn>
+      </mtd>
+      <mtd>
+        <mn>2</mn>
+      </mtd>
+      <mtd>
+        <mn>1</mn>
+      </mtd>
+      <mtd>
+        <mn>3</mn>
+      </mtd>
+      <mtd>
+        <mn>2</mn>
+      </mtd>
+      <mtd>
+        <mn>1</mn>
+      </mtd>
+      <mtd>
+        <mn>5</mn>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>i</mi>
+        <mo>+</mo>
+        <mi>j</mi>
+      </mtd>
+      <mtd>
+        <mn>3</mn>
+      </mtd>
+      <mtd>
+        <mn>5</mn>
+      </mtd>
+      <mtd>
+        <mn>5</mn>
+      </mtd>
+      <mtd>
+        <mn>7</mn>
+      </mtd>
+      <mtd>
+        <mn>7</mn>
+      </mtd>
+      <mtd>
+        <mn>7</mn>
+      </mtd>
+      <mtd>
+        <mn>11</mn>
+      </mtd>
+    </mtr>
+  </mtable>
+</math> 组织这种计算的一种自然方式是生成所有小于或等于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的正整数有序对的序列，过滤以选择那些和为素数的对，然后，对于每个通过过滤器的对 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，产生三元组 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo>,</mo>
+    <mi>i</mi>
+    <mo>+</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。</p>
+<p>这里有一种生成对的序列的方法：对于每个整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>n</mi>
+  </mrow>
+</math>，枚举整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>j</mi>
+    <mo>&lt;</mo>
+    <mi>i</mi>
+  </mrow>
+</math>，并且对于每个这样的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>j</mi>
+</math> 生成对 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。用序列操作来说，我们沿着序列 <code>(enumerate-interval 1 n)</code> 映射。对于这个序列中的每个 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>，我们沿着序列 <code>(enumerate-interval 1 (- i 1))</code> 映射。对于后一个序列中的每个 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>j</mi>
+</math>，我们生成对 <code>(list i j)</code>。这为每个 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> 给出了一个对的序列。将所有 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math> 的所有序列组合起来（通过用 <code>append</code> 累积）产生所需的对的序列：<a class="footnote_link" id="DOCF85" href="#FOOT85"><sup>85</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">accumulate 
+ append
+ nil
+ </span><span class="opn">(</span><span class="pln">map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">i</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">j</span><span class="clo">)</span><span class="pln"> 
+               </span><span class="opn">(</span><span class="pln">list i j</span><span class="clo">))</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">enumerate-interval </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> i </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">enumerate-interval </span><span class="lit">1</span><span class="pln"> n</span><span class="clo">)))</span></pre></div>
+
+<p>在这种程序中，映射与用<code>append</code>进行累积的组合非常常见，因此我们将把它单独提取为一个过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">flatmap proc seq</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate append nil </span><span class="opn">(</span><span class="pln">map proc seq</span><span class="clo">)))</span></pre></div>
+
+<p>现在过滤这个序对序列，找出其中和为素数的那些。过滤谓词会针对序列中的每个元素调用；它的参数是一个序对，并且必须从序对中提取出整数。因此，要应用于序列中每个元素的谓词是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">prime-sum? pair</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">prime? </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> pair</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cadr</span><span class="pln"> pair</span><span class="clo">))))</span></pre></div>
+
+<p>最后，通过使用以下过程对过滤后的序对进行映射，生成结果序列，该过程构造一个三元组，由序对的两个元素及其和组成：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-pair-sum pair</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> pair</span><span class="clo">)</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="kwd">cadr</span><span class="pln"> pair</span><span class="clo">)</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> pair</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cadr</span><span class="pln"> pair</span><span class="clo">))))</span></pre></div>
+
+<p>组合所有这些步骤就得到了完整的过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">prime-sum-pairs n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">map make-pair-sum
+       </span><span class="opn">(</span><span class="pln">filter 
+        prime-sum?
+        </span><span class="opn">(</span><span class="pln">flatmap
+         </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">i</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">j</span><span class="clo">)</span><span class="pln"> 
+                  </span><span class="opn">(</span><span class="pln">list i j</span><span class="clo">))</span><span class="pln">
+                </span><span class="opn">(</span><span class="pln">enumerate-interval 
+                 </span><span class="lit">1</span><span class="pln"> 
+                 </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> i </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">enumerate-interval </span><span class="lit">1</span><span class="pln"> n</span><span class="clo">)))))</span></pre></div>
+
+<p>嵌套映射对于枚举区间的序列之外的其他序列也很有用。假设我们希望生成集合<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mo>;</mo>
+  </mrow>
+</math>的所有排列，也就是集合中各项的所有排序方式。例如，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo fence="false" stretchy="false">{</mo>
+    <mn>1</mn>
+    <mo>,</mo>
+    <mn>2</mn>
+    <mo>,</mo>
+    <mn>3</mn>
+    <mo fence="false" stretchy="false">}</mo>
+  </mrow>
+</math>的排列是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo fence="false" stretchy="false">{</mo>
+    <mn>1</mn>
+    <mo>,</mo>
+    <mn>2</mn>
+    <mo>,</mo>
+    <mn>3</mn>
+    <mo fence="false" stretchy="false">}</mo>
+  </mrow>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo fence="false" stretchy="false">{</mo>
+    <mn>1</mn>
+    <mo>,</mo>
+    <mn>3</mn>
+    <mo>,</mo>
+    <mn>2</mn>
+    <mo fence="false" stretchy="false">}</mo>
+  </mrow>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo fence="false" stretchy="false">{</mo>
+    <mn>2</mn>
+    <mo>,</mo>
+    <mn>1</mn>
+    <mo>,</mo>
+    <mn>3</mn>
+    <mo fence="false" stretchy="false">}</mo>
+  </mrow>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo fence="false" stretchy="false">{</mo>
+    <mn>2</mn>
+    <mo>,</mo>
+    <mn>3</mn>
+    <mo>,</mo>
+    <mn>1</mn>
+    <mo fence="false" stretchy="false">}</mo>
+  </mrow>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo fence="false" stretchy="false">{</mo>
+    <mn>3</mn>
+    <mo>,</mo>
+    <mn>1</mn>
+    <mo>,</mo>
+    <mn>2</mn>
+    <mo fence="false" stretchy="false">}</mo>
+  </mrow>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo fence="false" stretchy="false">{</mo>
+    <mn>3</mn>
+    <mo>,</mo>
+    <mn>2</mn>
+    <mo>,</mo>
+    <mn>1</mn>
+    <mo fence="false" stretchy="false">}</mo>
+  </mrow>
+</math>。下面是生成<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>的排列的一个方案：对于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>中的每个项<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>，递归地生成<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mo>−<!-- − --></mo>
+    <mi>x</mi>
+  </mrow>
+</math><a class="footnote_link" id="DOCF86" href="#FOOT86"><sup>86</sup></a>的排列序列，并将<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>添加到每个排列的前面。这样，对于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>中的每个<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>，就得到了以<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>开头的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>的排列序列。将所有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>的这些序列组合起来，就得到了<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>的所有排列：<a class="footnote_link" id="DOCF87" href="#FOOT87"><sup>87</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">permutations s</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? s</span><span class="clo">)</span><span class="pln">   </span><span class="roman"><span class="com">; empty set?</span></span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">list nil</span><span class="clo">)</span><span class="pln">  </span><span class="roman"><span class="com">; sequence containing empty set</span></span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">flatmap </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p</span><span class="clo">)</span><span class="pln"> 
+                        </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x p</span><span class="clo">))</span><span class="pln">
+                      </span><span class="opn">(</span><span class="pln">permutations 
+                       </span><span class="opn">(</span><span class="pln">remove x s</span><span class="clo">))))</span><span class="pln">
+               s</span><span class="clo">)))</span></pre></div>
+
+<p>注意这个策略如何将生成<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>的排列的问题归约为生成元素比<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>少的集合的排列的问题。在终止情形中，我们一直向下处理到空表，它表示一个没有元素的集合。对于这种情况，我们生成<code>(list
+nil)</code>，它是一个只有一个项的序列，即没有元素的集合。<code>permutations</code>中使用的<code>remove</code>过程返回给定序列中除给定项之外的所有项。这可以表示为一个简单的过滤器：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">remove item sequence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">filter </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> x item</span><span class="clo">)))</span><span class="pln">
+          sequence</span><span class="clo">))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e40"></a>习题2.40：</strong> 定义一个过程<code>unique-pairs</code>，给定一个整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，生成满足<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1</mn>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>j</mi>
+  </mrow>
+  <mo>&lt;</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>n</mi>
+  </mrow>
+</math>的序对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的序列。使用<code>unique-pairs</code>来简化上面给出的<code>prime-sum-pairs</code>的定义。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e41"></a>习题2.41：</strong> 编写一个过程，找出所有由小于或等于给定整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>的不同正整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>j</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>组成的有序三元组，使它们的和等于给定整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>s</mi>
+</math>。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e42"></a>习题2.42：</strong>“八皇后谜题”问的是如何将八个皇后放在棋盘上，使得没有皇后被其他皇后攻击（即没有两个皇后位于同一行、同一列或同一对角线上）。<a href="#Figure-2_002e8">图2.8</a>中展示了一个可能的解。解决这个谜题的一种方法是横向遍历棋盘，在每一列放置一个皇后。一旦我们放置了<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>k</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math>个皇后，就必须将第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>k</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math>个皇后放在一个不会攻击棋盘上已有皇后的位置。我们可以递归地表述这种方法：假设我们已经生成了在棋盘前<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>k</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math>列中放置<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>k</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math>个皇后的所有可能方式的序列。对于其中的每一种方式，通过在第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>k</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math>列的每一行放置一个皇后，生成一组扩展的位置。现在过滤这些位置，只保留第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>k</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math>列的皇后相对于其他皇后安全的位置。这样就产生了在前<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>列中放置<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>个皇后的所有方式的序列。继续这个过程，我们将不仅产生一个解，而是产生谜题的所有解。</p>
+<figure class="float">
+<a id="Figure-2_002e8"></a>
+<object style="width: 33.41ex; height: 33.41ex;" data="fig/chap2/Fig2.8c.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.8：</strong>八皇后谜题的一个解。</p>
+</figcaption>
+</figure>
+
+<p>我们将这个解法实现为一个过程<code>queens</code>，它返回在<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>×<!-- × --></mo>
+    <mi>n</mi>
+  </mrow>
+</math>棋盘上放置<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>个皇后问题的所有解的序列。<code>Queens</code>有一个内部过程<code>queen-cols</code>，它返回在棋盘前<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>列中放置皇后的所有方式的序列。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">queens board-size</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">queen-cols k</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> k </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">list empty-board</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">filter
+         </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">positions</span><span class="clo">)</span><span class="pln"> 
+           </span><span class="opn">(</span><span class="pln">safe? k positions</span><span class="clo">))</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">flatmap
+          </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">rest-of-queens</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">new-row</span><span class="clo">)</span><span class="pln">
+                   </span><span class="opn">(</span><span class="pln">adjoin-position 
+                    new-row 
+                    k 
+                    rest-of-queens</span><span class="clo">))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">enumerate-interval 
+                  </span><span class="lit">1</span><span class="pln"> 
+                  board-size</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">queen-cols </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> k </span><span class="lit">1</span><span class="clo">))))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">queen-cols board-size</span><span class="clo">))</span></pre></div>
+
+<p>在这个过程中，<code>rest-of-queens</code>是在前<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>k</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math>列中放置<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>k</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math>个皇后的一种方式，而<code>new-row</code>是为第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>k</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math>列放置皇后而提议的行。通过实现棋盘位置集合的表示来完成程序，包括过程<code>adjoin-position</code>，它将一个新的行-列位置添加到一个位置集合中，以及<code>empty-board</code>，它表示一个空的位置集合。你还必须编写过程<code>safe?</code>，它对于一个位置集合，判断第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>k</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math>列的皇后相对于其他皇后是否安全。（注意我们只需要检查新皇后是否安全——其他皇后彼此之间已经保证安全了。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e43"></a>习题2.43：</strong> Louis Reasoner 在做<a href="#Exercise-2_002e42">习题2.42</a>时遇到了大麻烦。他的<code>queens</code>过程似乎能工作，但运行极其缓慢。（Louis 从来没能等到它解决哪怕<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>6</mn>
+    <mo>×<!-- × --></mo>
+    <mn>6</mn>
+  </mrow>
+</math>的情形。）当 Louis 向 Eva Lu Ator 求助时，她指出他把<code>flatmap</code>中嵌套映射的顺序弄反了，写成了</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">flatmap
+ </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">new-row</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">rest-of-queens</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">adjoin-position 
+           new-row k rest-of-queens</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">queen-cols </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> k </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">enumerate-interval </span><span class="lit">1</span><span class="pln"> board-size</span><span class="clo">))</span></pre></div>
+
+<p>解释为什么这种交换会使程序运行缓慢。假设<a href="#Exercise-2_002e42">习题2.42</a>中的程序解决谜题需要时间<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>，估计 Louis 的程序解决八皇后谜题需要多长时间。</p></blockquote>
+
+<a id="g_t2_002e2_002e4"></a>
+<a id="Example_003a-A-Picture-Language"></a>
+<h4 class="subsection"><span class="secnum">2.2.4</span><span class="sectitle">示例：图画语言</span></h4>
+
+<p>本节介绍一种用于画图的简单语言，它展示了数据抽象和闭合性的威力，并且以一种本质的方式利用了高阶过程。这种语言的设计使得试验诸如<a href="#Figure-2_002e9">图2.9</a>中那样的图案变得容易，这些图案由重复的元素经过平移和缩放组成。<a class="footnote_link" id="DOCF88" href="#FOOT88"><sup>88</sup></a>在这种语言中，被组合的数据对象表示为过程，而不是表结构。正如满足闭合性质的<code>cons</code>使我们能够轻松构建任意复杂的表结构一样，这种语言中的操作也满足闭合性质，使我们能够轻松构建任意复杂的图案。</p>
+<figure class="float">
+<a id="Figure-2_002e9"></a>
+<object style="width: 55.86ex; height: 31.34ex;" data="fig/chap2/Fig2.9.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.9：</strong>用图画语言生成的设计。</p>
+</figcaption>
+</figure>
+
+<a id="The-picture-language"></a>
+<h5 class="subsubheading">图画语言</h5>
+
+<p>当我们在<a href="1_002e1_zh.xhtml#g_t1_002e1">1.1</a>中开始学习程序设计时，我们强调了通过关注语言的基本要素、组合手段和抽象手段来描述一种语言的重要性。这里我们将遵循这一框架。</p>
+<p>这种图画语言的优雅之处部分在于只有一种元素，称为<a id="index-painter"></a><em>画家</em>。画家绘制一幅图像，该图像经过平移和缩放以适合指定的平行四边形框架。例如，有一个我们将称为<code>wave</code>的基本画家，它绘制一幅粗略的线条画，如<a href="#Figure-2_002e10">图2.10</a>所示。绘图的实际形状取决于框架——图2.10中的所有四幅图像都是由同一个<code>wave</code>画家产生的，但相对于四个不同的框架。画家可以比这更精细：称为<code>rogers</code>的基本画家绘制了一幅<abbr>MIT</abbr>创始人William Barton Rogers的画像，如<a href="#Figure-2_002e11">图2.11</a>所示。<a class="footnote_link" id="DOCF89" href="#FOOT89"><sup>89</sup></a>图2.11中的四幅图像是相对于与图2.10中<code>wave</code>图像相同的四个框架绘制的。</p>
+<figure class="float">
+<a id="Figure-2_002e10"></a>
+<object style="width: 28.23ex; height: 30.22ex;" data="fig/chap2/Fig2.10.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.10：</strong>由<code>wave</code>画家相对于四个不同框架产生的图像。用虚线显示的框架不是图像的一部分。</p>
+</figcaption>
+</figure>
+
+<figure class="float">
+<a id="Figure-2_002e11"></a>
+<object style="width: 28.23ex; height: 31.26ex;" data="fig/chap2/Fig2.11.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.11：</strong><abbr>MIT</abbr>的创始人兼第一任校长William Barton Rogers的画像，相对于与<a href="#Figure-2_002e10">图2.10</a>相同的四个框架绘制（原始图像来自Wikimedia Commons）。</p>
+</figcaption>
+</figure>
+
+<p>为了组合图像，我们使用各种操作从给定的画家构造新的画家。例如，<code>beside</code>操作接受两个画家并产生一个新的复合画家，该画家在框架的左半部分绘制第一个画家的图像，在框架的右半部分绘制第二个画家的图像。类似地，<code>below</code>接受两个画家并产生一个复合画家，该画家在第二个画家的图像下方绘制第一个画家的图像。有些操作转换单个画家以产生新的画家。例如，<code>flip-vert</code>接受一个画家并产生一个将其图像上下颠倒绘制的画家，而<code>flip-horiz</code>产生一个将原始画家的图像左右反转绘制的画家。</p>
+<p><a href="#Figure-2_002e12">图2.12</a>展示了称为<code>wave4</code>的画家绘制的图像，它是从<code>wave</code>开始分两个阶段构建的：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> wave2 </span><span class="opn">(</span><span class="pln">beside wave </span><span class="opn">(</span><span class="pln">flip-vert wave</span><span class="clo">)))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> wave4 </span><span class="opn">(</span><span class="pln">below wave2 wave2</span><span class="clo">))</span></pre></div>
+
+<figure class="float">
+<a id="Figure-2_002e12"></a>
+<object style="width: 47.06ex; height: 26.07ex;" data="fig/chap2/Fig2.12.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.12：</strong>创建一个复杂图形，从<a href="#Figure-2_002e10">图2.10</a>的<code>wave</code>画家开始。</p>
+</figcaption>
+</figure>
+
+<p>以这种方式构建复杂图像时，我们利用了画家在语言的组合手段下是封闭的这一事实。两个画家的<code>beside</code>或<code>below</code>本身就是一个画家；因此，我们可以将其用作制作更复杂画家的元素。正如使用<code>cons</code>构建表结构一样，我们的数据在组合手段下的封闭性对于仅使用少量操作就能创建复杂结构的能力至关重要。</p>
+<p>一旦我们能够组合画家，我们就希望能够抽象出组合画家的典型模式。我们将把画家操作实现为Scheme过程。这意味着我们不需要在图画语言中引入特殊的抽象机制：由于组合手段是普通的Scheme过程，我们自动获得了对画家操作做任何我们能对过程做的事情的能力。例如，我们可以将<code>wave4</code>中的模式抽象为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">flipped-pairs painter</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">painter2 
+         </span><span class="opn">(</span><span class="pln">beside painter 
+                 </span><span class="opn">(</span><span class="pln">flip-vert painter</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">below painter2 painter2</span><span class="clo">)))</span></pre></div>
+
+<p>并将<code>wave4</code>定义为该模式的一个实例：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> wave4 </span><span class="opn">(</span><span class="pln">flipped-pairs wave</span><span class="clo">))</span></pre></div>
+
+<p>我们还可以定义递归操作。下面这个操作使画家向右分裂和分支，如<a href="#Figure-2_002e13">图2.13</a>和<a href="#Figure-2_002e14">图2.14</a>所示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">right-split painter n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      painter
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">smaller </span><span class="opn">(</span><span class="pln">right-split painter 
+                                  </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">beside painter 
+                </span><span class="opn">(</span><span class="pln">below smaller smaller</span><span class="clo">)))))</span></pre></div>
+
+<figure class="float">
+<a id="Figure-2_002e13"></a>
+<object style="width: 52.15ex; height: 68.90ex;" data="fig/chap2/Fig2.13a.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.13：</strong><code>right-split</code>和<code>corner-split</code>的递归方案。</p>
+</figcaption>
+</figure>
+
+<p>我们可以通过向上以及向右分支来产生平衡的图案（见<a href="#Exercise-2_002e44">习题2.44</a>、<a href="#Figure-2_002e13">图2.13</a>和<a href="#Figure-2_002e14">图2.14</a>）：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">corner-split painter n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      painter
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">up </span><span class="opn">(</span><span class="pln">up-split painter </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">right </span><span class="opn">(</span><span class="pln">right-split painter 
+                                </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">top-left </span><span class="opn">(</span><span class="pln">beside up up</span><span class="clo">))</span><span class="pln">
+              </span><span class="opn">(</span><span class="pln">bottom-right </span><span class="opn">(</span><span class="pln">below right 
+                                   right</span><span class="clo">))</span><span class="pln">
+              </span><span class="opn">(</span><span class="pln">corner </span><span class="opn">(</span><span class="pln">corner-split painter 
+                                    </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">beside </span><span class="opn">(</span><span class="pln">below painter top-left</span><span class="clo">)</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">below bottom-right 
+                         corner</span><span class="clo">))))))</span></pre></div>
+
+<figure class="float">
+<a id="Figure-2_002e14"></a>
+<object style="width: 52.93ex; height: 62.25ex;" data="fig/chap2/Fig2.14b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.14：</strong>递归操作<code>right-split</code>和<code>corner-split</code>应用于画家<code>wave</code>和<code>rogers</code>。组合四个<code>corner-split</code>图形产生对称的<code>square-limit</code>设计，如<a href="#Figure-2_002e9">图2.9</a>所示。</p>
+</figcaption>
+</figure>
+
+<p>通过适当地放置<code>corner-split</code>的四个副本，我们获得一个称为<code>square-limit</code>的图案，其应用于<code>wave</code>和<code>rogers</code>的结果如<a href="#Figure-2_002e9">图2.9</a>所示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square-limit painter n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">quarter </span><span class="opn">(</span><span class="pln">corner-split painter n</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">half </span><span class="opn">(</span><span class="pln">beside </span><span class="opn">(</span><span class="pln">flip-horiz quarter</span><span class="clo">)</span><span class="pln"> 
+                        quarter</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">below </span><span class="opn">(</span><span class="pln">flip-vert half</span><span class="clo">)</span><span class="pln"> half</span><span class="clo">))))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e44"></a>习题2.44：</strong>定义<code>corner-split</code>所使用的过程<code>up-split</code>。它类似于<code>right-split</code>，不同之处在于它交换了<code>below</code>和<code>beside</code>的角色。</p></blockquote>
+
+<a id="Higher_002dorder-operations"></a>
+<h5 class="subsubheading">高阶操作</h5>
+
+<p>除了抽象组合画家的模式之外，我们还可以在更高的层次上工作，抽象组合画家操作的模式。也就是说，我们可以将画家操作视为要操作的元素，并可以为这些元素编写组合手段——接受画家操作作为参数并创建新画家操作的过程。</p>
+<p>例如，<code>flipped-pairs</code>和<code>square-limit</code>各自将画家的图像的四个副本排列成正方形图案；它们的不同仅在于如何定向这些副本。抽象这种画家组合模式的一种方法是使用以下过程，它接受四个单参数画家操作，并产生一个画家操作，该操作用这四个操作变换给定的画家，并将结果排列成正方形。<code>Tl</code>、<code>tr</code>、<code>bl</code>和<code>br</code>分别是应用于左上副本、右上副本、左下副本和右下副本的变换。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square-of-four tl tr bl br</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">painter</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">top </span><span class="opn">(</span><span class="pln">beside </span><span class="opn">(</span><span class="pln">tl painter</span><span class="clo">)</span><span class="pln"> 
+                       </span><span class="opn">(</span><span class="pln">tr painter</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">bottom </span><span class="opn">(</span><span class="pln">beside </span><span class="opn">(</span><span class="pln">bl painter</span><span class="clo">)</span><span class="pln"> 
+                          </span><span class="opn">(</span><span class="pln">br painter</span><span class="clo">))))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">below bottom top</span><span class="clo">))))</span></pre></div>
+
+<p>然后<code>flipped-pairs</code>可以基于<code>square-of-four</code>定义如下：<a class="footnote_link" id="DOCF90" href="#FOOT90"><sup>90</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">flipped-pairs painter</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">combine4 
+         </span><span class="opn">(</span><span class="pln">square-of-four identity 
+                         flip-vert
+                         identity 
+                         flip-vert</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">combine4 painter</span><span class="clo">)))</span></pre></div>
+
+<p>而<code>square-limit</code>可以表示为<a class="footnote_link" id="DOCF91" href="#FOOT91"><sup>91</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square-limit painter n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">combine4 
+         </span><span class="opn">(</span><span class="pln">square-of-four flip-horiz 
+                         identity
+                         rotate180 
+                         flip-vert</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">combine4 </span><span class="opn">(</span><span class="pln">corner-split painter n</span><span class="clo">))))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e45"></a>习题2.45：</strong> <code>Right-split</code>和<code>up-split</code>可以表示为一个通用分割操作的实例。定义一个过程<code>split</code>，使得求值</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> right-split </span><span class="opn">(</span><span class="pln">split beside below</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> up-split </span><span class="opn">(</span><span class="pln">split below beside</span><span class="clo">))</span></pre></div>
+
+<p>产生过程<code>right-split</code>和<code>up-split</code>，其行为与已经定义的过程相同。</p></blockquote>
+
+<a id="Frames"></a>
+<h5 class="subsubheading">框架</h5>
+
+<p>在我们能够展示如何实现画家及其组合手段之前，我们必须首先考虑框架。一个框架可以用三个向量来描述——一个原点向量和两个边向量。原点向量指定框架的原点相对于平面中某个绝对原点的偏移，而边向量指定框架的角相对于其原点的偏移。如果两条边互相垂直，框架将是矩形的。否则框架将是一个更一般的平行四边形。</p>
+<p><a href="#Figure-2_002e15">图2.15</a>展示了一个框架及其关联的向量。根据数据抽象，我们暂时不需要具体说明框架是如何表示的，只需说明有一个构造函数<code>make-frame</code>，它接受三个向量并产生一个框架，以及三个相应的选择函数<code>origin-frame</code>、<code>edge1-frame</code>和<code>edge2-frame</code>（见<a href="#Exercise-2_002e47">习题2.47</a>）。</p>
+<figure class="float">
+<a id="Figure-2_002e15"></a>
+<object style="width: 34.02ex; height: 32.03ex;" data="fig/chap2/Fig2.15a.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.15：</strong>一个框架由三个向量描述——一个原点和两个边。</p>
+</figcaption>
+</figure>
+
+<p>我们将使用单位正方形<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mn>0</mn>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>x</mi>
+    <mo>,</mo>
+    <mi>y</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>中的坐标来指定图像。对于每个框架，我们关联一个<a id="index-frame-coordinate-map"></a><em>框架坐标映射</em>，它将用于平移和缩放图像以适合框架。该映射通过将向量<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi mathvariant="bold">v</mi>
+    </mrow>
+    <mo>=</mo>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo>,</mo>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>映射到向量和<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Origin(Frame)</mtext>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo>⋅<!-- ⋅ --></mo>
+    <msub>
+      <mtext>Edge</mtext>
+      <mn>1</mn>
+    </msub>
+    <mtext>(Frame)</mtext>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo>⋅<!-- ⋅ --></mo>
+    <msub>
+      <mtext>Edge</mtext>
+      <mn>2</mn>
+    </msub>
+    <mtext>(Frame)</mtext>
+    <mo>.</mo>
+  </mrow>
+</math>来将单位正方形变换到框架中。例如，(0, 0)被映射到框架的原点，(1, 1)被映射到与原点对角相对的顶点，而(0.5, 0.5)被映射到框架的中心。我们可以用以下过程创建框架的坐标映射：<a class="footnote_link" id="DOCF92" href="#FOOT92"><sup>92</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">frame-coord-map frame</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">v</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">add-vect
+     </span><span class="opn">(</span><span class="pln">origin-frame frame</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">add-vect 
+      </span><span class="opn">(</span><span class="pln">scale-vect </span><span class="opn">(</span><span class="pln">xcor-vect v</span><span class="clo">)</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">edge1-frame frame</span><span class="clo">))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">scale-vect </span><span class="opn">(</span><span class="pln">ycor-vect v</span><span class="clo">)</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">edge2-frame frame</span><span class="clo">))))))</span></pre></div>
+
+<p>观察将<code>frame-coord-map</code>应用于一个框架会返回一个过程，该过程给定一个向量，返回一个向量。如果参数向量在单位正方形中，结果向量将在框架中。例如，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="pln">frame-coord-map a-frame</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0</span><span class="pln"> </span><span class="lit">0</span><span class="clo">))</span></pre></div>
+
+<p>返回与以下相同的向量</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">origin-frame a-frame</span><span class="clo">)</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e46"></a>习题2.46：</strong>一个从原点到一个点的二维向量<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi mathvariant="bold">v</mi>
+</math>可以表示为一个由<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>坐标和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>坐标组成的序对。通过给出构造函数<code>make-vect</code>和相应的选择函数<code>xcor-vect</code>和<code>ycor-vect</code>，为向量实现一个数据抽象。根据你的选择函数和构造函数，实现过程<code>add-vect</code>、<code>sub-vect</code>和<code>scale-vect</code>，它们执行向量加法、向量减法和向量乘以标量的操作：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right center left" rowspacing="3pt" columnspacing="thickmathspace">
+    <mtr>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>x</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>y</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>+</mo>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>x</mi>
+          <mn>2</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>y</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>x</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>+</mo>
+        <msub>
+          <mi>x</mi>
+          <mn>2</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>y</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>+</mo>
+        <msub>
+          <mi>y</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>x</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>y</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>−<!-- − --></mo>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>x</mi>
+          <mn>2</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>y</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>x</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>−<!-- − --></mo>
+        <msub>
+          <mi>x</mi>
+          <mn>2</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>y</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>−<!-- − --></mo>
+        <msub>
+          <mi>y</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>s</mi>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mo stretchy="false">(</mo>
+        <mi>x</mi>
+        <mo>,</mo>
+        <mi>y</mi>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <mi>s</mi>
+        <mi>x</mi>
+        <mo>,</mo>
+        <mi>s</mi>
+        <mi>y</mi>
+        <mo stretchy="false">)</mo>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math></p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e47"></a>习题2.47：</strong>这里是框架的两种可能的构造函数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-frame origin edge1 edge2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list origin edge1 edge2</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-frame origin edge1 edge2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> origin </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> edge1 edge2</span><span class="clo">)))</span></pre></div>
+
+<p>为每个构造函数提供适当的选择函数，以产生框架的实现。</p></blockquote>
+
+<a id="Painters"></a>
+<h5 class="subsubheading">画家</h5>
+
+<p>画家被表示为一个过程，该过程给定一个框架作为参数，绘制一个特定的图像，该图像被平移和缩放以适合该框架。也就是说，如果<code>p</code>是一个画家，<code>f</code>是一个框架，那么我们通过以<code>f</code>为参数调用<code>p</code>来在<code>f</code>中产生<code>p</code>的图像。</p>
+<p>基本画家如何实现的细节取决于图形系统的特定特征和要绘制的图像类型。例如，假设我们有一个过程<code>draw-line</code>，它在屏幕上两个指定点之间画一条线。那么我们可以从线段表创建线条画的画家，例如<a href="#Figure-2_002e10">图2.10</a>中的<code>wave</code>画家，如下所示：<a class="footnote_link" id="DOCF93" href="#FOOT93"><sup>93</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">segments-</span><span class="pun">&gt;</span><span class="pln">painter segment-list</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">frame</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">for-each
+     </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">segment</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">draw-line
+        </span><span class="opn">((</span><span class="pln">frame-coord-map frame</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">start-segment segment</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">frame-coord-map frame</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">end-segment segment</span><span class="clo">))))</span><span class="pln">
+     segment-list</span><span class="clo">)))</span></pre></div>
+
+<p>线段使用相对于单位正方形的坐标给出。对于表中的每条线段，画家用框架坐标映射变换线段的端点，并在变换后的点之间画一条线。</p>
+<p>将画家表示为过程在图画语言中建立了一个强大的抽象屏障。我们可以基于各种图形能力创建和混合各种基本画家。它们实现的细节无关紧要。任何过程都可以作为画家，只要它接受一个框架作为参数并绘制一些缩放以适合该框架的东西。<a class="footnote_link" id="DOCF94" href="#FOOT94"><sup>94</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e48"></a>习题2.48：</strong>平面中的有向线段可以表示为一对向量——从原点到线段起点的向量，以及从原点到线段终点的向量。使用你在<a href="#Exercise-2_002e46">习题2.46</a>中的向量表示，为线段定义一个表示，带有构造函数<code>make-segment</code>和选择函数<code>start-segment</code>和<code>end-segment</code>。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e49"></a>习题2.49：</strong>使用<code>segments-&gt;painter</code>定义以下基本画家：</p>
+<ol>
+<li>绘制指定框架轮廓的画家。</li><li>通过连接框架的对角来绘制“X”的画家。</li><li>通过连接框架各边的中点来绘制菱形形状的画家。</li><li><code>wave</code>画家。</li></ol>
+</blockquote>
+
+<a id="Transforming-and-combining-painters"></a>
+<h5 class="subsubheading">变换和组合画家</h5>
+
+<p>对画家的操作（例如<code>flip-vert</code>或<code>beside</code>）通过创建一个画家来工作，该画家相对于从参数框架派生的框架调用原始画家。因此，例如，<code>flip-vert</code>不必知道画家如何工作就能翻转它——它只需要知道如何将框架上下颠倒：翻转后的画家只是使用原始画家，但在倒置的框架中。</p>
+<p>画家的操作基于过程 <code>transform-painter</code>，它接受一个画家和一个关于如何变换框架的信息作为参数，并产生一个新的画家。变换后的画家在被调用到一个框架上时，会变换该框架，并在变换后的框架上调用原来的画家。<code>transform-painter</code> 的参数是指定点（表示为向量），它们指定新框架的角：当映射到框架中时，第一个点指定新框架的原点，另外两个点指定其边向量的端点。因此，单位正方形内的参数指定了一个包含在原始框架内的框架。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">transform-painter 
+         painter origin corner1 corner2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">frame</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">m </span><span class="opn">(</span><span class="pln">frame-coord-map frame</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">new-origin </span><span class="opn">(</span><span class="pln">m origin</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">painter </span><span class="opn">(</span><span class="pln">make-frame new-origin
+                  </span><span class="opn">(</span><span class="pln">sub-vect </span><span class="opn">(</span><span class="pln">m corner1</span><span class="clo">)</span><span class="pln"> 
+                            new-origin</span><span class="clo">)</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">sub-vect </span><span class="opn">(</span><span class="pln">m corner2</span><span class="clo">)</span><span class="pln">
+                            new-origin</span><span class="clo">)))))))</span></pre></div>
+
+<p>下面是如何垂直翻转画家图像：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">flip-vert painter</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">transform-painter 
+   painter
+   </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.0</span><span class="pln"> </span><span class="lit">1.0</span><span class="clo">)</span><span class="pln">   </span><span class="roman"><span class="com">; new </span><code><span class="com">origin</span></code></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">1.0</span><span class="pln"> </span><span class="lit">1.0</span><span class="clo">)</span><span class="pln">   </span><span class="roman"><span class="com">; new end of </span><code><span class="com">edge1</span></code></span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.0</span><span class="pln"> </span><span class="lit">0.0</span><span class="clo">)))</span><span class="pln"> </span><span class="roman"><span class="com">; new end of </span><code><span class="com">edge2</span></code></span>
+</pre></div>
+
+<p>使用 <code>transform-painter</code>，我们可以轻松定义新的变换。例如，我们可以定义一个画家，将其图像缩小到给定框架的右上四分之一：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">shrink-to-upper-right painter</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">transform-painter painter
+                     </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.5</span><span class="pln"> </span><span class="lit">0.5</span><span class="clo">)</span><span class="pln">
+                     </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">1.0</span><span class="pln"> </span><span class="lit">0.5</span><span class="clo">)</span><span class="pln">
+                     </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.5</span><span class="pln"> </span><span class="lit">1.0</span><span class="clo">)))</span></pre></div>
+
+<p>其他变换将图像逆时针旋转 90 度<a class="footnote_link" id="DOCF95" href="#FOOT95"><sup>95</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">rotate90 painter</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">transform-painter painter
+                     </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">1.0</span><span class="pln"> </span><span class="lit">0.0</span><span class="clo">)</span><span class="pln">
+                     </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">1.0</span><span class="pln"> </span><span class="lit">1.0</span><span class="clo">)</span><span class="pln">
+                     </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.0</span><span class="pln"> </span><span class="lit">0.0</span><span class="clo">)))</span></pre></div>
+
+<p>或将图像向框架中心挤压：<a class="footnote_link" id="DOCF96" href="#FOOT96"><sup>96</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">squash-inwards painter</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">transform-painter painter
+                     </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.0</span><span class="pln"> </span><span class="lit">0.0</span><span class="clo">)</span><span class="pln">
+                     </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.65</span><span class="pln"> </span><span class="lit">0.35</span><span class="clo">)</span><span class="pln">
+                     </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.35</span><span class="pln"> </span><span class="lit">0.65</span><span class="clo">)))</span></pre></div>
+
+<p>框架变换也是定义组合两个或多个画家的方法的关键。例如，<code>beside</code> 过程接受两个画家，将它们分别变换为在参数框架的左半部分和右半部分绘制，并产生一个新的复合画家。当复合画家被给定一个框架时，它调用第一个变换后的画家在框架的左半部分绘制，并调用第二个变换后的画家在框架的右半部分绘制：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">beside painter1 painter2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">split-point </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.5</span><span class="pln"> </span><span class="lit">0.0</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">paint-left  </span><span class="opn">(</span><span class="pln">transform-painter 
+                        painter1
+                        </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.0</span><span class="pln"> </span><span class="lit">0.0</span><span class="clo">)</span><span class="pln">
+                        split-point
+                        </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.0</span><span class="pln"> </span><span class="lit">1.0</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">paint-right </span><span class="opn">(</span><span class="pln">transform-painter
+                        painter2
+                        split-point
+                        </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">1.0</span><span class="pln"> </span><span class="lit">0.0</span><span class="clo">)</span><span class="pln">
+                        </span><span class="opn">(</span><span class="pln">make-vect </span><span class="lit">0.5</span><span class="pln"> </span><span class="lit">1.0</span><span class="clo">))))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">frame</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">paint-left frame</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">paint-right frame</span><span class="clo">)))))</span></pre></div>
+
+<p>观察画家数据抽象，特别是将画家表示为过程，如何使 <code>beside</code> 易于实现。<code>beside</code> 过程无需了解组件画家的任何细节，只需知道每个画家将在其指定的框架中绘制一些东西。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e50"></a>习题 2.50：</strong> 定义变换 <code>flip-horiz</code>，它水平翻转画家，以及将画家逆时针旋转 180 度和 270 度的变换。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e51"></a>习题 2.51：</strong> 为画家定义 <code>below</code> 操作。<code>Below</code> 接受两个画家作为参数。得到的画家，给定一个框架，用第一个画家在框架的底部绘制，用第二个画家在顶部绘制。以两种不同的方式定义 <code>below</code>——首先通过编写一个类似于上面给出的 <code>beside</code> 过程的过程，然后再次用 <code>beside</code> 和适当的旋转操作（来自 <a href="#Exercise-2_002e50">习题 2.50</a>）来定义。</p></blockquote>
+
+<a id="Levels-of-language-for-robust-design"></a>
+<h5 class="subsubheading">稳健设计的语言层次</h5>
+
+<p>图画语言运用了我们引入的关于过程和数据的抽象的一些关键思想。基本数据抽象，即画家，是使用过程表示实现的，这使得语言能够以统一的方式处理不同的基本绘制能力。组合方法满足闭合性质，这使我们能够轻松构建复杂的设计。最后，所有用于抽象过程的工具都可用于抽象画家的组合方法。</p>
+<p>我们还瞥见了关于语言和程序设计的另一个关键思想。这就是 <a id="index-stratified-design"></a> <em>分层设计</em> 的方法，即复杂系统应该被构造为一系列层次，这些层次使用一系列语言来描述。每一层通过组合在该层被视为基本的部分来构造，而在每一层构造的部分在下一层被用作基本部分。分层设计中每一层使用的语言都有适合该细节层次的基本部分、组合方法和抽象方法。</p>
+<p>分层设计遍及复杂系统的工程。例如，在计算机工程中，电阻和晶体管被组合（并使用模拟电路的语言描述）以产生诸如与门和或门之类的部件，这些部件构成了数字电路设计语言的基本部分。<a class="footnote_link" id="DOCF97" href="#FOOT97"><sup>97</sup></a> 这些部件被组合以构建处理器、总线结构和存储器系统，这些又使用适合计算机体系结构的语言被组合以形成计算机。计算机被组合以形成分布式系统，使用适合描述网络互连的语言，等等。</p>
+<p>作为分层的一个小例子，我们的图画语言使用基本元素（基本画家），这些元素是使用指定点和线的语言创建的，以提供 <code>segments-&gt;painter</code> 的线段表，或像 <code>rogers</code> 这样的画家的着色细节。我们对图画语言的大部分描述集中在组合这些基本部分上，使用诸如 <code>beside</code> 和 <code>below</code> 之类的几何组合器。我们也在更高的层次上工作，将 <code>beside</code> 和 <code>below</code> 视为基本部分，在一种语言中操作，该语言的操作，如 <code>square-of-four</code>，捕捉组合几何组合器的常见模式。</p>
+<p>分层设计有助于使程序 <a id="index-robust"></a> <em>稳健</em>，也就是说，它使得规范中的小变化很可能只需要程序中的相应小变化。例如，假设我们想要改变基于 <code>wave</code> 的图像，如 <a href="#Figure-2_002e9">图 2.9</a> 所示。我们可以在最低层次上工作，改变 <code>wave</code> 元素的详细外观；我们可以在中间层次上工作，改变 <code>corner-split</code> 复制 <code>wave</code> 的方式；我们可以在最高层次上工作，改变 <code>square-limit</code> 排列四个角副本的方式。一般来说，分层设计的每一层都提供了不同的词汇来表达系统的特征，以及不同种类的改变它的能力。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e52"></a>习题2.52：</strong>对<a href="#Figure-2_002e9">图2.9</a>中所示的<code>wave</code>的方形极限进行修改，按照上面描述的各个层次进行。具体来说：</p>
+<ol>
+<li>向<a href="#Exercise-2_002e49">习题2.49</a>的基本<code>wave</code>画家中添加一些线段（例如，添加一个微笑）。</li><li>改变由<code>corner-split</code>构造的图案（例如，只使用<code>up-split</code>和<code>right-split</code>图像的一份副本而不是两份）。</li><li>修改使用<code>square-of-four</code>的<code>square-limit</code>版本，以便以不同的图案组装角。（例如，你可以让大的罗杰斯先生从正方形的每个角向外看。）</li></ol>
+</blockquote>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT72"><p><a class="footnote_backlink" href="#DOCF72"><sup>72</sup></a>这里使用“closure”一词来自抽象代数，其中如果对一个集合中的元素应用某个运算所产生的结果仍然是该集合中的元素，则称该集合在该运算下是封闭的。Lisp社区也（不幸地）使用“closure”一词来描述一个完全无关的概念：闭包是一种用于表示带有自由变量的过程的实现技术。在本书中我们不使用“closure”的第二种含义。</p>
+</div>
+<div id="FOOT73"><p><a class="footnote_backlink" href="#DOCF73"><sup>73</sup></a>组合手段应满足闭合性这一观念是一个直截了当的想法。不幸的是，许多流行编程语言中提供的数据组合手段并不满足闭合性，或者使闭合性的利用变得笨拙。在Fortran或Basic中，人们通常通过将数据元素组装成数组来组合它们——但无法形成元素本身是数组的数组。Pascal和C允许元素是结构体的结构体。然而，这要求程序员显式地操作指针，并遵守每个结构体字段只能包含预先指定形式的元素这一限制。与具有序对的Lisp不同，这些语言没有内置的通用粘合剂，使得以统一的方式操作复合数据变得容易。这一局限性正是Alan Perlis在本书前言中所评论的背景：“在Pascal中，可声明数据结构的繁多导致了函数内部的专门化，这抑制并惩罚了随意的合作。让100个函数操作一个数据结构，比让10个函数操作10个数据结构要好。”</p>
+</div>
+<div id="FOOT74"><p><a class="footnote_backlink" href="#DOCF74"><sup>74</sup></a>在本书中，我们用<a id="index-list-1"></a><em>表</em>来表示以表结束标记终止的序对链。相比之下，术语<a id="index-list-structure"></a><em>表结构</em>指的是任何由序对构成的数据结构，而不仅仅是表。</p>
+</div>
+<div id="FOOT75"><p><a class="footnote_backlink" href="#DOCF75"><sup>75</sup></a>由于嵌套应用<code>car</code>和<code>cdr</code>写起来很笨拙，Lisp方言为它们提供了缩写——例如，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">cadr</span><span class="pln"> ⟨</span><var><span class="pln">arg</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln"> </span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> ⟨</span><var><span class="pln">arg</span></var><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+
+<p>所有这类过程的名称都以<code>c</code>开头并以<code>r</code>结尾。它们之间的每个<code>a</code>代表一个<code>car</code>操作，每个<code>d</code>代表一个<code>cdr</code>操作，按照它们在名称中出现的相同顺序应用。名称<code>car</code>和<code>cdr</code>之所以保留下来，是因为像<code>cadr</code>这样的简单组合读起来顺口。</p>
+</div>
+<div id="FOOT76"><p><a class="footnote_backlink" href="#DOCF76"><sup>76</sup></a>令人瞩目的是，Lisp方言标准化中如此多的精力被消耗在确实是关于“无”的争论上：<code>nil</code>应该是一个普通名称吗？<code>nil</code>的值应该是一个符号吗？它应该是一个表吗？它应该是一个序对吗？在Scheme中，<code>nil</code>是一个普通名称，我们在本节中将其用作一个变量，其值是表结束标记（就像<code>true</code>是一个普通变量，其值为真一样）。其他Lisp方言，包括Common Lisp，将<code>nil</code>视为一个特殊符号。本书的作者们，已经忍受了太多语言标准化的争吵，希望避免整个问题。一旦我们在<a href="2_002e3_zh.xhtml#g_t2_002e3">2.3</a>中引入了引用，我们将把空表表示为<code>'()</code>并完全省去变量<code>nil</code>。</p>
+</div>
+<div id="FOOT77"><p><a class="footnote_backlink" href="#DOCF77"><sup>77</sup></a>为了使用<code>lambda</code>定义<code>f</code>和<code>g</code>，我们会写</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> f </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y </span><span class="pun">.</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> ⟨</span><var><span class="pln">body</span></var><span class="pln">⟩</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> g </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> w ⟨</span><var><span class="pln">body</span></var><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+</div>
+<div id="FOOT78"><p><a class="footnote_backlink" href="#DOCF78"><sup>78</sup></a><a id="Footnote-78"></a>Scheme标准地提供了一个<code>map</code>过程，它比这里描述的那个更通用。这个更通用的<code>map</code>接受一个接受<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>个参数的过程，以及<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>个表，并将该过程应用于所有表的第一个元素、所有表的第二个元素，依此类推，返回一个结果表。例如：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">map </span><span class="pun">+</span><span class="pln"> 
+     </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="clo">)</span><span class="pln"> 
+     </span><span class="opn">(</span><span class="pln">list </span><span class="lit">40</span><span class="pln"> </span><span class="lit">50</span><span class="pln"> </span><span class="lit">60</span><span class="clo">)</span><span class="pln"> 
+     </span><span class="opn">(</span><span class="pln">list </span><span class="lit">700</span><span class="pln"> </span><span class="lit">800</span><span class="pln"> </span><span class="lit">900</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">741</span><span class="pln"> </span><span class="lit">852</span><span class="pln"> </span><span class="lit">963</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> y</span><span class="clo">)))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">list </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">6</span><span class="clo">))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">9</span><span class="pln"> </span><span class="lit">12</span><span class="pln"> </span><span class="lit">15</span><span class="clo">)</span></i>
+</pre></div>
+</div>
+<div id="FOOT79"><p><a class="footnote_backlink" href="#DOCF79"><sup>79</sup></a><code>cond</code>中前两个子句的顺序很重要，因为空表满足<code>null?</code>并且也不是序对。</p>
+</div>
+<div id="FOOT80"><p><a class="footnote_backlink" href="#DOCF80"><sup>80</sup></a>事实上，这恰恰是<a href="#Exercise-2_002e28">习题2.28</a>中的<code>fringe</code>过程。这里我们重新命名了它，以强调它是一系列通用序列操作过程的一部分。</p>
+</div>
+<div id="FOOT81"><p><a class="footnote_backlink" href="#DOCF81"><sup>81</sup></a>Richard<a href="References_zh.xhtml#Waters-_00281979_0029">Waters（1979）</a>开发了一个程序，可以自动分析传统的Fortran程序，从映射、过滤和累积的角度来看待它们。他发现，Fortran科学子程序包中完全有90%的代码恰好符合这种范式。Lisp作为一种编程语言成功的原因之一是，表提供了一种标准媒介来表达有序集合，从而可以使用高阶操作来操作它们。编程语言APL的强大和吸引力很大程度上归功于类似的选择。在APL中，所有数据都表示为数组，并且有一套通用且方便的通用操作符用于各种数组操作。</p>
+</div>
+<div id="FOOT82"><p><a class="footnote_backlink" href="#DOCF82"><sup>82</sup></a>根据<a href="References_zh.xhtml#Knuth-1981">Knuth1981</a>的说法，这个规则是由W. G. Horner在十九世纪初提出的，但该方法实际上在比这早一百多年的时候就被牛顿使用了。Horner规则在计算多项式时使用的加法和乘法比先计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mi>n</mi>
+    </msub>
+    <msup>
+      <mi>x</mi>
+      <mi>n</mi>
+    </msup>
+  </mrow>
+</math>，然后加上<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>n</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <msup>
+      <mi>x</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>n</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msup>
+  </mrow>
+</math>，依此类推的直接方法要少。事实上，可以证明任何用于计算任意多项式的算法都必须至少使用与Horner规则一样多的加法和乘法，因此Horner规则是多项式求值的最优算法。这一点（对于加法次数）由A. M. Ostrowski在一篇1954年的论文中证明，该论文基本上奠定了最优算法的现代研究。关于乘法的类似陈述由V. Y. Pan在1966年证明。<a href="References_zh.xhtml#Borodin-and-Munro-_00281975_0029">Borodin和Munro（1975）</a>的书概述了这些以及其他关于最优算法的结果。</p>
+</div>
+<div id="FOOT83"><p><a class="footnote_backlink" href="#DOCF83"><sup>83</sup></a>这个定义使用了<code>map</code>的扩展版本，在<a href="#Footnote-78">脚注78</a>中描述。</p>
+</div>
+<div id="FOOT84"><p><a class="footnote_backlink" href="#DOCF84"><sup>84</sup></a>这种嵌套映射的方法是由David Turner向我们展示的，他的语言KRC和Miranda为处理这些构造提供了优雅的形式化方法。本节中的例子（另见<a href="#Exercise-2_002e42">习题2.42</a>）改编自<a href="References_zh.xhtml#Turner-1981">Turner1981</a>。在<a href="3_002e5_zh.xhtml#g_t3_002e5_002e3">3.5.3</a>中，我们将看到这种方法如何推广到无限序列。</p>
+</div>
+<div id="FOOT85"><p><a class="footnote_backlink" href="#DOCF85"><sup>85</sup></a>我们在这里将一个序对表示为两个元素的表，而不是Lisp序对。因此，“序对”<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>表示为<code>(list i j)</code>，而不是<code>(cons i j)</code>。</p>
+</div>
+<div id="FOOT86"><p><a class="footnote_backlink" href="#DOCF86"><sup>86</sup></a>集合<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mo>−<!-- − --></mo>
+    <mi>x</mi>
+  </mrow>
+</math>是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>的所有元素的集合，排除<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>。</p>
+</div>
+<div id="FOOT87"><p><a class="footnote_backlink" href="#DOCF87"><sup>87</sup></a>Scheme代码中的分号用于引入<a id="index-comments"></a><em>注释</em>。从分号到行尾的所有内容都被解释器忽略。在本书中，我们不使用很多注释；我们试图通过使用描述性名称使程序自文档化。</p>
+</div>
+<div id="FOOT88"><p><a class="footnote_backlink" href="#DOCF88"><sup>88</sup></a>图画语言基于Peter Henderson创建的语言，用于构建像M.C. Escher的“Square Limit”木刻版画这样的图像（见<a href="References_zh.xhtml#Henderson-1982">Henderson1982</a>）。木刻版画包含重复的缩放图案，类似于本节中使用<code>square-limit</code>过程绘制的排列。</p>
+</div>
+<div id="FOOT89"><p><a class="footnote_backlink" href="#DOCF89"><sup>89</sup></a>William Barton Rogers（1804-1882）是<abbr>MIT</abbr>的创始人和第一任校长。他是一位地质学家和才华横溢的教师，曾在威廉与玛丽学院和弗吉尼亚大学任教。1859年，他搬到波士顿，在那里他有更多时间进行研究，制定建立“理工学院”的计划，并担任马萨诸塞州的第一任煤气表检查员。</p>
+<p>当<abbr>MIT</abbr>于1861年成立时，Rogers被选为第一任校长。Rogers倡导“有用学习”的理想，这与当时的大学教育不同，当时的大学教育过分强调古典学，正如他写道，古典学“阻碍了更广泛、更高和更实用的自然科学和社会科学的教学和训练。”这种教育同样不同于狭隘的职业学校教育。用Rogers的话说：</p>
+<blockquote>
+<p>世界强加的实践工作者和科学工作者之间的区别是完全徒劳的，现代的全部经验已经证明了它的完全无价值。</p></blockquote>
+
+<p>Rogers担任<abbr>MIT</abbr>校长直到1870年，因健康不佳而辞职。1878年，<abbr>MIT</abbr>的第二任校长John Runkle在1873年恐慌引发的金融危机和抵制哈佛接管<abbr>MIT</abbr>的企图所带来的压力下辞职。Rogers回来担任校长直到1881年。</p>
+<p>Rogers在1882年毕业典礼上向<abbr>MIT</abbr>的毕业班发表演讲时倒下并去世。Runkle在同年的纪念演讲中引用了Rogers的遗言：</p>
+<blockquote>
+<p>“当我今天站在这里，看到学院是什么样子，……我想起了科学的开端。我记得一百五十年前，Stephen Hales发表了一本关于照明用煤气的手册，其中他说他的研究表明128格令烟煤——” “烟煤，”这是他在世上的最后的话。他向前弯腰，仿佛在查看面前桌子上的笔记，然后慢慢恢复直立姿势，举起双手，从尘世劳作和胜利的场景被转移到“死亡的明天”，在那里生命的奥秘得到解答，脱离肉体的灵魂在沉思无限未来的新而仍然深不可测的奥秘中找到无尽的满足。</p></blockquote>
+
+<p>用Francis A. Walker（<abbr>MIT</abbr>的第三任校长）的话说：</p>
+<blockquote>
+<p>他一生都最为忠诚、最为英勇地立身行事，而他死得正像这样一位优秀骑士必定会希望的那样：在工作之中，在自己的岗位上，就在履行公共职责的当时。</p></blockquote>
+</div>
+<div id="FOOT90"><p><a class="footnote_backlink" href="#DOCF90"><sup>90</sup></a>等价地，我们可以写成</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> flipped-pairs
+  </span><span class="opn">(</span><span class="pln">square-of-four 
+   identity flip-vert identity flip-vert</span><span class="clo">))</span></pre></div>
+</div>
+<div id="FOOT91"><p><a class="footnote_backlink" href="#DOCF91"><sup>91</sup></a><code>Rotate180</code>将画家旋转180度（见<a href="#Exercise-2_002e50">习题2.50</a>）。我们可以说<code>(compose flip-vert flip-horiz)</code>，使用<a href="1_002e3_zh.xhtml#Exercise-1_002e42">习题1.42</a>中的<code>compose</code>过程，而不是<code>rotate180</code>。</p>
+</div>
+<div id="FOOT92"><p><a class="footnote_backlink" href="#DOCF92"><sup>92</sup></a><code>Frame-coord-map</code>使用了下面<a href="#Exercise-2_002e46">习题2.46</a>中描述的向量操作，我们假设这些操作已经使用某种向量表示实现了。由于数据抽象，只要向量操作行为正确，这种向量表示是什么并不重要。</p>
+</div>
+<div id="FOOT93"><p><a class="footnote_backlink" href="#DOCF93"><sup>93</sup></a><code>Segments-&gt;painter</code>使用了下面<a href="#Exercise-2_002e48">习题2.48</a>中描述的线段表示。它还使用了<a href="#Exercise-2_002e23">习题2.23</a>中描述的<code>for-each</code>过程。</p>
+</div>
+<div id="FOOT94"><p><a class="footnote_backlink" href="#DOCF94"><sup>94</sup></a>例如，<a href="#Figure-2_002e11">图2.11</a>的<code>rogers</code>画家是由灰度图像构造出来的。对于给定框架中的每个点，<code>rogers</code>画家确定在该框架坐标映射下映射到该点的图像中的点，并相应地为其着色。通过允许不同类型的画家，我们利用了<a href="2_002e1_zh.xhtml#g_t2_002e1_002e3">2.1.3</a>中讨论的抽象数据思想，在那里我们论证了有理数表示可以是满足适当条件的任何东西。这里我们利用的事实是，画家可以以任何方式实现，只要它在指定的框架中画出某些东西。<a href="2_002e1_zh.xhtml#g_t2_002e1_002e3">2.1.3</a>还展示了如何将序对实现为过程。画家是我们关于数据的过程式表示的第二个例子。</p>
+</div>
+<div id="FOOT95"><p><a class="footnote_backlink" href="#DOCF95"><sup>95</sup></a> <code>Rotate90</code>仅对方形框架才是纯旋转，因为它还会拉伸和收缩图像以适配旋转后的框架。</p>
+</div>
+<div id="FOOT96"><p><a class="footnote_backlink" href="#DOCF96"><sup>96</sup></a><a href="#Figure-2_002e10">图2.10</a>和<a href="#Figure-2_002e11">图2.11</a>中的菱形图像是通过将<code>squash-inwards</code>应用于<code>wave</code>和<code>rogers</code>而创建的。</p>
+</div>
+<div id="FOOT97"><p><a class="footnote_backlink" href="#DOCF97"><sup>97</sup></a><a href="3_002e3_zh.xhtml#g_t3_002e3_002e4">3.3.4</a>节描述了一种这样的语言。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="2_002e3_zh.xhtml#g_t2_002e3" accesskey="n" rel="next">2.3</a>, 上一节： <a href="2_002e1_zh.xhtml#g_t2_002e1" accesskey="p" rel="prev">2.1</a>, 上一级： <a href="#g_t2_002e2" accesskey="u" rel="prev">2.2</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

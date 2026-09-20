@@ -1,0 +1,1779 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：3.3</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 3.3" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 3.3" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-3_zh.xhtml#Chapter-3" rel="prev" title="Chapter 3" />
+<link href="3_002e4_zh.xhtml#g_t3_002e4" rel="next" title="3.4" />
+<link href="3_002e2_zh.xhtml#g_t3_002e2_002e4" rel="prev" title="3.2.4" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t3_002e3"></a>
+<nav class="header">
+<p>下一节： <a href="3_002e4_zh.xhtml#g_t3_002e4" accesskey="n" rel="next">3.4</a>, 上一节： <a href="3_002e2_zh.xhtml#g_t3_002e2" accesskey="p" rel="prev">3.2</a>, 上一级： <a href="Chapter-3_zh.xhtml#Chapter-3" accesskey="u" rel="prev">第3章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Modeling-with-Mutable-Data"></a>
+<h3 class="section"><span class="secnum">3.3</span><span class="sectitle">用可变数据建模</span></h3>
+
+<p><a href="Chapter-2_zh.xhtml#Chapter-2">第2</a>章将复合数据作为构造具有若干部分的计算对象的手段，以便对具有若干方面的现实世界对象进行建模。在那一章中，我们介绍了数据抽象的准则，根据该准则，数据结构通过构造函数（创建数据对象）和选择函数（访问复合数据对象的部分）来指定。但我们现在知道，数据还有另一个方面，第2章没有涉及。对由具有变化状态的对象组成的系统进行建模的愿望，使我们不仅需要构造和选择复合数据对象，还需要修改它们。为了对具有变化状态的复合对象进行建模，我们将设计数据抽象，使其除了选择函数和构造函数之外，还包括称为<a id="index-mutators"></a> <em>修改器</em>的操作，这些操作修改数据对象。例如，对银行系统进行建模需要我们改变账户余额。因此，用于表示银行账户的数据结构可能允许一个操作</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">set-balance! ⟨</span><var><span class="pln">account</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">new-value</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>该操作将指定账户的余额改为指定的新值。为其定义了修改器的数据对象称为<a id="index-mutable-data-objects"></a> <em>可变数据对象</em>。</p>
+<p>第2章介绍了序对作为合成复合数据的通用“胶水”。我们本节首先定义序对的基本修改器，以便序对可以作为构造可变数据对象的构建块。这些修改器极大地增强了序对的表示能力，使我们能够构建除<a href="2_002e2_zh.xhtml#g_t2_002e2">2.2</a>中所使用的序列和树之外的数据结构。我们还给出了一些模拟示例，其中复杂系统被建模为具有局部状态的对象集合。</p>
+
+<a id="g_t3_002e3_002e1"></a>
+<a id="Mutable-List-Structure"></a>
+<h4 class="subsection"><span class="secnum">3.3.1</span><span class="sectitle">可变表结构</span></h4>
+
+<p>序对的基本操作——<code>cons</code>、<code>car</code>和<code>cdr</code>——可以用来构造表结构并从表结构中选择部分，但它们无法修改表结构。我们迄今为止使用的表操作也是如此，例如<code>append</code>和<code>list</code>，因为它们可以用<code>cons</code>、<code>car</code>和<code>cdr</code>来定义。要修改表结构，我们需要新的操作。</p>
+<p>序对的基本修改器是<code>set-car!</code>和<code>set-cdr!</code>。<code>Set-car!</code>接受两个参数，第一个参数必须是序对。它修改这个序对，将<code>car</code>指针替换为指向<code>set-car!</code>的第二个参数的指针。<a class="footnote_link" id="DOCF144" href="#FOOT144"><sup>144</sup></a></p>
+<p>作为一个例子，假设<code>x</code>绑定到表<code>((a b) c d)</code>，<code>y</code>绑定到表<code>(e f)</code>，如<a href="#Figure-3_002e12">图3.12</a>所示。求值表达式<code> (set-car!  x y)</code>修改<code>x</code>所绑定的序对，将其<code>car</code>替换为<code>y</code>的值。操作的结果如<a href="#Figure-3_002e13">图3.13</a>所示。结构<code>x</code>已被修改，现在将打印为<code>((e f) c d)</code>。表示表<code>(a b)</code>的序对（由被替换的指针标识）现在与原始结构分离。<a class="footnote_link" id="DOCF145" href="#FOOT145"><sup>145</sup></a></p>
+<figure class="float">
+<a id="Figure-3_002e12"></a>
+<object style="width: 48.18ex; height: 37.82ex;" data="fig/chap3/Fig3.12b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.12：</strong>表<code>x</code>：<code>((a b) c d)</code>和<code>y</code>：<code>(e f)</code>。</p>
+</figcaption>
+</figure>
+
+<figure class="float">
+<a id="Figure-3_002e13"></a>
+<object style="width: 48.18ex; height: 37.82ex;" data="fig/chap3/Fig3.13b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.13：</strong><code>(set-car! x y)</code>对<a href="#Figure-3_002e12">图3.12</a>中表的影响。</p>
+</figcaption>
+</figure>
+
+<p>将<a href="#Figure-3_002e13">图3.13</a>与<a href="#Figure-3_002e14">图3.14</a>进行比较，后者展示了在<code>x</code>和<code>y</code>绑定到<a href="#Figure-3_002e12">图3.12</a>的原始表的情况下执行<code>(define z (cons y (cdr x)))</code>的结果。变量<code>z</code>现在绑定到由<code>cons</code>操作创建的新序对；<code>x</code>所绑定的表没有改变。</p>
+<figure class="float">
+<a id="Figure-3_002e14"></a>
+<object style="width: 48.18ex; height: 38.68ex;" data="fig/chap3/Fig3.14b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.14：</strong><code>(define z (cons y (cdr x)))</code>对<a href="#Figure-3_002e12">图3.12</a>中表的影响。</p>
+</figcaption>
+</figure>
+
+<p><code>set-cdr!</code>操作与<code>set-car!</code>类似。唯一的区别是，被替换的是序对的<code>cdr</code>指针，而不是<code>car</code>指针。对<a href="#Figure-3_002e12">图3.12</a>中的表执行<code>(set-cdr! x y)</code>的效果如<a href="#Figure-3_002e15">图3.15</a>所示。这里，<code>x</code>的<code>cdr</code>指针已被替换为指向<code>(e
+f)</code>的指针。此外，原本是<code>x</code>的<code>cdr</code>的表<code>(c d)</code>，现在已从该结构中脱离。</p>
+<figure class="float">
+<a id="Figure-3_002e15"></a>
+<object style="width: 48.18ex; height: 37.82ex;" data="fig/chap3/Fig3.15b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.15：</strong><code>(set-cdr! x y)</code>对<a href="#Figure-3_002e12">图3.12</a>中的表的效果。</p>
+</figcaption>
+</figure>
+
+<p><code>Cons</code>通过创建新序对来构建新的表结构，而<code>set-car!</code>和<code>set-cdr!</code>则修改已有的序对。实际上，我们可以用这两个修改器以及一个过程<code>get-new-pair</code>来实现<code>cons</code>，该过程返回一个不属于任何现有表结构的新序对。我们获得新序对，将其<code>car</code>和<code>cdr</code>指针设置为指定的对象，并返回新序对作为<code>cons</code>的结果。<a class="footnote_link" id="DOCF146" href="#FOOT146"><sup>146</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">new </span><span class="opn">(</span><span class="pln">get-new-pair</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">set-car! new x</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">set-cdr! new y</span><span class="clo">)</span><span class="pln">
+    new</span><span class="clo">))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e12"></a>习题3.12：</strong>下面用于连接表的过程在<a href="2_002e2_zh.xhtml#g_t2_002e2_002e1">2.2.1</a>中引入：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">append x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? x</span><span class="clo">)</span><span class="pln">
+      y
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">append </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> y</span><span class="clo">))))</span></pre></div>
+
+<p><code>Append</code>通过将<code>x</code>的元素依次<code>cons</code>到<code>y</code>上来形成新表。过程<code>append!</code>与<code>append</code>类似，但它是修改器而非构造函数。它通过将表拼接在一起来连接它们，修改<code>x</code>的最后一个序对，使其<code>cdr</code>现在为<code>y</code>。（用空<code>x</code>调用<code>append!</code>是错误的。）</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">append! x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">set-cdr! </span><span class="opn">(</span><span class="pln">last-pair x</span><span class="clo">)</span><span class="pln"> y</span><span class="clo">)</span><span class="pln">
+  x</span><span class="clo">)</span></pre></div>
+
+<p>这里<code>last-pair</code>是一个返回其参数中最后一个序对的过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">last-pair x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+      x
+      </span><span class="opn">(</span><span class="pln">last-pair </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">))))</span></pre></div>
+
+<p>考虑以下交互</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'a</span><span class="pln"> </span><span class="lit">'b</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> y </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'c</span><span class="pln"> </span><span class="lit">'d</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> z </span><span class="opn">(</span><span class="pln">append x y</span><span class="clo">))</span><span class="pln">
+
+z
+</span><i><span class="opn">(</span><span class="pln">a b c d</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+⟨</span><var><span class="pln">response</span></var><span class="pln">⟩
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> w </span><span class="opn">(</span><span class="pln">append! x y</span><span class="clo">))</span><span class="pln">
+
+w
+</span><i><span class="opn">(</span><span class="pln">a b c d</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+⟨</span><var><span class="pln">response</span></var><span class="pln">⟩</span></pre></div>
+
+<p>缺失的<code>⟨</code><var>response</var><code>⟩</code>是什么？画出盒指针图来解释你的答案。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e13"></a>习题3.13：</strong>考虑以下<code>make-cycle</code>过程，它使用了<a href="#Exercise-3_002e12">习题3.12</a>中定义的<code>last-pair</code>过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-cycle x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">set-cdr! </span><span class="opn">(</span><span class="pln">last-pair x</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+  x</span><span class="clo">)</span></pre></div>
+
+<p>画出盒指针图，展示由以下代码创建的<code>z</code>结构</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> z </span><span class="opn">(</span><span class="pln">make-cycle </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'a</span><span class="pln"> </span><span class="lit">'b</span><span class="pln"> </span><span class="lit">'c</span><span class="clo">)))</span></pre></div>
+
+<p>如果我们尝试计算<code>(last-pair z)</code>会发生什么？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e14"></a>习题3.14：</strong>以下过程非常有用，尽管晦涩难懂：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mystery x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">loop x y</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? x</span><span class="clo">)</span><span class="pln">
+        y
+        </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">temp </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">set-cdr! x y</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">loop temp x</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">loop x </span><span class="lit">'</span><span class="opn">(</span><span class="clo">)))</span></pre></div>
+
+<p><code>Loop</code>使用“临时”变量<code>temp</code>来保存<code>x</code>的<code>cdr</code>的旧值，因为下一行的<code>set-cdr!</code>破坏了<code>cdr</code>。解释<code>mystery</code>一般做什么。假设<code>v</code>由<code>(define v (list 'a 'b 'c 'd))</code>定义。画出表示<code>v</code>所绑定的表的盒指针图。假设我们现在求值<code>(define w (mystery v))</code>。画出求值此表达式后展示<code>v</code>和<code>w</code>结构的盒指针图。<code>v</code>和<code>w</code>的值会打印出什么？</p></blockquote>
+
+<a id="Sharing-and-identity"></a>
+<h5 class="subsubheading">共享与同一性</h5>
+
+<p>我们在<a href="3_002e1_zh.xhtml#g_t3_002e1_002e3">3.1.3</a>中提到了由引入赋值所引发的“同一性”和“变化”的理论问题。当各个序对被不同的数据对象<a id="index-shared"></a><em>共享</em>时，这些问题在实践中就会出现。例如，考虑由以下代码形成的结构</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'a</span><span class="pln"> </span><span class="lit">'b</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> z1 </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x x</span><span class="clo">))</span></pre></div>
+
+<p>如<a href="#Figure-3_002e16">图3.16</a>所示，<code>z1</code>是一个序对，其<code>car</code>和<code>cdr</code>都指向同一个序对<code>x</code>。<code>z1</code>的<code>car</code>和<code>cdr</code>共享<code>x</code>，这是<code>cons</code>实现方式的直接结果。一般来说，使用<code>cons</code>构造表将导致序对相互链接的结构，其中许多单个序对被许多不同的结构共享。</p>
+<figure class="float">
+<a id="Figure-3_002e16"></a>
+<object style="width: 31.08ex; height: 19.69ex;" data="fig/chap3/Fig3.16b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.16：</strong>由<code>(cons x x)</code>形成的表<code>z1</code>。</p>
+</figcaption>
+</figure>
+
+<p>与<a href="#Figure-3_002e16">图3.16</a>相反，<a href="#Figure-3_002e17">图3.17</a>展示了由以下代码创建的结构</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> z2 
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'a</span><span class="pln"> </span><span class="lit">'b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'a</span><span class="pln"> </span><span class="lit">'b</span><span class="clo">)))</span></pre></div>
+
+<figure class="float">
+<a id="Figure-3_002e17"></a>
+<object style="width: 47.57ex; height: 17.96ex;" data="fig/chap3/Fig3.17b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.17：</strong>由<code>(cons (list 'a 'b) (list 'a 'b))</code>形成的表<code>z2</code>。</p>
+</figcaption>
+</figure>
+
+<p>在这个结构中，两个<code>(a b)</code>表中的序对是不同的，尽管实际的符号是共享的。<a class="footnote_link" id="DOCF147" href="#FOOT147"><sup>147</sup></a></p>
+<p>当作为表来考虑时，<code>z1</code>和<code>z2</code>都表示“同一个”表，<code>((a b) a b)</code>。一般来说，如果我们仅使用<code>cons</code>、<code>car</code>和<code>cdr</code>对表进行操作，共享是完全无法检测的。然而，如果我们允许对表结构进行修改，共享就变得重要了。作为共享可能造成的差异的一个例子，考虑以下过程，它修改所应用结构的<code>car</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-to-wow! x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">set-car! </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'wow</span><span class="clo">)</span><span class="pln">
+  x</span><span class="clo">)</span></pre></div>
+
+<p>尽管<code>z1</code>和<code>z2</code>是“同一个”结构，对它们应用<code>set-to-wow!</code>却产生不同的结果。对于<code>z1</code>，改变<code>car</code>也会改变<code>cdr</code>，因为在<code>z1</code>中<code>car</code>和<code>cdr</code>是同一个序对。对于<code>z2</code>，<code>car</code>和<code>cdr</code>是不同的，所以<code>set-to-wow!</code>只修改<code>car</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">z1
+</span><i><span class="opn">((</span><span class="pln">a b</span><span class="clo">)</span><span class="pln"> a b</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">set-to-wow! z1</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">((</span><span class="pln">wow b</span><span class="clo">)</span><span class="pln"> wow b</span><span class="clo">)</span></i><span class="pln">
+
+z2
+</span><i><span class="opn">((</span><span class="pln">a b</span><span class="clo">)</span><span class="pln"> a b</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">set-to-wow! z2</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">((</span><span class="pln">wow b</span><span class="clo">)</span><span class="pln"> a b</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>检测表结构中共享的一种方法是使用谓词<code>eq?</code>，我们在<a href="2_002e3_zh.xhtml#g_t2_002e3_002e1">2.3.1</a>中引入它作为测试两个符号是否相等的方式。更一般地，<code>(eq?  x y)</code>测试<code>x</code>和<code>y</code>是否是同一个对象（即，<code>x</code>和<code>y</code>作为指针是否相等）。因此，对于<a href="#Figure-3_002e16">图3.16</a>和<a href="#Figure-3_002e17">图3.17</a>中定义的<code>z1</code>和<code>z2</code>，<code>(eq?  (car z1) (cdr
+z1))</code>为真，而<code>(eq? (car z2) (cdr z2))</code>为假。</p>
+<p>正如将在以下各节中看到的，我们可以利用共享来极大地扩展可用序对表示的数据结构的范围。另一方面，共享也可能是危险的，因为对结构所做的修改也会影响恰好共享被修改部分的其他结构。修改操作<code>set-car!</code>和<code>set-cdr!</code>应谨慎使用；除非我们很好地理解数据对象是如何共享的，否则修改可能会产生意想不到的结果。<a class="footnote_link" id="DOCF148" href="#FOOT148"><sup>148</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e15"></a>习题3.15：</strong>画出盒指针图来解释<code>set-to-wow!</code>对上述结构<code>z1</code>和<code>z2</code>的效果。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e16"></a>习题3.16：</strong>Ben Bitdiddle决定编写一个过程来计算任何表结构中的序对数量。“这很容易，”他推理道。“任何结构中的序对数量是<code>car</code>中的数量加上<code>cdr</code>中的数量，再加一以计入当前序对。”于是Ben编写了以下过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">count-pairs x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pln">pair? x</span><span class="clo">))</span><span class="pln">
+      </span><span class="lit">0</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">count-pairs </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">count-pairs </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+         </span><span class="lit">1</span><span class="clo">)))</span></pre></div>
+
+<p>证明这个过程不正确。特别地，画出表示恰好由三个序对组成的表结构的盒指针图，对于这些结构，Ben的过程会返回3；返回4；返回7；根本不返回。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e17"></a>习题 3.17：</strong>设计一个<code>count-pairs</code>过程的正确版本，该过程来自<a href="#Exercise-3_002e16">习题 3.16</a>，它返回任意结构中不同序对的数量。（提示：遍历结构，维护一个辅助数据结构，用于记录哪些序对已经被计数过。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e18"></a>习题 3.18：</strong>编写一个过程，它检查一个表并确定其中是否包含环，也就是说，一个试图通过连续取<code>cdr</code>来找到表尾的程序是否会进入无限循环。<a href="#Exercise-3_002e13">习题 3.13</a>构造了这样的表。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e19"></a>习题 3.19：</strong>使用一种只占用常量空间的算法重做<a href="#Exercise-3_002e18">习题 3.18</a>。（这需要一个非常巧妙的想法。）</p></blockquote>
+
+<a id="Mutation-is-just-assignment"></a>
+<h5 class="subsubheading">修改就是赋值</h5>
+
+<p>当我们引入复合数据时，我们在<a href="2_002e1_zh.xhtml#g_t2_002e1_002e3">2.1.3</a>中观察到，序对可以完全用过程来表示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'car</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'cdr</span><span class="clo">)</span><span class="pln"> y</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Undefined 
+                 operation: CONS"</span><span class="pln"> m</span><span class="clo">))))</span><span class="pln">
+  dispatch</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z </span><span class="lit">'car</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z </span><span class="lit">'cdr</span><span class="clo">))</span></pre></div>
+
+<p>同样的观察对于可变数据也成立。我们可以使用赋值和局部状态将可变数据对象实现为过程。例如，我们可以扩展上面的序对实现，以类似于我们在<a href="3_002e1_zh.xhtml#g_t3_002e1_002e1">3.1.1</a>中使用<code>make-account</code>实现银行账户的方式处理<code>set-car!</code>和<code>set-cdr!</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-x! v</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x v</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-y! v</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> y v</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'car</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'cdr</span><span class="clo">)</span><span class="pln"> y</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'set-car!</span><span class="clo">)</span><span class="pln"> set-x!</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'set-cdr!</span><span class="clo">)</span><span class="pln"> set-y!</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Undefined 
+                 operation: CONS"</span><span class="pln"> m</span><span class="clo">))))</span><span class="pln">
+  dispatch</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z </span><span class="lit">'car</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z </span><span class="lit">'cdr</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-car! z new-value</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">z </span><span class="lit">'set-car!</span><span class="clo">)</span><span class="pln"> new-value</span><span class="clo">)</span><span class="pln">
+  z</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-cdr! z new-value</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">z </span><span class="lit">'set-cdr!</span><span class="clo">)</span><span class="pln"> new-value</span><span class="clo">)</span><span class="pln">
+  z</span><span class="clo">)</span></pre></div>
+
+<p>从理论上讲，赋值就是解释可变数据行为所需的全部。一旦我们在语言中引入<code>set!</code>，我们就会提出所有问题，不仅是赋值的问题，而且是一般可变数据的问题。<a class="footnote_link" id="DOCF149" href="#FOOT149"><sup>149</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e20"></a>习题 3.20：</strong>画出环境图来说明以下表达式序列的求值</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> z </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x x</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">set-car! </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">)</span><span class="pln"> </span><span class="lit">17</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">17</span></i>
+</pre></div>
+
+<p>使用上面给出的序对的过程式实现。（比较<a href="3_002e2_zh.xhtml#Exercise-3_002e11">习题 3.11</a>。）</p></blockquote>
+
+<a id="g_t3_002e3_002e2"></a>
+<a id="Representing-Queues"></a>
+<h4 class="subsection"><span class="secnum">3.3.2</span><span class="sectitle">表示队列</span></h4>
+
+<p>修改器<code>set-car!</code>和<code>set-cdr!</code>使我们能够使用序对来构造仅用<code>cons</code>、<code>car</code>和<code>cdr</code>无法构建的数据结构。本节展示如何使用序对来表示一种称为队列的数据结构。第<a href="#g_t3_002e3_002e3">3.3.3</a>节将展示如何表示称为表的数据结构。</p>
+<p>一个<a id="index-queue"></a><em>队列</em>是一个序列，其中项从一端插入（称为队列的<a id="index-rear"></a><em>后端</em>），并从另一端删除（<a id="index-front"></a><em>前端</em>）。<a href="#Figure-3_002e18">图3.18</a>展示了一个初始为空的队列，其中插入了项<code>a</code>和<code>b</code>。然后<code>a</code>被移除，<code>c</code>和<code>d</code>被插入，<code>b</code>被移除。因为项总是按照它们被插入的顺序被移除，队列有时被称为<a id="index-FIFO"></a><em>FIFO</em>（先进先出）缓冲区。</p>
+<figure class="float">
+<a id="Figure-3_002e18"></a>
+<object style="width: 48.01ex; height: 23.05ex;" data="fig/chap3/Fig3.18.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.18：</strong>队列操作。</p>
+</figcaption>
+</figure>
+
+<p>就数据抽象而言，我们可以将队列视为由以下操作集定义：</p>
+<ul>
+<li>一个构造函数：<code>(make-queue)</code>返回一个空队列（一个不包含任何项的队列）。</li><li>两个选择函数：<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">empty-queue? ⟨</span><var><span class="pln">queue</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>测试队列是否为空。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">front-queue ⟨</span><var><span class="pln">queue</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>返回队列前端的对象，如果队列为空则发出错误信号；它不修改队列。</p>
+</li><li>两个修改器：<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">insert-queue! ⟨</span><var><span class="pln">queue</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">item</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>在队列的后端插入项，并返回修改后的队列作为其值。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">delete-queue! ⟨</span><var><span class="pln">queue</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>移除队列前端的项，并返回修改后的队列作为其值，如果在删除之前队列为空则发出错误信号。</p>
+</li></ul>
+
+<p>因为队列是项的序列，我们当然可以将其表示为普通的表；队列的前端将是表的<code>car</code>，在队列中插入项相当于在表的末尾追加一个新元素，而从队列中删除项只是取表的<code>cdr</code>。然而，这种表示效率低下，因为为了插入项，我们必须扫描表直到到达末尾。由于我们扫描表的唯一方法是连续进行<code>cdr</code>操作，对于有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>个项的表，这种扫描需要<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>步。对表表示的一个简单修改克服了这个缺点，它允许队列操作的实现只需要<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>步；也就是说，所需的步数与队列的长度无关。</p>
+<p>表表示的困难源于需要扫描以找到表的末尾。我们需要扫描的原因是，尽管将表表示为序对链的标准方式很容易为我们提供指向表开头的指针，但它没有给我们一个容易访问的指向末尾的指针。避免这个缺点的修改是将队列表示为一个表，外加一个指示表中最后一个序对的额外指针。这样，当我们插入项时，我们可以查询后端指针，从而避免扫描表。</p>
+<p>因此，队列被表示为一对指针，<code>front-ptr</code>和<code>rear-ptr</code>，它们分别指示普通表中的第一个和最后一个序对。由于我们希望队列是一个可识别的对象，我们可以使用<code>cons</code>来组合这两个指针。因此，队列本身将是这两个指针的<code>cons</code>。<a href="#Figure-3_002e19">图3.19</a>说明了这种表示。</p>
+<figure class="float">
+<a id="Figure-3_002e19"></a>
+<object style="width: 46.54ex; height: 22.45ex;" data="fig/chap3/Fig3.19b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.19：</strong>将队列实现为带有前端和后端指针的表。</p>
+</figcaption>
+</figure>
+
+<p>为了定义队列操作，我们使用以下过程，它们使我们能够选择和修改队列的前端和后端指针：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">front-ptr queue</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> queue</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">rear-ptr queue</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> queue</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-front-ptr! queue item</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">set-car! queue item</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-rear-ptr! queue item</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">set-cdr! queue item</span><span class="clo">))</span></pre></div>
+
+<p>现在我们可以实现实际的队列操作。如果队列的前端指针是空表，我们将认为队列为空：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-queue? queue</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">null? </span><span class="opn">(</span><span class="pln">front-ptr queue</span><span class="clo">)))</span></pre></div>
+
+<p><code>make-queue</code>构造函数返回一个序对作为初始为空的队列，其<code>car</code>和<code>cdr</code>都是空表：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-queue</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="clo">)))</span></pre></div>
+
+<p>要选择队列前端的项，我们返回由前端指针指示的序对的<code>car</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">front-queue queue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-queue? queue</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"FRONT called with an 
+              empty queue"</span><span class="pln"> queue</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> </span><span class="opn">(</span><span class="pln">front-ptr queue</span><span class="clo">))))</span></pre></div>
+
+<p>要在队列中插入一个项，我们采用其结果如<a href="#Figure-3_002e20">图3.20</a>所示的方法。我们首先创建一个新的序对，其<code>car</code>是要插入的项，其<code>cdr</code>是空表。如果队列最初为空，我们将队列的前端和后端指针设置为这个新序对。否则，我们修改队列中的最后一个序对，使其指向新序对，并将后端指针也设置为新序对。</p>
+<figure class="float">
+<a id="Figure-3_002e20"></a>
+<object style="width: 55.09ex; height: 22.45ex;" data="fig/chap3/Fig3.20c.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.20：</strong>对<a href="#Figure-3_002e19">图3.19</a>的队列使用<code>(insert-queue! q 'd)</code>的结果。</p>
+</figcaption>
+</figure>
+
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">insert-queue! queue item</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">new-pair </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> item </span><span class="lit">'</span><span class="opn">(</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">empty-queue? queue</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-front-ptr! queue new-pair</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-rear-ptr! queue new-pair</span><span class="clo">)</span><span class="pln">
+           queue</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-cdr! </span><span class="opn">(</span><span class="pln">rear-ptr queue</span><span class="clo">)</span><span class="pln"> 
+                          new-pair</span><span class="clo">)</span><span class="pln">
+                </span><span class="opn">(</span><span class="pln">set-rear-ptr! queue new-pair</span><span class="clo">)</span><span class="pln">
+                queue</span><span class="clo">))))</span></pre></div>
+
+<p>要删除队列前端的项，我们只需修改前端指针，使其现在指向队列中的第二个项，这可以通过沿着第一个项的<code>cdr</code>指针找到（见<a href="#Figure-3_002e21">图3.21</a>）：<a class="footnote_link" id="DOCF150" href="#FOOT150"><sup>150</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">delete-queue! queue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">empty-queue? queue</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"DELETE! called with 
+                 an empty queue"</span><span class="pln"> queue</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-front-ptr! 
+               queue 
+               </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> </span><span class="opn">(</span><span class="pln">front-ptr queue</span><span class="clo">)))</span><span class="pln">
+              queue</span><span class="clo">)))</span></pre></div>
+
+<figure class="float">
+<a id="Figure-3_002e21"></a>
+<object style="width: 55.09ex; height: 22.45ex;" data="fig/chap3/Fig3.21c.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.21：</strong>对<a href="#Figure-3_002e20">图3.20</a>的队列使用<code>(delete-queue!  q)</code>的结果。</p>
+</figcaption>
+</figure>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e21"></a>习题3.21：</strong>Ben Bitdiddle 决定测试上面描述的队列实现。他将这些过程输入 Lisp 解释器并开始尝试使用它们：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> q1 </span><span class="opn">(</span><span class="pln">make-queue</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">insert-queue! q1 </span><span class="lit">'a</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">((</span><span class="pln">a</span><span class="clo">)</span><span class="pln"> a</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">insert-queue! q1 </span><span class="lit">'b</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">((</span><span class="pln">a b</span><span class="clo">)</span><span class="pln"> b</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">delete-queue! q1</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">((</span><span class="pln">b</span><span class="clo">)</span><span class="pln"> b</span><span class="clo">)</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">delete-queue! q1</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">((</span><span class="clo">)</span><span class="pln"> b</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>“全错了！”他抱怨道。“解释器的响应表明最后一项被插入了队列两次。而当我删除这两项时，第二个 <code>b</code> 仍然在那里，所以队列不是空的，尽管它本应是空的。”Eva Lu Ator 认为 Ben 误解了正在发生的事情。“并不是这些项进入了队列两次，”她解释道。“只是标准的 Lisp 打印器不知道如何理解队列的表示。如果你想看到队列被正确地打印出来，你必须为队列定义你自己的打印过程。”解释 Eva Lu 在说什么。特别地，说明为什么 Ben 的例子会产生它们所打印出的结果。定义一个过程 <code>print-queue</code>，它接受一个队列作为输入并打印队列中各项的序列。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e22"></a>习题 3.22：</strong> 我们可以不把队列表示为一对指针，而是将队列构建为一个带有局部状态的过程。局部状态将由指向一个普通表的开头和末尾的指针组成。因此，<code>make-queue</code> 过程将具有以下形式</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-queue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">front-ptr </span><span class="roman"><span class="pun">…</span></span><span class="pln"> </span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">rear-ptr </span><span class="roman"><span class="pun">…</span></span><span class="pln"> </span><span class="clo">))</span><span class="pln">
+    ⟨</span><var><span class="pln">definitions of internal procedures</span></var><span class="pln">⟩
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln"> </span><span class="roman"><span class="pun">…</span></span><span class="clo">)</span><span class="pln">
+    dispatch</span><span class="clo">))</span></pre></div>
+
+<p>完成 <code>make-queue</code> 的定义，并提供使用这种表示的队列操作的实现。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e23"></a>习题 3.23：</strong> 一个 <a id="index-deque"></a> <em>deque</em>（“双端队列”）是一个序列，其中的项可以在前端或后端插入和删除。对 deque 的操作有构造函数 <code>make-deque</code>、谓词 <code>empty-deque?</code>、选择函数 <code>front-deque</code> 和 <code>rear-deque</code>，以及修改器 <code>front-insert-deque!</code>、<code>rear-insert-deque!</code>、<code>front-delete-deque!</code>、<code>rear-delete-deque!</code>。说明如何使用序对来表示 deque，并给出这些操作的实现。<a class="footnote_link" id="DOCF151" href="#FOOT151"><sup>151</sup></a> 所有操作都应在 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 步内完成。</p></blockquote>
+
+<a id="g_t3_002e3_002e3"></a>
+<a id="Representing-Tables"></a>
+<h4 class="subsection"><span class="secnum">3.3.3</span><span class="sectitle">表示表</span></h4>
+
+<p>当我们在 <a href="Chapter-2_zh.xhtml#Chapter-2">第 2</a> 章研究表示集合的各种方式时，我们在 <a href="2_002e3_zh.xhtml#g_t2_002e3_002e3">2.3.3</a> 中提到了维护一个由标识键索引的记录表的任务。在 <a href="2_002e4_zh.xhtml#g_t2_002e4_002e3">2.4.3</a> 中的数据导向编程的实现中，我们广泛使用了二维表，其中信息使用两个键来存储和检索。这里我们来看如何将表构建为可变的表结构。</p>
+<p>我们首先考虑一维表，其中每个值存储在单个键下。我们将表实现为一个记录的表，每个记录实现为一个由键和关联值组成的序对。这些记录通过其 <code>car</code> 指向相继记录的序对粘合在一起形成表。这些粘合序对被称为表的 <a id="index-backbone"></a> <em>骨架</em>。为了有一个在向表中添加新记录时可以更改的位置，我们将表构建为一个 <a id="index-headed-list"></a> <em>带表头的表</em>。带表头的表在开头有一个特殊的骨架序对，它持有一个哑“记录”——在这种情况下是任意选择的符号 <code>*table*</code>。<a href="#Figure-3_002e22">图 3.22</a> 显示了该表的盒指针图</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">a</span><span class="pun">:</span><span class="pln">  </span><span class="lit">1</span><span class="pln">
+b</span><span class="pun">:</span><span class="pln">  </span><span class="lit">2</span><span class="pln">
+c</span><span class="pun">:</span><span class="pln">  </span><span class="lit">3</span></pre></div>
+
+<figure class="float">
+<a id="Figure-3_002e22"></a>
+<object style="width: 53.27ex; height: 27.11ex;" data="fig/chap3/Fig3.22c.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.22：</strong> 一个表示为带表头的表的表。</p>
+</figcaption>
+</figure>
+
+<p>为了从表中提取信息，我们使用 <code>lookup</code> 过程，它接受一个键作为参数并返回关联的值（如果该键下没有存储值则返回假）。<code>Lookup</code> 是根据 <code>assoc</code> 操作定义的，该操作期望一个键和一个记录表作为参数。注意 <code>assoc</code> 从不会看到占位记录。<code>Assoc</code> 返回以给定键作为其 <code>car</code> 的记录。<a class="footnote_link" id="DOCF152" href="#FOOT152"><sup>152</sup></a> <code>Lookup</code> 然后检查由 <code>assoc</code> 返回的结果记录是否不为假，并返回该记录的值（即 <code>cdr</code>）。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">lookup key table</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">record </span><span class="opn">(</span><span class="pln">assoc key </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> table</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> record
+        </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> record</span><span class="clo">)</span><span class="pln">
+        false</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">assoc key records</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">null? records</span><span class="clo">)</span><span class="pln"> false</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="kwd">equal</span><span class="pun">?</span><span class="pln"> key </span><span class="opn">(</span><span class="kwd">caar</span><span class="pln"> records</span><span class="clo">))</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> records</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pln">assoc key </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> records</span><span class="clo">)))))</span></pre></div>
+
+<p>为了在表中指定的键下插入一个值，我们首先使用 <code>assoc</code> 查看表中是否已经存在具有该键的记录。如果没有，我们通过将键与值 <code>cons</code> 起来形成一个新记录，并将此记录插入到表的记录表的头部，即占位记录之后。如果已经存在具有该键的记录，我们将此记录的 <code>cdr</code> 设置为指定的新值。表的头部为我们提供了一个固定的位置，以便在插入新记录时进行修改。<a class="footnote_link" id="DOCF153" href="#FOOT153"><sup>153</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">insert! key value table</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">record </span><span class="opn">(</span><span class="pln">assoc key </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> table</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> record
+        </span><span class="opn">(</span><span class="pln">set-cdr! record value</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">set-cdr! table
+                  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> key value</span><span class="clo">)</span><span class="pln"> 
+                        </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> table</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="lit">'ok</span><span class="clo">)</span></pre></div>
+
+<p>为了构造一个新表，我们只需创建一个包含符号 <code>*table*</code> 的表：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-table</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'</span><span class="pun">*</span><span class="pln">table</span><span class="pun">*</span><span class="clo">))</span></pre></div>
+
+<a id="Two_002ddimensional-tables"></a>
+<h5 class="subsubheading">二维表</h5>
+
+<p>在二维表中，每个值由两个键索引。我们可以将这样的表构造为一个一维表，其中每个键标识一个子表。<a href="#Figure-3_002e23">图 3.23</a> 显示了该表的盒指针图</p>
+<div class="example">
+<pre class="example">math:  +: 43    letters:  a: 97
+       -: 45              b: 98
+       *: 42
+</pre></div>
+
+<p>它有两个子表。（子表不需要特殊的头部符号，因为标识子表的键就起到了这个作用。）</p>
+<figure class="float">
+<a id="Figure-3_002e23"></a>
+<object style="width: 57.42ex; height: 55.95ex;" data="fig/chap3/Fig3.23b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.23：</strong> 一个二维表。</p>
+</figcaption>
+</figure>
+
+<p>当我们查找一个项时，我们使用第一个键来标识正确的子表。然后我们使用第二个键来标识子表中的记录。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">lookup key-1 key-2 table</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">subtable </span><span class="opn">(</span><span class="pln">assoc key-1 </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> table</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> subtable
+        </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">record 
+               </span><span class="opn">(</span><span class="pln">assoc key-2 </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> subtable</span><span class="clo">))))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> record </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> record</span><span class="clo">)</span><span class="pln"> false</span><span class="clo">))</span><span class="pln">
+        false</span><span class="clo">)))</span></pre></div>
+
+<p>为了在一对键下插入一个新项，我们使用 <code>assoc</code> 查看第一个键下是否存储了一个子表。如果没有，我们构建一个包含单个记录（<code>key-2</code>，<code>value</code>）的新子表，并将其插入到表中第一个键下。如果第一个键的子表已经存在，我们将新记录插入到这个子表中，使用上述一维表的插入方法：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">insert! key-1 key-2 value table</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">subtable </span><span class="opn">(</span><span class="pln">assoc key-1 </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> table</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> subtable
+        </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">record 
+               </span><span class="opn">(</span><span class="pln">assoc key-2 </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> subtable</span><span class="clo">))))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> record
+              </span><span class="opn">(</span><span class="pln">set-cdr! record value</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="pln">set-cdr! 
+               subtable
+               </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> key-2 value</span><span class="clo">)</span><span class="pln">
+                     </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> subtable</span><span class="clo">)))))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">set-cdr! 
+         table
+         </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list key-1 </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> key-2 value</span><span class="clo">))</span><span class="pln">
+               </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> table</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="lit">'ok</span><span class="clo">)</span></pre></div>
+
+<a id="Creating-local-tables"></a>
+<h5 class="subsubheading">创建局部表</h5>
+
+<p>上面定义的 <code>lookup</code> 和 <code>insert!</code> 操作将表作为参数。这使我们能够使用访问多个表的程序。处理多个表的另一种方法是为每个表分别设置 <code>lookup</code> 和 <code>insert!</code> 过程。我们可以通过将表表示为一个过程来实现这一点，即作为一个对象，它维护一个内部表作为其局部状态的一部分。当发送适当的消息时，这个“表对象”提供用于操作内部表的过程。下面是一个以这种方式表示的二维表的生成器：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-table</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">local-table </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'</span><span class="pun">*</span><span class="pln">table</span><span class="pun">*</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">lookup key-1 key-2</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">subtable 
+             </span><span class="opn">(</span><span class="pln">assoc key-1 </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> local-table</span><span class="clo">))))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> subtable
+            </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">record 
+                   </span><span class="opn">(</span><span class="pln">assoc key-2 
+                          </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> subtable</span><span class="clo">))))</span><span class="pln">
+              </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> record </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> record</span><span class="clo">)</span><span class="pln"> false</span><span class="clo">))</span><span class="pln">
+            false</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">insert! key-1 key-2 value</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">subtable 
+             </span><span class="opn">(</span><span class="pln">assoc key-1 </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> local-table</span><span class="clo">))))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> subtable
+            </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">record 
+                   </span><span class="opn">(</span><span class="pln">assoc key-2 
+                          </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> subtable</span><span class="clo">))))</span><span class="pln">
+              </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> record
+                  </span><span class="opn">(</span><span class="pln">set-cdr! record value</span><span class="clo">)</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">set-cdr! 
+                   subtable
+                   </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> key-2 value</span><span class="clo">)</span><span class="pln">
+                         </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> subtable</span><span class="clo">)))))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">set-cdr! 
+             local-table
+             </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list key-1
+                         </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> key-2 value</span><span class="clo">))</span><span class="pln">
+                   </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> local-table</span><span class="clo">)))))</span><span class="pln">
+      </span><span class="lit">'ok</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'lookup-proc</span><span class="clo">)</span><span class="pln"> lookup</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'insert-proc!</span><span class="clo">)</span><span class="pln"> insert!</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown operation: 
+                          TABLE"</span><span class="pln"> m</span><span class="clo">))))</span><span class="pln">
+    dispatch</span><span class="clo">))</span></pre></div>
+
+<p>使用<code>make-table</code>，我们可以如下实现<a href="2_002e4_zh.xhtml#g_t2_002e4_002e3">2.4.3</a>中用于数据导向编程的<code>get</code>和<code>put</code>操作：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> operation-table </span><span class="opn">(</span><span class="pln">make-table</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> get </span><span class="opn">(</span><span class="pln">operation-table </span><span class="lit">'lookup-proc</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> put </span><span class="opn">(</span><span class="pln">operation-table </span><span class="lit">'insert-proc!</span><span class="clo">))</span></pre></div>
+
+<p><code>Get</code>接受两个键作为参数，<code>put</code>接受两个键和一个值作为参数。这两个操作访问同一个局部表，该表封装在由调用<code>make-table</code>所创建的对象中。</p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e24"></a>习题3.24：</strong>在上面的表实现中，键的相等性测试使用的是<code>equal?</code>（由<code>assoc</code>调用）。这并不总是合适的测试。例如，我们可能有一个带有数值键的表，其中我们不需要与所查找的数字精确匹配，而只需要在某个容差范围内的数字。设计一个表构造函数<code>make-table</code>，它接受一个<code>same-key?</code>过程作为参数，该过程将用于测试键的“相等性”。<code>Make-table</code>应返回一个<code>dispatch</code>过程，该过程可用于访问局部表的相应<code>lookup</code>和<code>insert!</code>过程。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e25"></a>习题3.25：</strong>将一维和二维表推广，展示如何实现一个表，其中值存储在任意数量的键下，并且不同的值可以存储在不同数量的键下。<code>lookup</code>和<code>insert!</code>过程应接受一个用于访问表的键的表作为输入。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e26"></a>习题3.26：</strong>要搜索如上实现的表，需要扫描记录表。这基本上就是<a href="2_002e3_zh.xhtml#g_t2_002e3_002e3">2.3.3</a>的无序表表示。对于大型表，以不同的方式组织表可能更高效。描述一种表实现，其中（键，值）记录使用二叉树组织，假设键可以按某种方式排序（例如，按数值或字母顺序）。（比较<a href="Chapter-2_zh.xhtml#Chapter-2">第2</a>章的<a href="2_002e3_zh.xhtml#Exercise-2_002e66">习题2.66</a>。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e27"></a>习题3.27：</strong><a id="index-Memoization"></a><em>记忆化</em>（也称为<a id="index-tabulation-1"></a><em>制表</em>）是一种技术，它使过程能够在局部表中记录先前已计算的值。这种技术可以极大地改变程序的性能。记忆化过程维护一个表，其中使用产生值的参数作为键来存储先前调用的值。当要求记忆化过程计算一个值时，它首先检查表中是否已有该值，如果有，就直接返回该值。否则，它按通常方式计算新值并将此值存储在表中。作为记忆化的一个例子，回忆<a href="1_002e2_zh.xhtml#g_t1_002e2_002e2">1.2.2</a>中计算斐波那契数的指数过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">fib </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">2</span><span class="clo">))))))</span></pre></div>
+
+<p>同一过程的记忆化版本是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> memo-fib
+  </span><span class="opn">(</span><span class="pln">memoize 
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">n</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> 
+            </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">memo-fib </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">memo-fib </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">2</span><span class="clo">))))))))</span></pre></div>
+
+<p>其中记忆化器定义为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">memoize f</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">table </span><span class="opn">(</span><span class="pln">make-table</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">previously-computed-result 
+             </span><span class="opn">(</span><span class="pln">lookup x table</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">or</span><span class="pln"> previously-computed-result
+            </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">result </span><span class="opn">(</span><span class="pln">f x</span><span class="clo">)))</span><span class="pln">
+              </span><span class="opn">(</span><span class="pln">insert! x result table</span><span class="clo">)</span><span class="pln">
+              result</span><span class="clo">))))))</span></pre></div>
+
+<p>画出环境图来分析<code>(memo-fib 3)</code>的计算。解释为什么<code>memo-fib</code>计算第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math>个斐波那契数的步数与<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>成正比。如果我们简单地将<code>memo-fib</code>定义为<code>(memoize fib)</code>，该方案仍然有效吗？</p></blockquote>
+
+<a id="g_t3_002e3_002e4"></a>
+<a id="A-Simulator-for-Digital-Circuits"></a>
+<h4 class="subsection"><span class="secnum">3.3.4</span><span class="sectitle">数字电路模拟器</span></h4>
+
+<p>设计复杂的数字系统，例如计算机，是一项重要的工程活动。数字系统通过互连简单元件来构造。尽管这些单个元件的行为很简单，但它们的网络可以具有非常复杂的行为。对提议的电路设计进行计算机模拟是数字系统工程师使用的重要工具。在本节中，我们设计一个用于执行数字逻辑模拟的系统。该系统代表了一类称为<a id="index-event_002ddriven-simulation"></a><em>事件驱动模拟</em>的程序，其中动作（“事件”）触发在稍后时间发生的进一步事件，这些事件又触发更多事件，依此类推。</p>
+<p>我们的电路计算模型将由与构造电路的基本组件相对应的对象组成。有<a id="index-wires"></a><em>导线</em>，它们携带<a id="index-digital-signals"></a><em>数字信号</em>。数字信号在任何时刻只能有两个可能值之一：0和1。还有各种类型的数字<a id="index-function-boxes"></a><em>功能盒</em>，它们将携带输入信号的导线连接到其他输出导线。这样的盒产生根据其输入信号计算出的输出信号。输出信号被延迟一段时间，该时间取决于功能盒的类型。例如，<a id="index-inverter"></a><em>反相器</em>是一种基本功能盒，它反转其输入。如果反相器的输入信号变为0，那么一个反相器延迟后，反相器将把其输出信号变为1。如果反相器的输入信号变为1，那么一个反相器延迟后，反相器将把其输出信号变为0。我们如<a href="#Figure-3_002e24">图3.24</a>中那样用符号表示反相器。<a id="index-and_002dgate"></a><em>与门</em>，也在图3.24中显示，是一种具有两个输入和一个输出的基本功能盒。它将其输出信号驱动为输入的<a id="index-logical-and"></a><em>逻辑与</em>值。也就是说，如果它的两个输入信号都变为1，那么一个与门延迟时间后，与门将强制其输出信号为1；否则输出将为0。<a id="index-or_002dgate"></a><em>或门</em>是一种类似的双输入基本功能盒，它将其输出信号驱动为输入的<a id="index-logical-or"></a><em>逻辑或</em>值。也就是说，如果至少一个输入信号为1，则输出将变为1；否则输出将变为0。</p>
+<figure class="float">
+<a id="Figure-3_002e24"></a>
+<object style="width: 49.30ex; height: 11.14ex;" data="fig/chap3/Fig3.24a.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.24：</strong>数字逻辑模拟器中的基本功能。</p>
+</figcaption>
+</figure>
+
+<p>我们可以将基本函数连接在一起以构造更复杂的函数。为此，我们将一些功能盒的输出连接到其他功能盒的输入。例如，<a href="#Figure-3_002e25">图3.25</a>中所示的<a id="index-half_002dadder"></a><em>半加器</em>电路由一个或门、两个与门和一个反相器组成。它接受两个输入信号 A 和 B，并有两个输出信号 S 和 C。当 A 和 B 中恰好有一个为1时，S 将变为1；当 A 和 B 都为1时，C 将变为1。从图中可以看出，由于涉及的延迟，输出可能在不同时间产生。数字电路设计中的许多困难都源于这一事实。</p>
+<figure class="float">
+<a id="Figure-3_002e25"></a>
+<object style="width: 48.52ex; height: 19.17ex;" data="fig/chap3/Fig3.25c.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.25：</strong>一个半加器电路。</p>
+</figcaption>
+</figure>
+
+<p>我们现在将构建一个程序，用于对我们希望研究的数字逻辑电路进行建模。该程序将构造对导线进行建模的计算对象，这些导线将“持有”信号。功能盒将由强制信号之间正确关系的过程来建模。</p>
+<p>我们模拟的一个基本元素将是一个过程<code>make-wire</code>，它构造导线。例如，我们可以如下构造六条导线：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> a </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> b </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> c </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> d </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> e </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> s </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span></pre></div>
+
+<p>我们通过调用构造某种盒的过程，将一个功能盒连接到一组导线上。构造过程的参数是要连接到该盒的导线。例如，假设我们可以构造与门、或门和反相器，我们可以将<a href="#Figure-3_002e25">图3.25</a>中所示的半加器连接在一起：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">or-gate a b d</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">ok</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">and-gate a b c</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">ok</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">inverter c e</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">ok</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">and-gate d e s</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">ok</span></i>
+</pre></div>
+
+<p>更好的是，我们可以通过定义一个过程<code>half-adder</code>来显式命名这个操作，该过程在给定要连接到半加器的四条外部导线的情况下构造这个电路：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">half-adder a b s c</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">d </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln"> </span><span class="opn">(</span><span class="pln">e </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">or-gate a b d</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">and-gate a b c</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">inverter c e</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">and-gate d e s</span><span class="clo">)</span><span class="pln">
+    </span><span class="lit">'ok</span><span class="clo">))</span></pre></div>
+
+<p>进行这个定义的好处是，我们可以将<code>half-adder</code>本身用作创建更复杂电路的构建块。例如，<a href="#Figure-3_002e26">图3.26</a>显示了一个由两个半加器和一个或门组成的<a id="index-full_002dadder"></a><em>全加器</em>。<a class="footnote_link" id="DOCF154" href="#FOOT154"><sup>154</sup></a>我们可以如下构造一个全加器：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">full-adder a b c-in sum c-out</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">c1 </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pln">c2 </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">s  </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">half-adder b c-in s c1</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">half-adder a s sum c2</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">or-gate c1 c2 c-out</span><span class="clo">)</span><span class="pln">
+    </span><span class="lit">'ok</span><span class="clo">))</span></pre></div>
+
+<figure class="float">
+<a id="Figure-3_002e26"></a>
+<object style="width: 51.29ex; height: 19.17ex;" data="fig/chap3/Fig3.26.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.26：</strong>一个全加器电路。</p>
+</figcaption>
+</figure>
+
+<p>在将<code>full-adder</code>定义为一个过程之后，我们现在可以将其用作创建更复杂电路的构建块。（例如，见<a href="#Exercise-3_002e30">习题3.30</a>。）</p>
+<p>本质上，我们的模拟器为我们提供了构造电路语言的工具。如果我们采用在<a href="1_002e1_zh.xhtml#g_t1_002e1">1.1</a>中研究 Lisp 时所采用的关于语言的一般视角，我们可以说，基本功能盒构成了语言的基元元素，将盒连接在一起提供了一种组合手段，而将连接模式指定为过程则充当了一种抽象手段。</p>
+<a id="Primitive-function-boxes"></a>
+<h5 class="subsubheading">基本功能盒</h5>
+
+<p>基本功能盒实现了“力”，通过这种力，一条导线上信号的变化会影响其他导线上的信号。为了构建功能盒，我们对导线使用以下操作：</p>
+<ul>
+<li> <code>(get-signal ⟨<var>wire</var>⟩)</code>
+
+<p>返回导线上信号的当前值。</p>
+</li><li> <code>(set-signal! ⟨<var>wire</var>⟩ ⟨<var>new value</var>⟩)</code>
+
+<p>将导线上信号的值更改为新值。</p>
+</li><li> <code>(add-action! ⟨<var>wire</var>⟩ ⟨<var>procedure of no arguments</var>⟩)</code>
+
+<p>断言每当导线上信号的值发生变化时，都应运行指定的过程。此类过程是将导线上信号值的变化传达到其他导线的载体。</p>
+</li></ul>
+
+<p>此外，我们将使用一个过程<code>after-delay</code>，它接受一个时间延迟和一个要运行的过程，并在给定延迟之后执行给定的过程。</p>
+<p>使用这些过程，我们可以定义基本的数字逻辑函数。为了通过反相器将输入连接到输出，我们使用<code>add-action!</code>将输入导线与一个过程关联起来，每当输入导线上的信号发生变化时，该过程就会运行。该过程计算输入信号的<code>logical-not</code>，然后在一个<code>inverter-delay</code>之后，将输出信号设置为这个新值：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">inverter input output</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">invert-input</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">new-value 
+           </span><span class="opn">(</span><span class="pln">logical-not </span><span class="opn">(</span><span class="pln">get-signal input</span><span class="clo">))))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">after-delay 
+       inverter-delay
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">set-signal! output new-value</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">add-action! input invert-input</span><span class="clo">)</span><span class="pln">
+  </span><span class="lit">'ok</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">logical-not s</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> s </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pun">=</span><span class="pln"> s </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Invalid signal"</span><span class="pln"> s</span><span class="clo">))))</span></pre></div>
+
+<p>与门稍微复杂一些。如果门的任一输入发生变化，就必须运行动作过程。它计算输入导线上信号值的<code>logical-and</code>（使用类似于<code>logical-not</code>的过程），并安排在输出导线上经过一个<code>and-gate-delay</code>后发生到新值的变化。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">and-gate a1 a2 output</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">and-action-procedure</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">new-value
+           </span><span class="opn">(</span><span class="pln">logical-and </span><span class="opn">(</span><span class="pln">get-signal a1</span><span class="clo">)</span><span class="pln"> 
+                        </span><span class="opn">(</span><span class="pln">get-signal a2</span><span class="clo">))))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">after-delay 
+       and-gate-delay
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">set-signal! output new-value</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">add-action! a1 and-action-procedure</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">add-action! a2 and-action-procedure</span><span class="clo">)</span><span class="pln">
+  </span><span class="lit">'ok</span><span class="clo">)</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e28"></a>习题3.28：</strong>将或门定义为基本功能盒。你的<code>or-gate</code>构造过程应类似于<code>and-gate</code>。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e29"></a>习题3.29：</strong>构造或门的另一种方式是将其作为由与门和反相器构成的复合数字逻辑器件。定义一个过程<code>or-gate</code>来实现这一点。用<code>and-gate-delay</code>和<code>inverter-delay</code>表示时，该或门的延迟时间是多少？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e30"></a>习题 3.30：</strong> <a href="#Figure-3_002e27">图 3.27</a>展示了一个<a id="index-ripple_002dcarry-adder"></a> <em>行波进位加法器</em>，它由<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>个全加器串联而成。这是用于将两个<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>位二进制数相加的最简单的并行加法器形式。输入<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mn>1</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mn>2</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mn>3</mn>
+  </msub>
+</math>、…、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mi>n</mi>
+  </msub>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>B</mi>
+    <mn>1</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>B</mi>
+    <mn>2</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>B</mi>
+    <mn>3</mn>
+  </msub>
+</math>、…、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>B</mi>
+    <mi>n</mi>
+  </msub>
+</math>是要相加的两个二进制数（每个<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mi>k</mi>
+  </msub>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>B</mi>
+    <mi>k</mi>
+  </msub>
+</math>都是0或1）。该电路生成<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>S</mi>
+    <mn>1</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>S</mi>
+    <mn>2</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>S</mi>
+    <mn>3</mn>
+  </msub>
+</math>、…、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>S</mi>
+    <mi>n</mi>
+  </msub>
+</math>，即和的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>个位，以及<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math>，即加法产生的进位。编写一个过程<code>ripple-carry-adder</code>来生成该电路。该过程应接受三个各含<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>条线的表作为参数——即<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>A</mi>
+    <mi>k</mi>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>B</mi>
+    <mi>k</mi>
+  </msub>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>S</mi>
+    <mi>k</mi>
+  </msub>
+</math>——以及另一条线<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math>。行波进位加法器的主要缺点是必须等待进位信号传播。以与门、或门和反相器的延迟来表示，从一个<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>位行波进位加法器获得完整输出需要多少延迟？</p></blockquote>
+
+<figure class="float">
+<a id="Figure-3_002e27"></a>
+<object style="width: 50.16ex; height: 15.54ex;" data="fig/chap3/Fig3.27b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.27：</strong>用于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 位数的行波进位加法器。</p>
+</figcaption>
+</figure>
+
+<a id="Representing-wires"></a>
+<h5 class="subsubheading">表示导线</h5>
+
+<p>在我们的模拟中，导线将是一个计算对象，带有两个局部状态变量：一个 <code>signal-value</code>（初始取为 0）和一个 <code>action-procedures</code> 的集合，当信号值改变时运行。我们使用消息传递风格将导线实现为一组局部过程，外加一个 <code>dispatch</code> 过程来选择适当的局部操作，就像我们在 <a href="3_002e1_zh.xhtml#g_t3_002e1_002e1">3.1.1</a> 中对简单的银行账户对象所做的那样：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">signal-value </span><span class="lit">0</span><span class="clo">)</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pln">action-procedures </span><span class="lit">'</span><span class="opn">(</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-my-signal! new-value</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> signal-value new-value</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> signal-value new-value</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">call-each 
+                  action-procedures</span><span class="clo">))</span><span class="pln">
+          </span><span class="lit">'done</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">accept-action-procedure! proc</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> action-procedures 
+            </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> proc action-procedures</span><span class="clo">))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">proc</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'get-signal</span><span class="clo">)</span><span class="pln"> 
+             signal-value</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'set-signal!</span><span class="clo">)</span><span class="pln"> 
+             set-my-signal!</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'add-action!</span><span class="clo">)</span><span class="pln"> 
+             accept-action-procedure!</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown operation: 
+                          WIRE"</span><span class="pln"> m</span><span class="clo">))))</span><span class="pln">
+    dispatch</span><span class="clo">))</span></pre></div>
+
+<p>局部过程 <code>set-my-signal!</code> 测试新的信号值是否改变了导线上的信号。如果是，它就运行每个动作过程，使用以下过程 <code>call-each</code>，该过程调用一个无参数过程表中的每一项：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">call-each procedures</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? procedures</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">'done</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">car</span><span class="pln"> procedures</span><span class="clo">))</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">call-each </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> procedures</span><span class="clo">)))))</span></pre></div>
+
+<p>局部过程 <code>accept-action-procedure!</code> 将给定的过程添加到要运行的过程表中，然后运行新过程一次。（见 <a href="#Exercise-3_002e31">习题 3.31</a>。）</p>
+<p>在按指定方式设置好局部 <code>dispatch</code> 过程后，我们可以提供以下过程来访问导线上的局部操作：<a class="footnote_link" id="DOCF155" href="#FOOT155"><sup>155</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-signal wire</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">wire </span><span class="lit">'get-signal</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-signal! wire new-value</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">wire </span><span class="lit">'set-signal!</span><span class="clo">)</span><span class="pln"> new-value</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-action! wire action-procedure</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">wire </span><span class="lit">'add-action!</span><span class="clo">)</span><span class="pln"> action-procedure</span><span class="clo">))</span></pre></div>
+
+<p>导线具有随时间变化的信号，并且可以增量地连接到设备上，是典型的可变对象。我们将它们建模为带有局部状态变量的过程，这些变量通过赋值来修改。当创建一条新导线时，会分配一组新的状态变量（通过 <code>make-wire</code> 中的 <code>let</code> 表达式），并构造并返回一个新的 <code>dispatch</code> 过程，捕获带有新状态变量的环境。</p>
+<p>导线在已连接到它们的各种设备之间共享。因此，与一个设备交互所做的改变将影响连接到该导线的所有其他设备。导线通过调用在建立连接时提供给它的动作过程，将改变传达给它的邻居。</p>
+<a id="The-agenda"></a>
+<h5 class="subsubheading">日程表</h5>
+
+<p>完成模拟器所需的唯一东西是 <code>after-delay</code>。这里的想法是我们维护一个称为 <a id="index-agenda"></a><em>日程表</em>的数据结构，其中包含要做的事情的时间表。为日程表定义了以下操作：</p>
+<ul>
+<li><code>(make-agenda)</code> 返回一个新的空日程表。</li><li>如果指定的日程表为空，则 <code>(empty-agenda? ⟨<var>agenda</var>⟩)</code> 为真。</li><li><code>(first-agenda-item ⟨<var>agenda</var>⟩)</code> 返回日程表上的第一项。</li><li><code>(remove-first-agenda-item! ⟨<var>agenda</var>⟩)</code> 通过移除第一项来修改日程表。</li><li><code>(add-to-agenda! ⟨<var>time</var>⟩ ⟨<var>action</var>⟩ ⟨<var>agenda</var>⟩)</code> 通过添加给定的动作过程以在指定时间运行来修改日程表。</li><li><code>(current-time ⟨<var>agenda</var>⟩)</code> 返回当前模拟时间。</li></ul>
+
+<p>我们使用的特定日程表由 <code>the-agenda</code> 表示。过程 <code>after-delay</code> 向 <code>the-agenda</code> 添加新元素：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">after-delay </span><span class="kwd">delay</span><span class="pln"> action</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">add-to-agenda! 
+   </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="kwd">delay</span><span class="pln"> </span><span class="opn">(</span><span class="pln">current-time the-agenda</span><span class="clo">))</span><span class="pln">
+   action
+   the-agenda</span><span class="clo">))</span></pre></div>
+
+<p>模拟由过程 <code>propagate</code> 驱动，它作用于 <code>the-agenda</code>，按顺序执行日程表上的每个过程。一般来说，随着模拟运行，新项将被添加到日程表中，只要日程表上还有项，<code>propagate</code> 就会继续模拟：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">propagate</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-agenda? the-agenda</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">'done</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">first-item 
+             </span><span class="opn">(</span><span class="pln">first-agenda-item the-agenda</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">first-item</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">remove-first-agenda-item! the-agenda</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">propagate</span><span class="clo">))))</span></pre></div>
+
+<a id="A-sample-simulation"></a>
+<h5 class="subsubheading">一个模拟示例</h5>
+
+<p>以下过程在导线上放置一个“探针”，展示了模拟器的运行情况。探针告诉导线，每当其信号值改变时，它应打印新的信号值，以及当前时间和标识该导线的名称：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">probe name wire</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">add-action! 
+   wire
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">newline</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">display name</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">display </span><span class="str">" "</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">display </span><span class="opn">(</span><span class="pln">current-time the-agenda</span><span class="clo">))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">display </span><span class="str">"  New-value = "</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">display </span><span class="opn">(</span><span class="pln">get-signal wire</span><span class="clo">)))))</span></pre></div>
+
+<p>我们首先初始化日程表并指定基本功能盒的延迟：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> the-agenda </span><span class="opn">(</span><span class="pln">make-agenda</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> inverter-delay </span><span class="lit">2</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> and-gate-delay </span><span class="lit">3</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> or-gate-delay </span><span class="lit">5</span><span class="clo">)</span></pre></div>
+
+<p>现在我们定义四条导线，并在其中两条上放置探针：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> input-1 </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> input-2 </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> sum </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> carry </span><span class="opn">(</span><span class="pln">make-wire</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">probe </span><span class="lit">'sum</span><span class="pln"> sum</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">sum </span><span class="lit">0</span><span class="pln">  New-value </span><span class="pun">=</span><span class="pln"> </span><span class="lit">0</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">probe </span><span class="lit">'carry</span><span class="pln"> carry</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">carry </span><span class="lit">0</span><span class="pln">  New-value </span><span class="pun">=</span><span class="pln"> </span><span class="lit">0</span></i>
+</pre></div>
+
+<p>接下来我们将导线连接成半加器电路（如 <a href="#Figure-3_002e25">图 3.25</a> 所示），将 <code>input-1</code> 上的信号设为 1，并运行模拟：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">half-adder input-1 input-2 sum carry</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">ok</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">set-signal! input-1 </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">done</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">propagate</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">sum </span><span class="lit">8</span><span class="pln">  New-value </span><span class="pun">=</span><span class="pln"> </span><span class="lit">1</span></i><span class="pln">
+</span><i><span class="pln">done</span></i>
+</pre></div>
+
+<p><code>sum</code> 信号在时间 8 变为 1。我们现在距离模拟开始已经八个时间单位。此时，我们可以将 <code>input-2</code> 上的信号设为 1，并让值传播：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">set-signal! input-2 </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">done</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">propagate</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">carry </span><span class="lit">11</span><span class="pln">  New-value </span><span class="pun">=</span><span class="pln"> </span><span class="lit">1</span></i><span class="pln">
+</span><i><span class="pln">sum </span><span class="lit">16</span><span class="pln">  New-value </span><span class="pun">=</span><span class="pln"> </span><span class="lit">0</span></i><span class="pln">
+</span><i><span class="pln">done</span></i>
+</pre></div>
+
+<p><code>carry</code> 在时间 11 变为 1，而 <code>sum</code> 在时间 16 变为 0。</p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e31"></a>习题 3.31：</strong> <code>make-wire</code> 中定义的内部过程 <code>accept-action-procedure!</code> 规定，当新的动作过程被添加到导线时，该过程立即运行。解释为什么这种初始化是必要的。特别地，追踪上面段落中的半加器示例，并说明系统的响应会有何不同，如果我们把 <code>accept-action-procedure!</code> 定义为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">accept-action-procedure! proc</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> action-procedures 
+        </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> proc action-procedures</span><span class="clo">)))</span></pre></div>
+</blockquote>
+
+<a id="Implementing-the-agenda"></a>
+<h5 class="subsubheading">实现日程表</h5>
+
+<p>最后，我们给出日程表数据结构的细节，它保存计划在未来执行的过程。</p>
+<p>日程表由 <a id="index-time-segments"></a><em>时间段</em>组成。每个时间段是一个序对，由一个数字（时间）和一个队列（见 <a href="#Exercise-3_002e32">习题 3.32</a>）组成，该队列保存计划在该时间段内运行的过程。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-time-segment time queue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> time queue</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">segment-time s</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> s</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">segment-queue s</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> s</span><span class="clo">))</span></pre></div>
+
+<p>我们将使用 <a href="#g_t3_002e3_002e2">3.3.2</a> 中描述的队列操作来操作时间段队列。</p>
+<p>日程表本身是一个一维的时间段表。它与<a href="#g_t3_002e3_002e3">3.3.3</a>中描述的表不同之处在于，其中的时间段将按时间递增的顺序排序。此外，我们在日程表的头部存储<a id="index-current-time"></a><em>当前时间</em>（即最后处理的动作的时间）。新构造的日程表没有时间段，当前时间为0：<a class="footnote_link" id="DOCF156" href="#FOOT156"><sup>156</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-agenda</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">current-time agenda</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> agenda</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-current-time! agenda time</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">set-car! agenda time</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">segments agenda</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> agenda</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-segments! agenda segments</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">set-cdr! agenda segments</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">first-segment agenda</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> </span><span class="opn">(</span><span class="pln">segments agenda</span><span class="clo">)))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">rest-segments agenda</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> </span><span class="opn">(</span><span class="pln">segments agenda</span><span class="clo">)))</span></pre></div>
+
+<p>如果日程表没有时间段，则它是空的：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-agenda? agenda</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">null? </span><span class="opn">(</span><span class="pln">segments agenda</span><span class="clo">)))</span></pre></div>
+
+<p>要向日程表中添加一个动作，我们首先检查日程表是否为空。如果是，我们为该动作创建一个时间段，并将其安装到日程表中。否则，我们扫描日程表，检查每个时间段的时间。如果我们找到与我们指定的时间相同的时间段，就将该动作添加到关联的队列中。如果我们到达的时间晚于我们指定的时间，就在它之前插入一个新的时间段到日程表中。如果我们到达了日程表的末尾，就必须在末尾创建一个新的时间段。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-to-agenda! time action agenda</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">belongs-before? segments</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">or</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? segments</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> time 
+           </span><span class="opn">(</span><span class="pln">segment-time </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> segments</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-new-time-segment time action</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">q </span><span class="opn">(</span><span class="pln">make-queue</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">insert-queue! q action</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">make-time-segment time q</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-to-segments! segments</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">segment-time </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> segments</span><span class="clo">))</span><span class="pln"> time</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">insert-queue! 
+         </span><span class="opn">(</span><span class="pln">segment-queue </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> segments</span><span class="clo">))</span><span class="pln">
+         action</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">rest </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> segments</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">belongs-before? rest</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="pln">set-cdr!
+               segments
+               </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-new-time-segment 
+                      time 
+                      action</span><span class="clo">)</span><span class="pln">
+                     </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> segments</span><span class="clo">)))</span><span class="pln">
+              </span><span class="opn">(</span><span class="pln">add-to-segments! rest</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">segments </span><span class="opn">(</span><span class="pln">segments agenda</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">belongs-before? segments</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">set-segments!
+         agenda
+         </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-new-time-segment 
+                time 
+                action</span><span class="clo">)</span><span class="pln">
+               segments</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">add-to-segments! segments</span><span class="clo">))))</span></pre></div>
+
+<p>从日程表中移除第一个项的过程会删除第一个时间段中队列前端的项。如果这次删除使得该时间段为空，我们就将它从时间段表中移除：<a class="footnote_link" id="DOCF157" href="#FOOT157"><sup>157</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">remove-first-agenda-item! agenda</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">q </span><span class="opn">(</span><span class="pln">segment-queue 
+            </span><span class="opn">(</span><span class="pln">first-segment agenda</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">delete-queue! q</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-queue? q</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">set-segments! 
+         agenda 
+         </span><span class="opn">(</span><span class="pln">rest-segments agenda</span><span class="clo">)))))</span></pre></div>
+
+<p>第一个日程表项在第一个时间段中位于队列的头部。每当我们取出一个项时，我们也会更新当前时间：<a class="footnote_link" id="DOCF158" href="#FOOT158"><sup>158</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">first-agenda-item agenda</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-agenda? agenda</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Agenda is empty: 
+              FIRST-AGENDA-ITEM"</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">first-seg 
+             </span><span class="opn">(</span><span class="pln">first-segment agenda</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">set-current-time! 
+         agenda 
+         </span><span class="opn">(</span><span class="pln">segment-time first-seg</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">front-queue 
+         </span><span class="opn">(</span><span class="pln">segment-queue first-seg</span><span class="clo">)))))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e32"></a>习题 3.32：</strong>日程表的每个时间段中要运行的过程保存在一个队列中。因此，每个时间段的过程按照它们被添加到日程表的顺序被调用（先进先出）。解释为什么必须使用这种顺序。特别地，追踪一个与门的行为，其输入在同一时间段内从 0、1 变为 1、0，并说明如果我们把某个时间段的过程存储在一个普通的表中，只在表的前端添加和移除过程（后进先出），行为会有什么不同。</p></blockquote>
+
+
+<a id="g_t3_002e3_002e5"></a>
+<a id="Propagation-of-Constraints"></a>
+<h4 class="subsection"><span class="secnum">3.3.5</span><span class="sectitle">约束的传播</span></h4>
+
+<p>计算机程序传统上被组织为单向计算，即对预先指定的参数执行操作以产生所需的输出。另一方面，我们经常用量之间的关系来对系统建模。例如，一个机械结构的数学模型可能包含这样的信息：金属杆的挠度 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math> 与杆上的力 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math>、杆的长度 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+</math>、横截面积 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> 以及弹性模量 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>E</mi>
+</math> 通过方程 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>A</mi>
+    <mi>E</mi>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>F</mi>
+    <mi>L</mi>
+    <mo>.</mo>
+  </mrow>
+</math> 相关联。这样的方程不是单向的。给定其中任意四个量，我们可以用它来计算第五个。然而，将方程翻译成传统的计算机语言会迫使我们选择其中一个量用其他四个量来计算。因此，用于计算面积 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> 的过程不能用于计算挠度 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math>，即使 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>d</mi>
+</math> 的计算来自同一个方程。<a class="footnote_link" id="DOCF159" href="#FOOT159"><sup>159</sup></a></p>
+<p>在本节中，我们勾勒一种语言的设计，它使我们能够直接根据关系本身来工作。该语言的基本元素是 <a id="index-primitive-constraints"></a> <em>基本约束</em>，它们声明某些关系在量之间成立。例如，<code>(adder a b c)</code> 指定量 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+</math> 必须通过方程 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mo>+</mo>
+    <mi>b</mi>
+    <mo>=</mo>
+    <mi>c</mi>
+  </mrow>
+</math> 相关联，<code>(multiplier x y z)</code> 表达约束 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mi>y</mi>
+    <mo>=</mo>
+    <mi>z</mi>
+  </mrow>
+</math>，而 <code>(constant 3.14 x)</code> 表示 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 的值必须是 3.14。</p>
+<p>我们的语言提供了一种组合基本约束以表达更复杂关系的手段。我们通过构造 <a id="index-constraint-networks"></a> <em>约束网络</em> 来组合约束，其中约束由 <a id="index-connectors"></a> <em>连接器</em> 连接。连接器是一个“持有”值的对象，该值可以参与一个或多个约束。例如，我们知道华氏温度和摄氏温度之间的关系是 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>9</mn>
+    <mi>C</mi>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>5</mn>
+    <mo stretchy="false">(</mo>
+    <mi>F</mi>
+    <mo>−<!-- − --></mo>
+    <mn>32</mn>
+    <mo stretchy="false">)</mo>
+    <mo>.</mo>
+  </mrow>
+</math> 这样的约束可以被看作一个由基本加法器、乘法器和常量约束组成的网络（<a href="#Figure-3_002e28">图 3.28</a>）。在图中，我们看到左边有一个乘法器盒子，带有三个端子，标记为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>m</mi>
+  <mn>1</mn>
+</mrow>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>m</mi>
+  <mn>2</mn>
+</mrow>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math>。它们将乘法器连接到网络的其余部分，如下所示：<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>m</mi>
+  <mn>1</mn>
+</mrow>
+</math> 端子连接到一个连接器 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math>，它将持有摄氏温度。<math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>m</mi>
+  <mn>2</mn>
+</mrow>
+</math> 端子连接到一个连接器 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+</math>，该连接器还连接到一个持有 9 的常量盒子。<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math> 端子（乘法器盒子将其约束为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>m</mi>
+  <mn>1</mn>
+</mrow>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>m</mi>
+  <mn>2</mn>
+</mrow>
+</math> 的乘积）连接到另一个乘法器盒子的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>p</mi>
+</math> 端子，该乘法器盒子的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>m</mi>
+  <mn>2</mn>
+</mrow>
+</math> 连接到一个常量 5，其 <math xmlns="http://www.w3.org/1998/Math/MathML">
+<mrow class="MJX-TeXAtom-ORD">
+  <mi>m</mi>
+  <mn>1</mn>
+</mrow>
+</math> 连接到一个和式中的一项。</p>
+<figure class="float">
+<a id="Figure-3_002e28"></a>
+<object style="width: 58.11ex; height: 18.30ex;" data="fig/chap3/Fig3.28.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.28：</strong> 关系 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>9</mn>
+    <mi>C</mi>
+    <mo>=</mo>
+    <mn>5</mn>
+    <mo stretchy="false">(</mo>
+    <mi>F</mi>
+    <mo>−<!-- − --></mo>
+    <mn>32</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 表示为约束网络。</p>
+</figcaption>
+</figure>
+
+<p>通过这样的网络进行计算的过程如下：当一个连接器被赋予一个值（由用户或由与其链接的约束盒子赋予）时，它会唤醒所有与之关联的约束（除了刚刚唤醒它的那个约束），通知它们它有一个值。每个被唤醒的约束盒子然后轮询它的连接器，看看是否有足够的信息来确定某个连接器的值。如果有，该盒子就设置那个连接器，然后该连接器唤醒所有与之关联的约束，依此类推。例如，在摄氏温度和华氏温度之间的转换中，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>w</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math> 立即被常量盒子分别设置为 9、5 和 32。这些连接器唤醒乘法器和加法器，它们确定没有足够的信息继续。如果用户（或网络的某个其他部分）将 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math> 设置为一个值（比如 25），最左边的乘法器将被唤醒，它将 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>u</mi>
+</math> 设置为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>25</mn>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mn>9</mn>
+    <mo>=</mo>
+    <mn>225</mn>
+  </mrow>
+</math>。然后 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>u</mi>
+</math> 唤醒第二个乘法器，它将 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math> 设置为 45，而 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math> 唤醒加法器，它将 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>F</mi>
+</math> 设置为 77。</p>
+<a id="Using-the-constraint-system"></a>
+<h5 class="subsubheading">使用约束系统</h5>
+
+<p>为了使用约束系统执行上面概述的温度计算，我们首先通过调用构造函数 <code>make-connector</code> 创建两个连接器 <code>C</code> 和 <code>F</code>，并将 <code>C</code> 和 <code>F</code> 链接在一个适当的网络中：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> C </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> F </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">celsius-fahrenheit-converter C F</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">ok</span></i>
+</pre></div>
+
+<p>创建该网络的过程定义如下：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">celsius-fahrenheit-converter c f</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">u </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">v </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">w </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">x </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">y </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">multiplier c w u</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">multiplier v x u</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">adder v y f</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">constant </span><span class="lit">9</span><span class="pln"> w</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">constant </span><span class="lit">5</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">constant </span><span class="lit">32</span><span class="pln"> y</span><span class="clo">)</span><span class="pln">
+    </span><span class="lit">'ok</span><span class="clo">))</span></pre></div>
+
+<p>这个过程创建内部连接器 <code>u</code>、<code>v</code>、<code>w</code>、<code>x</code> 和 <code>y</code>，并使用基本约束构造函数 <code>adder</code>、<code>multiplier</code> 和 <code>constant</code> 将它们如 <a href="#Figure-3_002e28">图 3.28</a> 所示链接起来。正如 <a href="#g_t3_002e3_002e4">3.3.4</a> 的数字电路模拟器一样，用过程来表达这些基本元素的组合自动为我们的语言提供了一种对复合对象进行抽象的手段。</p>
+<p>为了观察网络的活动，我们可以在连接器 <code>C</code> 和 <code>F</code> 上放置探针，使用一个类似于我们在 <a href="#g_t3_002e3_002e4">3.3.4</a> 中用来监视导线所用的 <code>probe</code> 过程。在连接器上放置探针将导致每当连接器被赋予一个值时打印一条消息：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">probe </span><span class="str">"Celsius temp"</span><span class="pln"> C</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">probe </span><span class="str">"Fahrenheit temp"</span><span class="pln"> F</span><span class="clo">)</span></pre></div>
+
+<p>接下来我们将 <code>C</code> 的值设置为 25。（<code>set-value!</code> 的第三个参数告诉 <code>C</code> 这个指令来自 <code>user</code>。）</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">set-value! C </span><span class="lit">25</span><span class="pln"> </span><span class="lit">'user</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">Probe</span><span class="pun">:</span><span class="pln"> Celsius temp </span><span class="pun">=</span><span class="pln"> </span><span class="lit">25</span></i><span class="pln">
+</span><i><span class="pln">Probe</span><span class="pun">:</span><span class="pln"> Fahrenheit temp </span><span class="pun">=</span><span class="pln"> </span><span class="lit">77</span></i><span class="pln">
+</span><i><span class="pln">done</span></i>
+</pre></div>
+
+<p><code>C</code>上的探针被唤醒并报告该值。<code>C</code>也如上所述通过网络传播其值。这将<code>F</code>设置为77，由<code>F</code>上的探针报告。</p>
+<p>现在我们可以尝试将<code>F</code>设置为一个新值，比如212：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">set-value! F </span><span class="lit">212</span><span class="pln"> </span><span class="lit">'user</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">Error! Contradiction </span><span class="opn">(</span><span class="lit">77</span><span class="pln"> </span><span class="lit">212</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>连接器报告检测到了矛盾：它的值是77，而有人试图将其设置为212。如果我们真的想用新值重用该网络，可以告诉<code>C</code>忘记它的旧值：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">forget-value! C </span><span class="lit">'user</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">Probe</span><span class="pun">:</span><span class="pln"> Celsius temp </span><span class="pun">=</span><span class="pln"> </span><span class="pun">?</span></i><span class="pln">
+</span><i><span class="pln">Probe</span><span class="pun">:</span><span class="pln"> Fahrenheit temp </span><span class="pun">=</span><span class="pln"> </span><span class="pun">?</span></i><span class="pln">
+</span><i><span class="pln">done</span></i>
+</pre></div>
+
+<p><code>C</code>发现最初设置其值的<code>user</code>现在正在撤回该值，因此<code>C</code>同意失去其值，如探针所示，并将这一事实通知网络中的其余部分。这一信息最终传播到<code>F</code>，它现在发现自己没有理由继续相信自己的值是77。因此，<code>F</code>也放弃了它的值，如探针所示。</p>
+<p>既然<code>F</code>没有值了，我们就可以自由地将其设置为212：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">set-value! F </span><span class="lit">212</span><span class="pln"> </span><span class="lit">'user</span><span class="clo">)</span><span class="pln">
+</span><i><span class="pln">Probe</span><span class="pun">:</span><span class="pln"> Fahrenheit temp </span><span class="pun">=</span><span class="pln"> </span><span class="lit">212</span></i><span class="pln">
+</span><i><span class="pln">Probe</span><span class="pun">:</span><span class="pln"> Celsius temp </span><span class="pun">=</span><span class="pln"> </span><span class="lit">100</span></i><span class="pln">
+</span><i><span class="pln">done</span></i>
+</pre></div>
+
+<p>这个新值在通过网络传播时，迫使<code>C</code>的值为100，这由<code>C</code>上的探针记录。注意，同一个网络既被用来在给定<code>F</code>的情况下计算<code>C</code>，也被用来在给定<code>C</code>的情况下计算<code>F</code>。计算的这种无方向性是约束系统的显著特征。</p>
+<a id="Implementing-the-constraint-system"></a>
+<h5 class="subsubheading">实现约束系统</h5>
+
+<p>约束系统是通过带有局部状态的过程对象实现的，其方式与<a href="#g_t3_002e3_002e4">3.3.4</a>的数字电路模拟器非常相似。尽管约束系统的基本对象稍微复杂一些，但整个系统更简单，因为无需考虑日程表和逻辑延迟。</p>
+<p>连接器上的基本操作如下：</p>
+<ul>
+<li><code>(has-value? ⟨<var>connector</var>⟩)</code>判断连接器是否有值。</li><li><code>(get-value ⟨<var>connector</var>⟩)</code>返回连接器的当前值。</li><li><code>(set-value! ⟨<var>connector</var>⟩ ⟨<var>new-value</var>⟩ ⟨<var>informant</var>⟩)</code>表示通知者正在请求连接器将其值设置为新值。</li><li><code>(forget-value! ⟨<var>connector</var>⟩ ⟨<var>retractor</var>⟩)</code>告诉连接器撤回者正在请求它忘记其值。</li><li><code>(connect ⟨<var>connector</var>⟩ ⟨<var>new-constraint</var>⟩)</code>告诉连接器参与新的约束。</li></ul>
+
+<p>连接器通过过程<code>inform-about-value</code>和<code>inform-about-no-value</code>与约束通信，前者告诉给定约束连接器有值，后者告诉约束连接器已失去其值。</p>
+<p><code>Adder</code>在加数连接器<code>a1</code>和<code>a2</code>以及一个<code>sum</code>连接器之间构造一个加法器约束。加法器实现为一个带有局部状态的过程（下面的过程<code>me</code>）：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">adder a1 a2 sum</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">process-new-value</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pln">has-value? a1</span><span class="clo">)</span><span class="pln"> 
+                </span><span class="opn">(</span><span class="pln">has-value? a2</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-value! sum
+                       </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-value a1</span><span class="clo">)</span><span class="pln"> 
+                          </span><span class="opn">(</span><span class="pln">get-value a2</span><span class="clo">))</span><span class="pln">
+                       me</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pln">has-value? a1</span><span class="clo">)</span><span class="pln"> 
+                </span><span class="opn">(</span><span class="pln">has-value? sum</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-value! a2
+                       </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-value sum</span><span class="clo">)</span><span class="pln"> 
+                          </span><span class="opn">(</span><span class="pln">get-value a1</span><span class="clo">))</span><span class="pln">
+                       me</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pln">has-value? a2</span><span class="clo">)</span><span class="pln"> 
+                </span><span class="opn">(</span><span class="pln">has-value? sum</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-value! a1
+                       </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-value sum</span><span class="clo">)</span><span class="pln"> 
+                          </span><span class="opn">(</span><span class="pln">get-value a2</span><span class="clo">))</span><span class="pln">
+                       me</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">process-forget-value</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">forget-value! sum me</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">forget-value! a1 me</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">forget-value! a2 me</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">process-new-value</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">me request</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> request </span><span class="lit">'I-have-a-value</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">process-new-value</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> request </span><span class="lit">'I-lost-my-value</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">process-forget-value</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown request: 
+                        ADDER"</span><span class="pln"> request</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">connect a1 me</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">connect a2 me</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">connect sum me</span><span class="clo">)</span><span class="pln">
+  me</span><span class="clo">)</span></pre></div>
+
+<p><code>Adder</code>将新的加法器连接到指定的连接器，并将其作为值返回。表示加法器的过程<code>me</code>充当对局部过程的分派。以下“语法接口”（见<a href="#g_t3_002e3_002e4">3.3.4</a>中的<a href="#Footnote-155">脚注155</a>）与分派一起使用：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">inform-about-value constraint</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">constraint </span><span class="lit">'I-have-a-value</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">inform-about-no-value constraint</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">constraint </span><span class="lit">'I-lost-my-value</span><span class="clo">))</span></pre></div>
+
+<p>当加法器被告知其某个连接器有值时，会调用加法器的局部过程<code>process-new-value</code>。加法器首先检查<code>a1</code>和<code>a2</code>是否都有值。如果是，它告诉<code>sum</code>将其值设置为两个加数之和。<code>set-value!</code>的<code>informant</code>参数是<code>me</code>，即加法器对象本身。如果<code>a1</code>和<code>a2</code>不都有值，那么加法器检查是否<code>a1</code>和<code>sum</code>有值。如果是，它将<code>a2</code>设置为这两者之差。最后，如果<code>a2</code>和<code>sum</code>有值，这给加法器足够的信息来设置<code>a1</code>。如果加法器被告知其某个连接器失去了值，它请求其所有连接器现在都失去它们的值。（只有那些由该加法器设置的值才会真正失去。）然后它运行<code>process-new-value</code>。最后这一步的原因是，一个或多个连接器可能仍然有值（也就是说，某个连接器可能有一个最初不是由该加法器设置的值），这些值可能需要通过加法器传播回去。</p>
+<p>乘法器与加法器非常相似。如果任一因子为0，即使另一个因子未知，它也会将其<code>product</code>设置为0。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">multiplier m1 m2 product</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">process-new-value</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">or</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pln">has-value? m1</span><span class="clo">)</span><span class="pln"> 
+                    </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-value m1</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+               </span><span class="opn">(</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pln">has-value? m2</span><span class="clo">)</span><span class="pln"> 
+                    </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-value m2</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-value! product </span><span class="lit">0</span><span class="pln"> me</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pln">has-value? m1</span><span class="clo">)</span><span class="pln"> 
+                </span><span class="opn">(</span><span class="pln">has-value? m2</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-value! product
+                       </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-value m1</span><span class="clo">)</span><span class="pln"> 
+                          </span><span class="opn">(</span><span class="pln">get-value m2</span><span class="clo">))</span><span class="pln">
+                       me</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pln">has-value? product</span><span class="clo">)</span><span class="pln"> 
+                </span><span class="opn">(</span><span class="pln">has-value? m1</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-value! m2
+                       </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-value product</span><span class="clo">)</span><span class="pln"> 
+                          </span><span class="opn">(</span><span class="pln">get-value m1</span><span class="clo">))</span><span class="pln">
+                       me</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pln">has-value? product</span><span class="clo">)</span><span class="pln"> 
+                </span><span class="opn">(</span><span class="pln">has-value? m2</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">set-value! m1
+                       </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-value product</span><span class="clo">)</span><span class="pln"> 
+                          </span><span class="opn">(</span><span class="pln">get-value m2</span><span class="clo">))</span><span class="pln">
+                       me</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">process-forget-value</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">forget-value! product me</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">forget-value! m1 me</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">forget-value! m2 me</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">process-new-value</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">me request</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> request </span><span class="lit">'I-have-a-value</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">process-new-value</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> request </span><span class="lit">'I-lost-my-value</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">process-forget-value</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+           </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown request: 
+                   MULTIPLIER"</span><span class="pln"> 
+                  request</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">connect m1 me</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">connect m2 me</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">connect product me</span><span class="clo">)</span><span class="pln">
+  me</span><span class="clo">)</span></pre></div>
+
+<p><code>constant</code>构造函数只是设置指定连接器的值。任何发送到常量框的<code>I-have-a-value</code>或<code>I-lost-my-value</code>消息都会产生错误。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">constant value connector</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">me request</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown request: CONSTANT"</span><span class="pln"> 
+           request</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">connect connector me</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">set-value! connector value me</span><span class="clo">)</span><span class="pln">
+  me</span><span class="clo">)</span></pre></div>
+
+<p>最后，探针打印关于指定连接器设置或取消设置的消息：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">probe name connector</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">print-probe value</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">newline</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">display </span><span class="str">"Probe: "</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">display name</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">display </span><span class="str">" = "</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">display value</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">process-new-value</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">print-probe </span><span class="opn">(</span><span class="pln">get-value connector</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">process-forget-value</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">print-probe </span><span class="str">"?"</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">me request</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> request </span><span class="lit">'I-have-a-value</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">process-new-value</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> request </span><span class="lit">'I-lost-my-value</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">process-forget-value</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown request: 
+                        PROBE"</span><span class="pln"> request</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">connect connector me</span><span class="clo">)</span><span class="pln">
+  me</span><span class="clo">)</span></pre></div>
+
+<a id="Representing-connectors"></a>
+<h5 class="subsubheading">表示连接器</h5>
+
+<p>连接器表示为一个带有局部状态变量的过程对象：<code>value</code>，连接器的当前值；<code>informant</code>，设置连接器值的对象；以及<code>constraints</code>，连接器参与的约束的表。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">value false</span><span class="clo">)</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pln">informant false</span><span class="clo">)</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pln">constraints </span><span class="lit">'</span><span class="opn">(</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-my-value newval setter</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">not </span><span class="opn">(</span><span class="pln">has-value? me</span><span class="clo">))</span><span class="pln">
+             </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> value newval</span><span class="clo">)</span><span class="pln">
+             </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> informant setter</span><span class="clo">)</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">for-each-except 
+              setter
+              inform-about-value
+              constraints</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">((</span><span class="pln">not </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> value newval</span><span class="clo">))</span><span class="pln">
+             </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Contradiction"</span><span class="pln"> 
+                    </span><span class="opn">(</span><span class="pln">list value newval</span><span class="clo">)))</span><span class="pln">
+            </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="lit">'ignored</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">forget-my-value retractor</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> retractor informant</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> informant false</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">for-each-except 
+                  retractor
+                  inform-about-no-value
+                  constraints</span><span class="clo">))</span><span class="pln">
+          </span><span class="lit">'ignored</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">connect new-constraint</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pln">memq new-constraint 
+                     constraints</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> constraints
+                </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> new-constraint 
+                      constraints</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">has-value? me</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">inform-about-value new-constraint</span><span class="clo">))</span><span class="pln">
+      </span><span class="lit">'done</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">me request</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> request </span><span class="lit">'has-value?</span><span class="clo">)</span><span class="pln">
+             </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> informant true false</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> request </span><span class="lit">'value</span><span class="clo">)</span><span class="pln"> value</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> request </span><span class="lit">'set-value!</span><span class="clo">)</span><span class="pln"> 
+             set-my-value</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> request </span><span class="lit">'forget</span><span class="clo">)</span><span class="pln"> 
+             forget-my-value</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> request </span><span class="lit">'connect</span><span class="clo">)</span><span class="pln"> connect</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown operation: 
+                          CONNECTOR"</span><span class="pln">
+                         request</span><span class="clo">))))</span><span class="pln">
+    me</span><span class="clo">))</span></pre></div>
+
+<p>当有请求要求设置连接器的值时，会调用连接器的局部过程 <code>set-my-value</code>。如果连接器当前没有值，它将设置自己的值，并记住请求设置该值的约束为 <code>informant</code>。<a class="footnote_link" id="DOCF160" href="#FOOT160"><sup>160</sup></a> 然后，连接器将通知所有参与其中的约束，但请求设置该值的约束除外。这是通过以下迭代器完成的，该迭代器将指定的过程应用于表中除给定项之外的所有项：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">for-each-except exception 
+                         procedure 
+                         list</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">loop items</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">null? items</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'done</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> items</span><span class="clo">)</span><span class="pln"> exception</span><span class="clo">)</span><span class="pln"> 
+           </span><span class="opn">(</span><span class="pln">loop </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pln">procedure </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> items</span><span class="clo">))</span><span class="pln">
+                </span><span class="opn">(</span><span class="pln">loop </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">loop list</span><span class="clo">))</span></pre></div>
+
+<p>如果要求连接器忘记它的值，它会运行局部过程 <code>forget-my-value</code>，该过程首先检查以确保请求来自最初设置该值的同一对象。如果是这样，连接器会通知其关联的约束该值已丢失。</p>
+<p>局部过程 <code>connect</code> 将指定的新约束添加到约束表中，如果它尚未在该表中的话。然后，如果连接器有值，它会将这一事实告知新约束。</p>
+<p>连接器的过程 <code>me</code> 充当对其他内部过程的分派，并且还将连接器表示为一个对象。以下过程为分派提供了语法接口：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">has-value? connector</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">connector </span><span class="lit">'has-value?</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-value connector</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">connector </span><span class="lit">'value</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">set-value! connector 
+                    new-value 
+                    informant</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">connector </span><span class="lit">'set-value!</span><span class="clo">)</span><span class="pln"> 
+   new-value 
+   informant</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">forget-value! connector retractor</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">connector </span><span class="lit">'forget</span><span class="clo">)</span><span class="pln"> retractor</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">connect connector new-constraint</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">connector </span><span class="lit">'connect</span><span class="clo">)</span><span class="pln"> new-constraint</span><span class="clo">))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e33"></a>习题3.33：</strong>使用基本乘法器、加法器和常量约束，定义一个过程<code>averager</code>，它接受三个连接器<code>a</code>、<code>b</code>和<code>c</code>作为输入，并建立约束：<code>c</code>的值是<code>a</code>和<code>b</code>的值的平均值。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e34"></a>习题3.34：</strong>Louis Reasoner想要构建一个平方器，一种具有两个端子的约束装置，使得第二个端子上的连接器<code>b</code>的值始终是第一个端子上的值<code>a</code>的平方。他提出了以下由乘法器构成的简单装置：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">squarer a b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">multiplier a a b</span><span class="clo">))</span></pre></div>
+
+<p>这个想法有一个严重的缺陷。请解释。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e35"></a>习题3.35：</strong>Ben Bitdiddle告诉Louis，避免<a href="#Exercise-3_002e34">习题3.34</a>中麻烦的一种方法是将平方器定义为一个新的基本约束。补全Ben给出的过程框架，以实现这样一个约束：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">squarer a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">process-new-value</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">has-value? b</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-value b</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"square less than 0: 
+                    SQUARER"</span><span class="pln"> 
+                   </span><span class="opn">(</span><span class="pln">get-value b</span><span class="clo">))</span><span class="pln">
+            ⟨</span><var><span class="pln">alternative1</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+        ⟨</span><var><span class="pln">alternative2</span></var><span class="pln">⟩</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">process-forget-value</span><span class="clo">)</span><span class="pln"> ⟨</span><var><span class="pln">body1</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">me request</span><span class="clo">)</span><span class="pln"> ⟨</span><var><span class="pln">body2</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+  ⟨</span><var><span class="pln">rest of definition</span></var><span class="pln">⟩
+  me</span><span class="clo">)</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e36"></a>习题3.36：</strong>假设我们在全局环境中求值以下表达式序列：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> a </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> b </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">set-value! a </span><span class="lit">10</span><span class="pln"> </span><span class="lit">'user</span><span class="clo">)</span></pre></div>
+
+<p>在求值<code>set-value!</code>过程中的某个时刻，连接器的局部过程中的以下表达式被求值：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">for-each-except 
+  setter inform-about-value constraints</span><span class="clo">)</span></pre></div>
+
+<p>画出环境图，显示上述表达式被求值时所处的环境。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e37"></a>习题3.37：</strong>与更面向表达式的定义风格相比，<code>celsius-fahrenheit-converter</code>过程显得很笨拙，例如</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">celsius-fahrenheit-converter x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">c</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">c</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">c</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cv </span><span class="lit">9</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cv </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+          x</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">cv </span><span class="lit">32</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> C </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> F </span><span class="opn">(</span><span class="pln">celsius-fahrenheit-converter C</span><span class="clo">))</span></pre></div>
+
+<p>这里<code>c+</code>、<code>c*</code>等是算术运算的“约束”版本。例如，<code>c+</code>接受两个连接器作为参数，并返回一个通过加法器约束与它们相关联的连接器：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">c</span><span class="pun">+</span><span class="pln"> x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">z </span><span class="opn">(</span><span class="pln">make-connector</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">adder x y z</span><span class="clo">)</span><span class="pln">
+    z</span><span class="clo">))</span></pre></div>
+
+<p>定义类似的过程<code>c-</code>、<code>c*</code>、<code>c/</code>和<code>cv</code>（常量值），使我们能够像上面的转换器示例那样定义复合约束。<a class="footnote_link" id="DOCF161" href="#FOOT161"><sup>161</sup></a></p></blockquote>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT144"><p><a class="footnote_backlink" href="#DOCF144"><sup>144</sup></a> <code>Set-car!</code>和<code>set-cdr!</code>返回依赖于实现的值。与<code>set!</code>一样，它们应仅因其效果而被使用。</p>
+</div>
+<div id="FOOT145"><p><a class="footnote_backlink" href="#DOCF145"><sup>145</sup></a>由此我们看到，对表进行修改操作可以产生不属于任何可访问结构的“垃圾”。我们将在<a href="5_002e3_zh.xhtml#g_t5_002e3_002e2">5.3.2</a>中看到，Lisp内存管理系统包含一个<a id="index-garbage-collector"></a><em>垃圾回收器</em>，它识别并回收不再需要的序对所使用的内存空间。</p>
+</div>
+<div id="FOOT146"><p><a class="footnote_backlink" href="#DOCF146"><sup>146</sup></a> <code>Get-new-pair</code>是必须作为Lisp实现所需内存管理的一部分来实现的操作之一。我们将在<a href="5_002e3_zh.xhtml#g_t5_002e3_002e1">5.3.1</a>中讨论这一点。</p>
+</div>
+<div id="FOOT147"><p><a class="footnote_backlink" href="#DOCF147"><sup>147</sup></a>这两个序对是不同的，因为每次调用<code>cons</code>都返回一个新的序对。符号是共享的；在Scheme中，任何给定名称都有一个唯一的符号。由于Scheme没有提供修改符号的方法，这种共享是无法检测的。还要注意，正是这种共享使我们能够使用<code>eq?</code>来比较符号，它只是检查指针的相等性。</p>
+</div>
+<div id="FOOT148"><p><a class="footnote_backlink" href="#DOCF148"><sup>148</sup></a>处理可变数据对象共享的微妙之处反映了<a href="3_002e1_zh.xhtml#g_t3_002e1_002e3">3.1.3</a>中提出的“同一性”和“变化”的根本问题。我们在那里提到，承认语言中的变化要求复合对象必须具有一种“身份”，它不同于构成它的各个部分。在Lisp中，我们将这种“身份”视为由<code>eq?</code>测试的性质，即指针的相等性。由于在大多数Lisp实现中，指针本质上是一个内存地址，我们通过规定数据对象“本身”是存储在计算机中某个特定内存位置集合中的信息来“解决”定义对象身份的问题。这对于简单的Lisp程序来说足够了，但很难作为解决计算模型中“同一性”问题的一般方法。</p>
+</div>
+<div id="FOOT149"><p><a class="footnote_backlink" href="#DOCF149"><sup>149</sup></a>另一方面，从实现的角度来看，赋值要求我们修改环境，而环境本身就是一个可变的数据结构。因此，赋值和修改是等势的：每一个都可以用另一个来实现。</p>
+</div>
+<div id="FOOT150"><p><a class="footnote_backlink" href="#DOCF150"><sup>150</sup></a>如果第一个项是队列中的最后一项，删除后前端指针将为空表，这将把队列标记为空；我们不必担心更新后端指针，它仍将指向被删除的项，因为<code>empty-queue?</code>只查看前端指针。</p>
+</div>
+<div id="FOOT151"><p><a class="footnote_backlink" href="#DOCF151"><sup>151</sup></a>注意不要让解释器试图打印包含环的结构。（参见<a href="#Exercise-3_002e13">习题3.13</a>。）</p>
+</div>
+<div id="FOOT152"><p><a class="footnote_backlink" href="#DOCF152"><sup>152</sup></a>因为<code>assoc</code>使用<code>equal?</code>，它可以识别符号、数字或表结构作为键。</p>
+</div>
+<div id="FOOT153"><p><a class="footnote_backlink" href="#DOCF153"><sup>153</sup></a>因此，第一个骨架序对就是表示表“本身”的对象；也就是说，指向表的指针就是指向这个序对的指针。这个相同的骨架序对总是表的开头。如果我们不这样安排，<code>insert!</code>在添加新记录时就必须为表的开头返回一个新值。</p>
+</div>
+<div id="FOOT154"><p><a class="footnote_backlink" href="#DOCF154"><sup>154</sup></a>全加器是用于将两个二进制数相加的基本电路元件。这里A和B是要相加的两个数中对应位置的位，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi mathvariant="normal">C</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi mathvariant="normal">i</mi>
+      <mi mathvariant="normal">n</mi>
+    </mrow>
+  </msub>
+</math>是来自右边一位加法的进位位。该电路生成SUM，即对应位置的和位，以及<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi mathvariant="normal">C</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi mathvariant="normal">o</mi>
+      <mi mathvariant="normal">u</mi>
+      <mi mathvariant="normal">t</mi>
+    </mrow>
+  </msub>
+</math>，即要向左传播的进位位。</p>
+</div>
+<div id="FOOT155"><p><a class="footnote_backlink" href="#DOCF155"><sup>155</sup></a> <a id="Footnote-155"></a>这些过程只是语法糖，使我们能够使用普通的过程语法来访问对象的局部过程。令人惊讶的是，我们可以如此简单地互换“过程”和“数据”的角色。例如，如果我们写<code>(wire 'get-signal)</code>，我们会把<code>wire</code>视为一个过程，以消息<code>get-signal</code>作为输入来调用它。或者，写<code>(get-signal wire)</code>会促使我们把<code>wire</code>视为一个数据对象，它是过程<code>get-signal</code>的输入。事实是，在一种我们可以把过程当作对象来处理的语言中，“过程”和“数据”之间没有根本区别，我们可以选择我们的语法糖，以便以我们选择的任何风格来编程。</p>
+</div>
+<div id="FOOT156"><p><a class="footnote_backlink" href="#DOCF156"><sup>156</sup></a>日程表是一个带表头的表，就像<a href="#g_t3_002e3_002e3">3.3.3</a>中的表一样，但由于该表以时间作为表头，我们不需要额外的占位表头（例如与表一起使用的<code>*table*</code>符号）。</p>
+</div>
+<div id="FOOT157"><p><a class="footnote_backlink" href="#DOCF157"><sup>157</sup></a>注意，此过程中的<code>if</code>表达式没有<code>⟨</code><var>alternative</var><code>⟩</code>表达式。这种“单臂<code>if</code>语句”用于决定是否做某事，而不是在两个表达式之间进行选择。如果谓词为假且没有<code>⟨</code><var>alternative</var><code>⟩</code>，则<code>if</code>表达式返回一个未指定的值。</p>
+</div>
+<div id="FOOT158"><p><a class="footnote_backlink" href="#DOCF158"><sup>158</sup></a>这样，当前时间将始终是最近处理的动作的时间。将此时间存储在日程表的头部，确保即使关联的时间段已被删除，它仍然可用。</p>
+</div>
+<div id="FOOT159"><p><a class="footnote_backlink" href="#DOCF159"><sup>159</sup></a>约束传播最早出现在Ivan<a href="References_zh.xhtml#Sutherland-_00281963_0029">Sutherland（1963）</a>极具前瞻性的<abbr>SKETCHPAD</abbr>系统中。Alan<a href="References_zh.xhtml#Borning-_00281977_0029">Borning（1977）</a>在施乐帕洛阿尔托研究中心开发了一个基于Smalltalk语言的优美约束传播系统。Sussman、Stallman和Steele将约束传播应用于电路分析（<a href="References_zh.xhtml#Sussman-and-Stallman-1975">Sussman和Stallman1975</a>；<a href="References_zh.xhtml#Sussman-and-Steele-1980">Sussman和Steele1980</a>）。TK!Solver（<a href="References_zh.xhtml#Konopasek-and-Jayaraman-1984">Konopasek和Jayaraman1984</a>）是一个基于约束的广泛建模环境。</p>
+</div>
+<div id="FOOT160"><p><a class="footnote_backlink" href="#DOCF160"><sup>160</sup></a><code>setter</code>可能不是约束。在我们的温度示例中，我们使用<code>user</code>作为<code>setter</code>。</p>
+</div>
+<div id="FOOT161"><p><a class="footnote_backlink" href="#DOCF161"><sup>161</sup></a>面向表达式的格式很方便，因为它避免了在计算中命名中间表达式的需要。我们最初的约束语言表述很笨拙，就像许多语言在处理复合数据上的操作时很笨拙一样。例如，如果我们想计算乘积<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>a</mi>
+    <mo>+</mo>
+    <mi>b</mi>
+    <mo stretchy="false">)</mo>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mo stretchy="false">(</mo>
+    <mi>c</mi>
+    <mo>+</mo>
+    <mi>d</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，其中变量表示向量，我们可以采用“命令式风格”，使用设置指定向量参数的值但本身不返回向量作为值的过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">v-sum a b temp1</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">v-sum c d temp2</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">v-prod temp1 temp2 answer</span><span class="clo">)</span></pre></div>
+
+<p>或者，我们可以处理表达式，使用返回向量作为值的过程，从而避免显式提及<code>temp1</code>和<code>temp2</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> answer 
+  </span><span class="opn">(</span><span class="pln">v-prod </span><span class="opn">(</span><span class="pln">v-sum a b</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">v-sum c d</span><span class="clo">)))</span></pre></div>
+
+<p>由于Lisp允许我们返回复合对象作为过程的值，我们可以将命令式风格的约束语言转换为本练习中所示的面向表达式的风格。在处理复合对象方面能力贫乏的语言中，例如Algol、Basic和Pascal（除非显式使用Pascal指针变量），在操作复合对象时通常只能使用命令式风格。鉴于面向表达式格式的优势，人们可能会问，是否有任何理由以命令式风格实现该系统，就像我们在本节中所做的那样。一个原因是，非面向表达式的约束语言提供了对约束对象（例如<code>adder</code>过程的值）以及连接器对象的操作手段。如果我们希望用直接与约束通信的新操作来扩展系统，而不是仅通过连接器上的操作间接通信，这将很有用。尽管根据命令式实现很容易实现面向表达式的风格，但反过来做却非常困难。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="3_002e4_zh.xhtml#g_t3_002e4" accesskey="n" rel="next">3.4</a>, 上一节： <a href="3_002e2_zh.xhtml#g_t3_002e2" accesskey="p" rel="prev">3.2</a>, 上一级： <a href="#g_t3_002e3" accesskey="u" rel="prev">3.3</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：第5章</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: Chapter 5" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: Chapter 5" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="index_zh.xhtml#Top" rel="prev" title="Top" />
+<link href="5_002e1_zh.xhtml#g_t5_002e1" rel="next" title="5.1" />
+<link href="4_002e4_zh.xhtml#g_t4_002e4_002e4_002e8" rel="prev" title="4.4.4.8" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="Chapter-5"></a>
+<nav class="header">
+<p>下一节： <a href="5_002e1_zh.xhtml#g_t5_002e1" accesskey="n" rel="next">5.1</a>, 上一节： <a href="4_002e4_zh.xhtml#g_t4_002e4" accesskey="p" rel="prev">4.4</a>, 上一级： <a href="index_zh.xhtml#Top" accesskey="u" rel="prev">首页</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Computing-with-Register-Machines"></a>
+<h2 class="chapter"><span class="chapnum">5</span><span class="chaptitle">用寄存器机器进行计算</span></h2>
+
+<blockquote>
+<p>我的目的是表明，天体机器并非某种神圣的、活的存在，而是一种钟表装置（而相信钟表有灵魂的人，是把造物主的荣耀归给了作品），因为几乎所有这些多样的运动都是由一种最简单、最物质的力量引起的，正如钟表的所有运动都是由一个重锤引起的一样。</p>
+<p>——约翰内斯·开普勒（致赫瓦特·冯·霍恩堡的信，1605年）</p></blockquote>
+
+
+<p>我们通过研究计算过程，并用 Lisp 编写的过程来描述计算过程，开始了这本书。为了解释这些过程的含义，我们使用了一系列求值模型：<a href="Chapter-1_zh.xhtml#Chapter-1">第1章</a>的代换模型、<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>的环境模型，以及<a href="Chapter-4_zh.xhtml#Chapter-4">第4章</a>的元循环求值器。特别是，我们对元循环求值器的考察，驱散了关于类 Lisp 语言如何被解释的许多神秘感。但即使是元循环求值器也留下了重要问题未回答，因为它未能阐明 Lisp 系统中的控制机制。例如，求值器没有解释子表达式的求值如何设法将值返回给使用该值的表达式，求值器也没有解释一些递归过程如何生成迭代计算过程（即，使用常量空间求值），而另一些递归过程生成递归计算过程。这些问题仍未得到回答，因为元循环求值器本身就是一个 Lisp 程序，因此继承了底层 Lisp 系统的控制结构。为了更完整地描述 Lisp 求值器的控制结构，我们必须在比 Lisp 本身更原始的层次上工作。</p>
+<p>在本章中，我们将根据传统计算机的逐步操作来描述计算过程。这种计算机，或<a id="index-register-machine"></a> <em>寄存器机器</em>，顺序执行<a id="index-instructions"></a> <em>指令</em>，这些指令操作一组称为<a id="index-registers"></a> <em>寄存器</em>的固定存储单元的内容。典型的寄存器机器指令将一个基本操作应用于某些寄存器的内容，并将结果赋给另一个寄存器。我们对寄存器机器执行的计算过程的描述将非常像传统计算机的“机器语言”程序。然而，我们不是关注任何特定计算机的机器语言，而是考察几个 Lisp 过程，并设计一个特定的寄存器机器来执行每个过程。因此，我们将从硬件架构师的角度而不是机器语言计算机程序员的角度来处理我们的任务。在设计寄存器机器时，我们将开发实现重要编程构造（如递归）的机制。我们还将提出一种用于描述寄存器机器设计的语言。在<a href="5_002e2_zh.xhtml#g_t5_002e2">5.2</a>中，我们将实现一个 Lisp 程序，它使用这些描述来模拟我们设计的机器。</p>
+<p>我们的寄存器机器的大多数基本操作都非常简单。例如，一个操作可以将从两个寄存器中取出的数相加，产生一个结果存储到第三个寄存器中。这样的操作可以由容易描述的硬件来执行。然而，为了处理表结构，我们还将使用内存操作<code>car</code>、<code>cdr</code>和<code>cons</code>，这些操作需要精细的存储分配机制。在<a href="5_002e3_zh.xhtml#g_t5_002e3">5.3</a>中，我们根据更基本的操作来研究它们的实现。</p>
+<p>在<a href="5_002e4_zh.xhtml#g_t5_002e4">5.4</a>中，在我们积累了将简单过程表述为寄存器机器的经验之后，我们将设计一台机器，它执行<a href="4_002e1_zh.xhtml#g_t4_002e1">4.1</a>的元循环求值器所描述的算法。这将填补我们对 Scheme 表达式如何被解释的理解中的空白，为求值器中的控制机制提供一个显式模型。在<a href="5_002e5_zh.xhtml#g_t5_002e5">5.5</a>中，我们将研究一个简单的编译器，它将 Scheme 程序翻译成可以直接用求值器寄存器机器的寄存器和操作执行的指令序列。</p>
+
+<nav class="header">
+<p>下一节： <a href="5_002e1_zh.xhtml#g_t5_002e1" accesskey="n" rel="next">5.1</a>, 上一节： <a href="4_002e4_zh.xhtml#g_t4_002e4" accesskey="p" rel="prev">4.4</a>, 上一级： <a href="index_zh.xhtml#Top" accesskey="u" rel="prev">首页</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

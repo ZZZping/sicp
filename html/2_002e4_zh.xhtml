@@ -1,0 +1,804 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：2.4</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 2.4" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 2.4" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-2_zh.xhtml#Chapter-2" rel="prev" title="Chapter 2" />
+<link href="2_002e5_zh.xhtml#g_t2_002e5" rel="next" title="2.5" />
+<link href="2_002e3_zh.xhtml#g_t2_002e3_002e4" rel="prev" title="2.3.4" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t2_002e4"></a>
+<nav class="header">
+<p>下一节： <a href="2_002e5_zh.xhtml#g_t2_002e5" accesskey="n" rel="next">2.5</a>, 上一节： <a href="2_002e3_zh.xhtml#g_t2_002e3" accesskey="p" rel="prev">2.3</a>, 上一级： <a href="Chapter-2_zh.xhtml#Chapter-2" accesskey="u" rel="prev">第2章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Multiple-Representations-for-Abstract-Data"></a>
+<h3 class="section"><span class="secnum">2.4</span><span class="sectitle">抽象数据的多重表示</span></h3>
+
+<p>我们已经介绍了数据抽象，这是一种构造系统的方法论，使得程序的大部分可以独立于实现程序所操作的数据对象时所做的选择来指定。例如，我们在<a href="2_002e1_zh.xhtml#g_t2_002e1_002e1">2.1.1</a>中看到了如何将设计使用有理数的程序的任务与用计算机语言的基本机制构造复合数据来实现有理数的任务分离开来。关键思想是建立一道抽象屏障——在这种情况下，是有理数的选择函数和构造函数（<code>make-rat</code>、<code>numer</code>、<code>denom</code>）——将有理数的使用方式与其基于表结构的底层表示隔离开来。类似的抽象屏障将执行有理数算术的过程（<code>add-rat</code>、<code>sub-rat</code>、<code>mul-rat</code>和<code>div-rat</code>）的细节与使用有理数的“更高层”过程隔离开来。得到的程序具有<a href="2_002e1_zh.xhtml#Figure-2_002e1">图2.1</a>所示的结构。</p>
+<p>这些数据抽象屏障是控制复杂性的强大工具。通过隔离数据对象的底层表示，我们可以把设计大型程序的任务分解为可以分别执行的更小任务。但这种数据抽象还不够强大，因为对于数据对象而言，谈论“底层表示”并不总是有意义的。</p>
+<p>一方面，对于同一个数据对象可能存在多种有用的表示方式，而我们可能希望设计出能处理多种表示方式的系统。举一个简单的例子，复数可以用两种几乎等价的方式表示：直角坐标形式（实部和虚部）和极坐标形式（模和幅角）。有时直角坐标形式更合适，有时极坐标形式更合适。事实上，完全可以想象一个系统，其中复数用两种方式表示，并且用于操作复数的过程可以处理任何一种表示。</p>
+<p>更重要的是，编程系统通常是由许多人在很长一段时间内共同设计的，并且要满足随时间变化的需求。在这样的环境中，根本不可能让所有人事先就数据表示的选择达成一致。因此，除了将表示与使用隔离开的数据抽象屏障之外，我们还需要将不同设计选择彼此隔离开、并允许不同选择在单个程序中共存的抽象屏障。此外，由于大型程序通常是通过组合独立设计的已有模块来创建的，我们需要一些约定，使程序员能够以<a id="index-additively-1"></a><em>增量式</em>的方式将模块纳入更大的系统，也就是说，无需重新设计或重新实现这些模块。</p>
+<p>在本节中，我们将学习如何处理可能由程序的不同部分以不同方式表示的数据。这需要构造<a id="index-generic-procedures-1"></a><em>通用过程</em>——即能够操作可能以多种方式表示的数据的过程。我们构建通用过程的主要技术将基于带有<a id="index-type-tags"></a><em>类型标签</em>的数据对象，也就是说，这些数据对象包含关于它们应如何被处理的显式信息。我们还将讨论<a id="index-data_002ddirected"></a><em>数据导向</em>编程，这是一种强大而方便的、用于以增量方式组装带有通用操作的系统实现策略。</p>
+<p>我们从简单的复数例子开始。我们将看到类型标签和数据导向风格如何使我们能够为复数设计独立的直角坐标和极坐标表示，同时保持抽象“复数”数据对象的概念。我们将通过根据通用选择函数来定义复数的算术过程（<code>add-complex</code>、<code>sub-complex</code>、<code>mul-complex</code>和<code>div-complex</code>）来实现这一点，这些选择函数访问复数的各个部分，而与数字如何表示无关。由此得到的复数系统，如<a href="#Figure-2_002e19">图2.19</a>所示，包含两种不同的抽象屏障。“水平”抽象屏障与<a href="2_002e1_zh.xhtml#Figure-2_002e1">图2.1</a>中的屏障作用相同。它们将“高层”操作与“低层”表示隔离开来。此外，还有一个“垂直”屏障，使我们能够分别设计和安装替代表示。</p>
+<figure class="float">
+<a id="Figure-2_002e19"></a>
+<object style="width: 40.41ex; height: 33.41ex;" data="fig/chap2/Fig2.19a.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.19：</strong>复数系统中的数据抽象屏障。</p>
+</figcaption>
+</figure>
+
+<p>在<a href="2_002e5_zh.xhtml#g_t2_002e5">2.5</a>中，我们将展示如何使用类型标签和数据导向风格来开发一个通用算术包。它提供了过程（<code>add</code>、<code>mul</code>等），可用于操作各种“数字”，并且当需要一种新的数字类型时，可以很容易地扩展。在<a href="2_002e5_zh.xhtml#g_t2_002e5_002e3">2.5.3</a>中，我们将展示如何在一个执行符号代数的系统中使用通用算术。</p>
+
+<a id="g_t2_002e4_002e1"></a>
+<a id="Representations-for-Complex-Numbers"></a>
+<h4 class="subsection"><span class="secnum">2.4.1</span><span class="sectitle">复数的表示</span></h4>
+
+<p>我们将开发一个对复数执行算术操作的系统，作为使用通用操作的程序的一个简单但不现实的例子。我们首先讨论复数的两种可能的序对表示：直角坐标形式（实部和虚部）和极坐标形式（模和幅角）。<a class="footnote_link" id="DOCF109" href="#FOOT109"><sup>109</sup></a>第<a href="#g_t2_002e4_002e2">2.4.2</a>节将展示如何通过使用类型标签和通用操作，使这两种表示在单个系统中共存。</p>
+<p>与有理数一样，复数自然地表示为有序对。复数集可以被看作一个具有两条正交轴的二维空间，“实”轴和“虚”轴。（见<a href="#Figure-2_002e20">图2.20</a>。）从这个观点来看，复数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>z</mi>
+    <mo>=</mo>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mi>i</mi>
+    <mi>y</mi>
+  </mrow>
+</math>（其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>i</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mspace width="0.1em"/>
+        <mn>2</mn>
+      </mrow>
+    </msup>
+    <mo>=</mo>
+    <mtext>−1</mtext>
+  </mrow>
+</math>）可以被看作平面上的点，其实坐标为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>，虚坐标为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>。在这种表示下，复数的加法归结为坐标的加法：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right center left" rowspacing="3pt" columnspacing="thickmathspace">
+    <mtr>
+      <mtd>
+        <mtext>Real-part</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>+</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mtext>Real-part</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>+</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd/>
+      <mtd>
+        <mtext>Real-part</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>Imaginary-part</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>+</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mtext>Imaginary-part</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>+</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd/>
+      <mtd>
+        <mtext>Imaginary-part</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math></p>
+<figure class="float">
+<a id="Figure-2_002e20"></a>
+<object style="width: 51.98ex; height: 30.74ex;" data="fig/chap2/Fig2.20.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.20：</strong>复数作为平面上的点。</p>
+</figcaption>
+</figure>
+
+<p>当复数相乘时，用极坐标形式表示复数更为自然，即用模和幅角表示（<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>r</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>A</mi>
+</math>在<a href="#Figure-2_002e20">图2.20</a>中）。两个复数的乘积是通过将一个复数按另一个复数的长度拉伸，然后旋转另一个复数的角度而得到的向量：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right center left" rowspacing="3pt" columnspacing="thickmathspace">
+    <mtr>
+      <mtd>
+        <mtext>Magnitude</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>⋅<!-- ⋅ --></mo>
+        <msub>
+          <mi>z</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mtext>Magnitude</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mtext>Magnitude</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>Angle</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>⋅<!-- ⋅ --></mo>
+        <msub>
+          <mi>z</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mtext>Angle</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>+</mo>
+        <mtext>Angle</mtext>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>z</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math></p>
+<p>因此，复数有两种不同的表示方式，它们分别适用于不同的运算。然而，从编写使用复数的程序的人的角度来看，数据抽象原则表明，无论计算机采用哪种表示方式，所有操作复数的运算都应该是可用的。例如，能够求出一个用直角坐标指定的复数的模长往往是很有用的。类似地，能够确定一个用极坐标指定的复数的实部也往往是很有用的。</p>
+<p>为了设计这样一个系统，我们可以遵循与在<a href="2_002e1_zh.xhtml#g_t2_002e1_002e1">2.1.1</a>中设计有理数包时相同的数据抽象策略。假设复数的运算基于四个选择函数实现：<code>real-part</code>、<code>imag-part</code>、<code>magnitude</code>和<code>angle</code>。同时假设我们有两个构造复数的过程：<code>make-from-real-imag</code>返回一个具有指定实部和虚部的复数，<code>make-from-mag-ang</code>返回一个具有指定模长和幅角的复数。这些过程具有这样的性质：对于任意复数<code>z</code>，以下两者</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">make-from-real-imag </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">)</span><span class="pln"> 
+                     </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">))</span></pre></div>
+
+<p>和</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">make-from-mag-ang </span><span class="opn">(</span><span class="pln">magnitude z</span><span class="clo">)</span><span class="pln"> 
+                   </span><span class="opn">(</span><span class="pln">angle z</span><span class="clo">))</span></pre></div>
+
+<p>都产生等于<code>z</code>的复数。</p>
+<p>使用这些构造函数和选择函数，我们可以利用构造函数和选择函数所指定的“抽象数据”来实现复数的算术运算，就像我们在<a href="2_002e1_zh.xhtml#g_t2_002e1_002e1">2.1.1</a>中对有理数所做的那样。如上面的公式所示，我们可以根据实部和虚部来加减复数，同时根据模长和幅角来乘除复数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-complex z1 z2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-from-real-imag 
+   </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z2</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z2</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sub-complex z1 z2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-from-real-imag 
+   </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z2</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z2</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul-complex z1 z2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-from-mag-ang 
+   </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z2</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z2</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">div-complex z1 z2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-from-mag-ang 
+   </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z2</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z2</span><span class="clo">))))</span></pre></div>
+
+<p>为了完成复数包，我们必须选择一种表示方式，并且必须基于基本数值和基本表结构来实现构造函数和选择函数。有两种显而易见的方法：我们可以将复数表示为“直角坐标形式”的序对（实部，虚部），或者表示为“极坐标形式”的序对（模长，幅角）。我们应该选择哪一种呢？</p>
+<p>为了使不同的选择具体化，设想有两位程序员，Ben Bitdiddle 和 Alyssa P. Hacker，他们各自独立地为复数系统设计表示方式。Ben 选择用直角坐标形式来表示复数。在这种选择下，选取复数的实部和虚部是直截了当的，用给定的实部和虚部构造一个复数也是如此。为了求出模长和幅角，或者用给定的模长和幅角构造一个复数，他使用三角关系式</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right center left" rowspacing="3pt" columnspacing="thickmathspace">
+    <mtr>
+      <mtd>
+        <mi>x</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mi>r</mi>
+        <mi>cos</mi>
+        <mo>⁡<!-- ⁡ --></mo>
+        <mi>A</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>y</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mi>r</mi>
+        <mi>sin</mi>
+        <mo>⁡<!-- ⁡ --></mo>
+        <mi>A</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>r</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <msqrt>
+          <msup>
+            <mi>x</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>+</mo>
+          <msup>
+            <mi>y</mi>
+            <mn>2</mn>
+          </msup>
+          <mo>,</mo>
+        </msqrt>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>A</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mi>arctan</mi>
+        <mo>⁡<!-- ⁡ --></mo>
+        <mo stretchy="false">(</mo>
+        <mi>y</mi>
+        <mo>,</mo>
+        <mi>x</mi>
+        <mo stretchy="false">)</mo>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>
+
+<p>这些关系式将实部和虚部<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo>,</mo>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>与模长和幅角<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>r</mi>
+    <mo>,</mo>
+    <mi>A</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>联系起来。<a class="footnote_link" id="DOCF110" href="#FOOT110"><sup>110</sup></a>因此，Ben 的表示方式由以下选择函数和构造函数给出：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sqrt </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">))</span><span class="pln"> 
+           </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">atan </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-real-imag x y</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-mag-ang r a</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> r </span><span class="opn">(</span><span class="pln">cos a</span><span class="clo">))</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> r </span><span class="opn">(</span><span class="pln">sin a</span><span class="clo">))))</span></pre></div>
+
+<p>相比之下，Alyssa 选择用极坐标形式来表示复数。对她来说，选取模长和幅角是直截了当的，但她必须使用三角关系式来获得实部和虚部。Alyssa 的表示方式是：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cos </span><span class="opn">(</span><span class="pln">angle z</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sin </span><span class="opn">(</span><span class="pln">angle z</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-real-imag x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">atan y x</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-mag-ang r a</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> r a</span><span class="clo">))</span></pre></div>
+
+<p>数据抽象的准则确保了<code>add-complex</code>、<code>sub-complex</code>、<code>mul-complex</code>和<code>div-complex</code>的同一实现既能与 Ben 的表示方式配合工作，也能与 Alyssa 的表示方式配合工作。</p>
+<a id="g_t2_002e4_002e2"></a>
+<a id="Tagged-data"></a>
+<h4 class="subsection"><span class="secnum">2.4.2</span><span class="sectitle">带标签数据</span></h4>
+
+<p>看待数据抽象的一种方式是将其视为“最小承诺原则”的一种应用。在<a href="#g_t2_002e4_002e1">2.4.1</a>中实现复数系统时，我们可以使用 Ben 的直角坐标表示方式，也可以使用 Alyssa 的极坐标表示方式。由选择函数和构造函数形成的抽象屏障使我们能够将数据对象具体表示方式的选择推迟到最后一刻，从而在系统设计中保持最大的灵活性。</p>
+<p>最小承诺原则可以被推向更极端的程度。如果我们愿意，我们甚至可以在设计完选择函数和构造函数<em>之后</em>仍然保持表示方式的不确定性，并选择同时使用 Ben 的表示方式<em>和</em> Alyssa 的表示方式。然而，如果两种表示方式都包含在同一个系统中，我们就需要某种方法来区分极坐标形式的数据和直角坐标形式的数据。否则，例如，如果要求我们求序对（3，4）的<code>magnitude</code>，我们就不知道应该回答5（将数解释为直角坐标形式）还是3（将数解释为极坐标形式）。实现这种区分的一种直接方法是，在每个复数中包含一个<a id="index-type-tag"></a><em>类型标签</em>——符号<code>rectangular</code>或<code>polar</code>。这样，当我们需要操作一个复数时，就可以使用标签来决定应用哪个选择函数。</p>
+<p>为了操作带标签的数据，我们将假设有过程<code>type-tag</code>和<code>contents</code>，它们从数据对象中提取标签和实际内容（对于复数而言，就是极坐标或直角坐标）。我们还将假定有一个过程<code>attach-tag</code>，它接受一个标签和内容并产生一个带标签的数据对象。实现这一点的一种直接方法是使用普通的表结构：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">attach-tag type-tag contents</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> type-tag contents</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">type-tag datum</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pair? datum</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> datum</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Bad tagged datum: 
+              TYPE-TAG"</span><span class="pln"> datum</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">contents datum</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pair? datum</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> datum</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Bad tagged datum: 
+              CONTENTS"</span><span class="pln"> datum</span><span class="clo">)))</span></pre></div>
+
+<p>使用这些过程，我们可以定义谓词<code>rectangular?</code>和<code>polar?</code>，它们分别识别直角坐标形式和极坐标形式的数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">rectangular? z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> </span><span class="opn">(</span><span class="pln">type-tag z</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'rectangular</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">polar? z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> </span><span class="opn">(</span><span class="pln">type-tag z</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'polar</span><span class="clo">))</span></pre></div>
+
+<p>有了类型标签，Ben 和 Alyssa 现在可以修改他们的代码，使他们的两种不同表示可以在同一个系统中并存。每当 Ben 构造一个复数时，他就把它标记为 rectangular。每当 Alyssa 构造一个复数时，她就把它标记为 polar。此外，Ben 和 Alyssa 必须确保他们的过程名不会冲突。一种做法是让 Ben 在他的每个表示过程名后加上后缀 <code>rectangular</code>，让 Alyssa 在她的过程名后加上 <code>polar</code>。下面是 Ben 根据 <a href="#g_t2_002e4_002e1">2.4.1</a> 修订后的直角坐标表示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part-rectangular z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part-rectangular z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude-rectangular z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sqrt </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">real-part-rectangular z</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">imag-part-rectangular z</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle-rectangular z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">atan </span><span class="opn">(</span><span class="pln">imag-part-rectangular z</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">real-part-rectangular z</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-real-imag-rectangular x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">attach-tag </span><span class="lit">'rectangular</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x y</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-mag-ang-rectangular r a</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">attach-tag 
+   </span><span class="lit">'rectangular</span><span class="pln">
+   </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> r </span><span class="opn">(</span><span class="pln">cos a</span><span class="clo">))</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> r </span><span class="opn">(</span><span class="pln">sin a</span><span class="clo">)))))</span></pre></div>
+
+<p>下面是 Alyssa 修订后的极坐标表示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part-polar z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude-polar z</span><span class="clo">)</span><span class="pln"> 
+     </span><span class="opn">(</span><span class="pln">cos </span><span class="opn">(</span><span class="pln">angle-polar z</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part-polar z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude-polar z</span><span class="clo">)</span><span class="pln"> 
+     </span><span class="opn">(</span><span class="pln">sin </span><span class="opn">(</span><span class="pln">angle-polar z</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude-polar z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle-polar z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-real-imag-polar x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">attach-tag 
+   </span><span class="lit">'polar</span><span class="pln">
+   </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">)))</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">atan y x</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-mag-ang-polar r a</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">attach-tag </span><span class="lit">'polar</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> r a</span><span class="clo">)))</span></pre></div>
+
+<p>每个通用选择函数都实现为一个过程，它检查其参数的类型标签，并调用适当的过程来处理该类型的数据。例如，为了获得一个复数的实部，<code>real-part</code> 检查类型标签，以确定是使用 Ben 的 <code>real-part-rectangular</code> 还是 Alyssa 的 <code>real-part-polar</code>。无论哪种情况，我们都使用 <code>contents</code> 提取出裸的、无标签的数据，并按需将其发送给直角坐标或极坐标过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">rectangular? z</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">real-part-rectangular </span><span class="opn">(</span><span class="pln">contents z</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">polar? z</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">real-part-polar </span><span class="opn">(</span><span class="pln">contents z</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown type: 
+               REAL-PART"</span><span class="pln"> z</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">rectangular? z</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">imag-part-rectangular </span><span class="opn">(</span><span class="pln">contents z</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">polar? z</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">imag-part-polar </span><span class="opn">(</span><span class="pln">contents z</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown type: 
+               IMAG-PART"</span><span class="pln"> z</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">rectangular? z</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">magnitude-rectangular </span><span class="opn">(</span><span class="pln">contents z</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">polar? z</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">magnitude-polar </span><span class="opn">(</span><span class="pln">contents z</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown type: 
+               MAGNITUDE"</span><span class="pln"> z</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">rectangular? z</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">angle-rectangular </span><span class="opn">(</span><span class="pln">contents z</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">polar? z</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">angle-polar </span><span class="opn">(</span><span class="pln">contents z</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown type: 
+               ANGLE"</span><span class="pln"> z</span><span class="clo">))))</span></pre></div>
+
+<p>为了实现复数算术运算，我们可以使用来自 <a href="#g_t2_002e4_002e1">2.4.1</a> 的相同过程 <code>add-complex</code>、<code>sub-complex</code>、<code>mul-complex</code> 和 <code>div-complex</code>，因为它们调用的选择函数是通用的，所以对两种表示都适用。例如，过程 <code>add-complex</code> 仍然是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-complex z1 z2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-from-real-imag 
+   </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z2</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z2</span><span class="clo">))))</span></pre></div>
+
+<p>最后，我们必须选择是使用 Ben 的表示还是 Alyssa 的表示来构造复数。一个合理的选择是：每当我们有实部和虚部时，就构造直角坐标数；每当我们有模和幅角时，就构造极坐标数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-real-imag x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-from-real-imag-rectangular x y</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-mag-ang r a</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">make-from-mag-ang-polar r a</span><span class="clo">))</span></pre></div>
+
+<p>由此得到的复数系统具有 <a href="#Figure-2_002e21">图 2.21</a> 所示的结构。该系统已被分解为三个相对独立的部分：复数算术运算、Alyssa 的极坐标实现和 Ben 的直角坐标实现。极坐标和直角坐标实现本可以由 Ben 和 Alyssa 分别编写，而这两者都可以被第三位程序员用作底层表示，以基于抽象构造函数/选择函数接口来实现复数算术过程。</p>
+<figure class="float">
+<a id="Figure-2_002e21"></a>
+<object style="width: 65.01ex; height: 33.59ex;" data="fig/chap2/Fig2.21a.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 2.21：</strong> 通用复数算术系统的结构。</p>
+</figcaption>
+</figure>
+
+<p>由于每个数据对象都带有其类型标签，选择函数以通用方式作用于数据。也就是说，每个选择函数被定义为具有一种行为，该行为取决于它所应用的数据的特定类型。注意用于连接各个独立表示的通用机制：在给定的表示实现内部（比如 Alyssa 的极坐标包），复数是一个无类型的序对（模，幅角）。当一个通用选择函数作用于一个 <code>polar</code> 类型的数时，它剥去标签，并将内容传递给 Alyssa 的代码。反过来，当 Alyssa 构造一个供一般使用的数时，她给它加上类型标签，以便它能被更高层的过程适当地识别。这种在数据对象逐层传递时剥去和附加标签的规则可以是一种重要的组织策略，我们将在 <a href="2_002e5_zh.xhtml#g_t2_002e5">2.5</a> 中看到。</p>
+<a id="g_t2_002e4_002e3"></a>
+<a id="Data_002dDirected-Programming-and-Additivity"></a>
+<h4 class="subsection"><span class="secnum">2.4.3</span><span class="sectitle">数据导向的程序设计与可加性</span></h4>
+
+<p>检查数据的类型并调用适当过程的一般策略称为 <a id="index-dispatching-on-type"></a> <em>基于类型的分派</em>。这是在系统设计中获得模块化的一种强大策略。另一方面，像 <a href="#g_t2_002e4_002e2">2.4.2</a> 那样实现分派有两个显著弱点。一个弱点是通用接口过程（<code>real-part</code>、<code>imag-part</code>、<code>magnitude</code> 和 <code>angle</code>）必须知道所有不同的表示。例如，假设我们想将一种新的复数表示纳入我们的复数系统。我们需要用类型来标识这种新表示，然后向每个通用接口过程添加一个子句，以检查新类型并应用该表示的适当选择函数。</p>
+<p>该技术的另一个弱点是，即使各个表示可以分别设计，我们也必须保证整个系统中没有两个过程具有相同的名称。这就是为什么 Ben 和 Alyssa 不得不更改 <a href="#g_t2_002e4_002e1">2.4.1</a> 中他们原始过程的名称。</p>
+<p>这两个弱点的根本问题在于，实现通用接口的技术不是<a id="index-additive"></a><em>可加的</em>。实现通用选择函数过程的人必须在每次安装新表示时修改这些过程，而负责将各个表示接入系统的人必须修改他们的代码以避免名称冲突。在每种情况下，必须对代码进行的更改都是直截了当的，但无论如何都必须进行，这是不便和错误的来源。对于目前的复数系统来说，这不是什么大问题，但假设复数不是有两种而是有数百种不同的表示。再假设抽象数据接口中有许多通用选择函数需要维护。事实上，假设没有一个程序员知道所有的接口过程或所有的表示。这个问题是真实存在的，必须在大规模数据库管理系统这样的程序中加以解决。</p>
+<p>我们需要的是进一步模块化系统设计的手段。这由称为<a id="index-data_002ddirected-programming-1"></a><em>数据导向程序设计</em>的编程技术提供。要理解数据导向程序设计如何工作，首先观察：每当我们处理一组对于一组不同类型通用的通用操作时，我们实际上是在处理一个二维表，其中一个轴包含可能的操作，另一个轴包含可能的类型。表中的条目是实现针对所呈现的每种参数类型的每个操作的过程。在上一节开发的复数系统中，操作名称、数据类型和实际过程之间的对应关系分散在通用接口过程的各种条件子句中。但同样的信息本可以组织在一个表中，如<a href="#Figure-2_002e22">图2.22</a>所示。</p>
+<figure class="float">
+<a id="Figure-2_002e22"></a>
+<object style="width: 63.29ex; height: 20.98ex;" data="fig/chap2/Fig2.22.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图2.22：</strong>复数系统的操作表。</p>
+</figcaption>
+</figure>
+
+<p>数据导向程序设计是设计程序直接与这样的表一起工作的技术。之前，我们将复数算术代码与两个表示包接口的机制实现为一组过程，每个过程对类型执行显式分派。这里我们将把接口实现为单个过程，它在表中查找操作名称和参数类型的组合以找到要应用的正确过程，然后将其应用于参数的内容。如果我们这样做，那么要向系统添加新的表示包，我们不需要更改任何现有过程；我们只需要向表中添加新条目。</p>
+<p>为了实现这个计划，假设我们有两个过程，<code>put</code>和<code>get</code>，用于操作操作-类型表：</p>
+<ul>
+<li><code>(put ⟨<var>op</var>⟩ ⟨<var>type</var>⟩ ⟨<var>item</var>⟩)</code>将<code>⟨</code><var>item</var><code>⟩</code>安装到表中，以<code>⟨</code><var>op</var><code>⟩</code>和<code>⟨</code><var>type</var><code>⟩</code>为索引。</li><li><code>(get ⟨<var>op</var>⟩ ⟨<var>type</var>⟩)</code>在表中查找<code>⟨</code><var>op</var><code>⟩</code>、<code>⟨</code><var>type</var><code>⟩</code>条目并返回在那里找到的项。如果没有找到项，<code>get</code>返回假。</li></ul>
+
+<p>目前，我们可以假设<code>put</code>和<code>get</code>包含在我们的语言中。在<a href="Chapter-3_zh.xhtml#Chapter-3">第3</a>章（<a href="3_002e3_zh.xhtml#g_t3_002e3_002e3">3.3.3</a>）中，我们将看到如何实现这些以及其他用于操作表的操作。</p>
+<p>以下是如何在复数系统中使用数据导向程序设计。开发了直角坐标表示的 Ben 完全像他最初那样实现他的代码。他定义了一组过程，或者一个<a id="index-package"></a><em>包</em>，并通过向表中添加告诉系统如何操作直角坐标数的条目来将这些过程与系统的其余部分接口。这是通过调用以下过程来完成的：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">install-rectangular-package</span><span class="clo">)</span><span class="pln">
+  </span><span class="roman"><span class="com">;; internal procedures</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-real-imag x y</span><span class="clo">)</span><span class="pln"> 
+    </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">sqrt </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">))</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">atan </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-mag-ang r a</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> r </span><span class="opn">(</span><span class="pln">cos a</span><span class="clo">))</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> r </span><span class="opn">(</span><span class="pln">sin a</span><span class="clo">))))</span><span class="pln">
+  </span><span class="roman"><span class="com">;; interface to the rest of the system</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag x</span><span class="clo">)</span><span class="pln"> 
+    </span><span class="opn">(</span><span class="pln">attach-tag </span><span class="lit">'rectangular</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'real-part</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">rectangular</span><span class="clo">)</span><span class="pln"> real-part</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'imag-part</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">rectangular</span><span class="clo">)</span><span class="pln"> imag-part</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'magnitude</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">rectangular</span><span class="clo">)</span><span class="pln"> magnitude</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'angle</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">rectangular</span><span class="clo">)</span><span class="pln"> angle</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'make-from-real-imag</span><span class="pln"> </span><span class="lit">'rectangular</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">make-from-real-imag x y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'make-from-mag-ang</span><span class="pln"> </span><span class="lit">'rectangular</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">r a</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">make-from-mag-ang r a</span><span class="clo">))))</span><span class="pln">
+  </span><span class="lit">'done</span><span class="clo">)</span></pre></div>
+
+<p>注意，这里的内部过程与 Ben 在孤立工作时所写的<a href="#g_t2_002e4_002e1">2.4.1</a>中的过程相同。为了将它们与系统的其余部分接口，不需要任何更改。此外，由于这些过程定义是安装过程的内部定义，Ben 不必担心与直角坐标包外部其他过程的名称冲突。为了将这些过程与系统的其余部分接口，Ben 将他的<code>real-part</code>过程安装在操作名<code>real-part</code>和类型<code>(rectangular)</code>下，其他选择函数也类似。<a class="footnote_link" id="DOCF111" href="#FOOT111"><sup>111</sup></a>接口还定义了供外部系统使用的构造函数。<a class="footnote_link" id="DOCF112" href="#FOOT112"><sup>112</sup></a>这些与 Ben 内部定义的构造函数相同，只是它们附加了标签。</p>
+<p>Alyssa 的极坐标包是类似的：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">install-polar-package</span><span class="clo">)</span><span class="pln">
+  </span><span class="roman"><span class="com">;; internal procedures</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-mag-ang r a</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> r a</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cos </span><span class="opn">(</span><span class="pln">angle z</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sin </span><span class="opn">(</span><span class="pln">angle z</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-real-imag x y</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">atan y x</span><span class="clo">)))</span><span class="pln">
+  </span><span class="roman"><span class="com">;; interface to the rest of the system</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tag x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">attach-tag </span><span class="lit">'polar</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'real-part</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">polar</span><span class="clo">)</span><span class="pln"> real-part</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'imag-part</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">polar</span><span class="clo">)</span><span class="pln"> imag-part</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'magnitude</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">polar</span><span class="clo">)</span><span class="pln"> magnitude</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'angle</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">polar</span><span class="clo">)</span><span class="pln"> angle</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'make-from-real-imag</span><span class="pln"> </span><span class="lit">'polar</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">make-from-real-imag x y</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">put </span><span class="lit">'make-from-mag-ang</span><span class="pln"> </span><span class="lit">'polar</span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">r a</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">tag </span><span class="opn">(</span><span class="pln">make-from-mag-ang r a</span><span class="clo">))))</span><span class="pln">
+  </span><span class="lit">'done</span><span class="clo">)</span></pre></div>
+
+<p>即使 Ben 和 Alyssa 仍然使用他们各自定义的与对方同名的原始过程（例如<code>real-part</code>），这些定义现在位于不同的过程内部（见<a href="1_002e1_zh.xhtml#g_t1_002e1_002e8">1.1.8</a>），因此没有名称冲突。</p>
+<p>复数算术选择函数通过一个称为<code>apply-generic</code>的通用“操作”过程访问表，该过程将通用操作应用于某些参数。<code>Apply-generic</code>在表中查找操作名称和参数类型，如果存在相应的过程，则应用它：<a class="footnote_link" id="DOCF113" href="#FOOT113"><sup>113</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">apply-generic op </span><span class="pun">.</span><span class="pln"> args</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">type-tags </span><span class="opn">(</span><span class="pln">map type-tag args</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">proc </span><span class="opn">(</span><span class="pln">get op type-tags</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> proc
+          </span><span class="opn">(</span><span class="pln">apply proc </span><span class="opn">(</span><span class="pln">map contents args</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="err">error</span><span class="pln">
+            </span><span class="str">"No method for these types: 
+             APPLY-GENERIC"</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">list op type-tags</span><span class="clo">))))))</span></pre></div>
+
+<p>使用<code>apply-generic</code>，我们可以如下定义通用选择函数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">real-part z</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">apply-generic </span><span class="lit">'real-part</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">imag-part z</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">apply-generic </span><span class="lit">'imag-part</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">magnitude z</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">apply-generic </span><span class="lit">'magnitude</span><span class="pln"> z</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">angle z</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">apply-generic </span><span class="lit">'angle</span><span class="pln"> z</span><span class="clo">))</span></pre></div>
+
+<p>注意，如果向系统中添加新的表示，这些完全不会改变。</p>
+<p>我们还可以从表中提取供包外部程序使用的构造函数，用于从实部和虚部以及从模和幅角构造复数。如<a href="#g_t2_002e4_002e2">2.4.2</a>中那样，每当我们有实部和虚部时就构造直角坐标数，每当我们有模和幅角时就构造极坐标数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-real-imag x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">get </span><span class="lit">'make-from-real-imag</span><span class="pln"> 
+        </span><span class="lit">'rectangular</span><span class="clo">)</span><span class="pln"> 
+   x y</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-mag-ang r a</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">get </span><span class="lit">'make-from-mag-ang</span><span class="pln"> 
+        </span><span class="lit">'polar</span><span class="clo">)</span><span class="pln"> 
+   r a</span><span class="clo">))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e73"></a>习题2.73：</strong> <a href="2_002e3_zh.xhtml#g_t2_002e3_002e2">2.3.2</a>描述了一个执行符号求导的程序：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">deriv exp var</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">number? exp</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">variable? exp</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">same-variable? exp var</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">sum? exp</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">make-sum </span><span class="opn">(</span><span class="pln">deriv </span><span class="opn">(</span><span class="pln">addend exp</span><span class="clo">)</span><span class="pln"> var</span><span class="clo">)</span><span class="pln">
+                   </span><span class="opn">(</span><span class="pln">deriv </span><span class="opn">(</span><span class="pln">augend exp</span><span class="clo">)</span><span class="pln"> var</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">product? exp</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">make-sum
+           </span><span class="opn">(</span><span class="pln">make-product 
+            </span><span class="opn">(</span><span class="pln">multiplier exp</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">deriv </span><span class="opn">(</span><span class="pln">multiplicand exp</span><span class="clo">)</span><span class="pln"> var</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">make-product 
+            </span><span class="opn">(</span><span class="pln">deriv </span><span class="opn">(</span><span class="pln">multiplier exp</span><span class="clo">)</span><span class="pln"> var</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">multiplicand exp</span><span class="clo">))))</span><span class="pln">
+        ⟨</span><var><span class="pln">more rules can be added here</span></var><span class="pln">⟩
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"unknown expression type:
+                      DERIV"</span><span class="pln"> exp</span><span class="clo">))))</span></pre></div>
+
+<p>我们可以将这个程序视为根据待求导表达式的类型进行分派。在这种情况下，数据的“类型标签”是代数运算符符号（例如<code>+</code>），而所执行的操作是<code>deriv</code>。我们可以通过将基本的求导过程重写为以下形式，把这个程序转换为数据导向的风格：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">deriv exp var</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">number? exp</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">((</span><span class="pln">variable? exp</span><span class="clo">)</span><span class="pln"> 
+           </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">same-variable? exp var</span><span class="clo">)</span><span class="pln"> 
+               </span><span class="lit">1</span><span class="pln"> 
+               </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+         </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">((</span><span class="pln">get </span><span class="lit">'deriv</span><span class="pln"> </span><span class="opn">(</span><span class="pln">operator exp</span><span class="clo">))</span><span class="pln"> 
+                </span><span class="opn">(</span><span class="pln">operands exp</span><span class="clo">)</span><span class="pln"> 
+                var</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">operator exp</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> exp</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">operands exp</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> exp</span><span class="clo">))</span></pre></div>
+
+<ol>
+<li>解释上面做了什么。为什么我们不能把谓词<code>number?</code>和<code>variable?</code>纳入数据导向的分派中？</li><li>编写求和的导数和乘积的导数的过程，以及将它们安装到上面程序所使用的表中所需的辅助代码。</li><li>选择任何你喜欢的额外求导规则，例如幂运算的规则（<a href="2_002e3_zh.xhtml#Exercise-2_002e56">习题2.56</a>），并将其安装到这个数据导向系统中。</li><li>在这个简单的代数操作器中，表达式的类型是将其结合在一起的代数运算符。然而，假设我们以相反的方式索引过程，使得<code>deriv</code>中的分派行看起来像这样：<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="pln">get </span><span class="opn">(</span><span class="pln">operator exp</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'deriv</span><span class="clo">)</span><span class="pln"> 
+ </span><span class="opn">(</span><span class="pln">operands exp</span><span class="clo">)</span><span class="pln"> var</span><span class="clo">)</span></pre></div>
+
+<p>需要对求导系统做哪些相应的修改？</p>
+</li></ol>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e74"></a>习题2.74：</strong>贪得无厌企业有限公司是一家高度分散的企业集团，由遍布世界各地的大量独立部门组成。该公司的计算机设施刚刚通过一种巧妙的网络接口方案互联起来，使得整个网络对任何用户来说都像是一台单一的计算机。贪得无厌公司的总裁首次尝试利用网络从各部门文件中提取管理信息，却沮丧地发现，尽管所有部门文件都已实现为Scheme中的数据结构，但各部门使用的具体数据结构各不相同。于是匆忙召开了一次部门经理会议，以寻找一种策略来整合这些文件，既能满足总部的需求，又能保持各部门现有的自主权。</p>
+<p>展示如何用数据导向编程实现这样的策略。举例来说，假设每个部门的人事记录由一个文件组成，其中包含一组以员工姓名为键的记录。这组记录的结构因部门而异。此外，每个员工的记录本身也是一个集合（各部门的结构不同），其中包含以<code>address</code>和<code>salary</code>等标识符为键的信息。具体来说：</p>
+<ol>
+<li>为总部实现一个<code>get-record</code>过程，从指定的人事文件中检索指定员工的记录。该过程应适用于任何部门的文件。解释各部门的文件应如何组织。特别是，必须提供什么类型信息？</li><li>为总部实现一个<code>get-salary</code>过程，从任何部门的人事文件中返回给定员工记录中的薪水信息。为了使这个操作可行，记录应如何组织？</li><li>为总部实现一个<code>find-employee-record</code>过程。它应搜索所有部门的文件，查找给定员工的记录并返回该记录。假设该过程以员工姓名和所有部门文件的表作为参数。</li><li>当贪得无厌公司接管一家新公司时，必须做哪些修改才能将新的人事信息纳入中央系统？</li></ol>
+</blockquote>
+
+<a id="Message-passing"></a>
+<h5 class="subsubheading">消息传递</h5>
+
+<p>数据导向编程的关键思想是通过显式地处理操作-类型表（例如<a href="#Figure-2_002e22">图2.22</a>中的表）来处理程序中的通用操作。我们在<a href="#g_t2_002e4_002e2">2.4.2</a>中使用的编程风格通过让每个操作自行处理其分派来组织所需的类型分派。实际上，这将操作-类型表分解为行，每个通用操作过程代表表中的一行。</p>
+<p>另一种实现策略是将表分解为列，并且不使用根据数据类型进行分派的“智能操作”，而是使用根据操作名称进行分派的“智能数据对象”。我们可以通过这样安排来实现：让一个数据对象（例如直角坐标形式的复数）表示为一个过程，该过程接受所需操作名称作为输入并执行所指示的操作。在这种方式下，<code>make-from-real-imag</code>可以写成：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-from-real-imag x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch op</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> op </span><span class="lit">'real-part</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> op </span><span class="lit">'imag-part</span><span class="clo">)</span><span class="pln"> y</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> op </span><span class="lit">'magnitude</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">sqrt </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">))))</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> op </span><span class="lit">'angle</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">atan y x</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+           </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown op: 
+            MAKE-FROM-REAL-IMAG"</span><span class="pln"> op</span><span class="clo">))))</span><span class="pln">
+  dispatch</span><span class="clo">)</span></pre></div>
+
+<p>相应的<code>apply-generic</code>过程，它将通用操作应用于参数，现在只需将操作名称传递给数据对象，让对象来完成工作：<a class="footnote_link" id="DOCF114" href="#FOOT114"><sup>114</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">apply-generic op arg</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">arg op</span><span class="clo">))</span></pre></div>
+
+<p>注意，<code>make-from-real-imag</code>返回的值是一个过程——内部的<code>dispatch</code>过程。当<code>apply-generic</code>请求执行某个操作时，调用的就是这个过程。</p>
+<p>这种编程风格称为<a id="index-message-passing-1"></a><em>消息传递</em>。这个名字来源于这样的意象：数据对象是一个实体，它接收所请求的操作名称作为“消息”。我们已经在<a href="2_002e1_zh.xhtml#g_t2_002e1_002e3">2.1.3</a>中看到了消息传递的一个例子，在那里我们看到<code>cons</code>、<code>car</code>和<code>cdr</code>如何在没有数据对象而只有过程的情况下定义。这里我们看到，消息传递不是一种数学技巧，而是一种用于组织具有通用操作的系统的有用技术。在本章的剩余部分，我们将继续使用数据导向编程，而不是消息传递，来讨论通用算术操作。在<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>中，我们将回到消息传递，并会看到它可以成为构造模拟程序的强大工具。</p>
+<blockquote>
+<p><strong><a id="Exercise-2_002e75"></a>习题 2.75：</strong> 用消息传递风格实现构造函数 <code>make-from-mag-ang</code>。这个过程应该类似于上面给出的 <code>make-from-real-imag</code> 过程。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-2_002e76"></a>习题 2.76：</strong> 随着带有通用操作的大型系统不断演化，可能需要新的数据类型或新的操作。对于三种策略——显式分派的通用操作、数据导向风格和消息传递风格——描述为了添加新类型或新操作必须对系统做出的修改。对于必须经常添加新类型的系统，哪种组织方式最合适？对于必须经常添加新操作的系统，哪种最合适？</p></blockquote>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT109"><p><a class="footnote_backlink" href="#DOCF109"><sup>109</sup></a> 在实际的计算系统中，大多数时候直角坐标形式比极坐标形式更可取，因为在直角坐标与极坐标之间进行转换时会出现舍入误差。这就是为什么复数这个例子并不现实。尽管如此，它清晰地展示了使用通用运算来设计系统的方法，并且很好地引出了本章后面将要开发的更为实质性的系统。</p>
+</div>
+<div id="FOOT110"><p><a class="footnote_backlink" href="#DOCF110"><sup>110</sup></a> 这里提到的反正切函数，由 Scheme 的 <code>atan</code> 过程计算，其定义是接受两个参数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>，并返回正切为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>x</mi>
+  </mrow>
+</math> 的角度。参数的符号决定了角度所在的象限。</p>
+</div>
+<div id="FOOT111"><p><a class="footnote_backlink" href="#DOCF111"><sup>111</sup></a> 我们使用表 <code>(rectangular)</code> 而不是符号 <code>rectangular</code>，是为了允许操作具有多个参数，且这些参数并非都是同一类型。</p>
+</div>
+<div id="FOOT112"><p><a class="footnote_backlink" href="#DOCF112"><sup>112</sup></a> 构造函数所安装到的类型不必是表，因为构造函数总是用于生成某一特定类型的对象。</p>
+</div>
+<div id="FOOT113"><p><a class="footnote_backlink" href="#DOCF113"><sup>113</sup></a> <code>Apply-generic</code> 使用了 <a href="2_002e2_zh.xhtml#Exercise-2_002e20">习题 2.20</a> 中描述的点尾记法，因为不同的通用操作可能接受不同数量的参数。在 <code>apply-generic</code> 中，<code>op</code> 的值是 <code>apply-generic</code> 的第一个参数，而 <code>args</code> 的值是剩余参数组成的表。</p>
+<p><code>Apply-generic</code> 还使用了基本过程 <code>apply</code>，它接受两个参数：一个过程和一个表。<code>Apply</code> 应用该过程，使用表中的元素作为参数。例如，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">apply </span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">list </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="clo">))</span></pre></div>
+
+<p>返回 10。</p>
+</div>
+<div id="FOOT114"><p><a class="footnote_backlink" href="#DOCF114"><sup>114</sup></a> 这种组织方式的一个局限是它只允许单参数的通用过程。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="2_002e5_zh.xhtml#g_t2_002e5" accesskey="n" rel="next">2.5</a>, 上一节： <a href="2_002e3_zh.xhtml#g_t2_002e3" accesskey="p" rel="prev">2.3</a>, 上一级： <a href="#g_t2_002e4" accesskey="u" rel="prev">2.4</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

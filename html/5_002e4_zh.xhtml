@@ -1,0 +1,814 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：5.4</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 5.4" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 5.4" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-5_zh.xhtml#Chapter-5" rel="prev" title="Chapter 5" />
+<link href="5_002e5_zh.xhtml#g_t5_002e5" rel="next" title="5.5" />
+<link href="5_002e3_zh.xhtml#g_t5_002e3_002e2" rel="prev" title="5.3.2" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t5_002e4"></a>
+<nav class="header">
+<p>下一节： <a href="5_002e5_zh.xhtml#g_t5_002e5" accesskey="n" rel="next">5.5</a>, 上一节： <a href="5_002e3_zh.xhtml#g_t5_002e3" accesskey="p" rel="prev">5.3</a>, 上一级： <a href="Chapter-5_zh.xhtml#Chapter-5" accesskey="u" rel="prev">第5章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="The-Explicit_002dControl-Evaluator"></a>
+<h3 class="section"><span class="secnum">5.4</span><span class="sectitle">显式控制求值器</span></h3>
+
+<p>在<a href="5_002e1_zh.xhtml#g_t5_002e1">5.1</a>中，我们看到了如何将简单的Scheme程序转换为寄存器机器的描述。现在我们将对更复杂的程序执行这种转换，即<a href="4_002e1_zh.xhtml#g_t4_002e1_002e1">4.1.1</a>–<a href="4_002e1_zh.xhtml#g_t4_002e1_002e4">4.1.4</a>的元循环求值器，它展示了如何用过程<code>eval</code>和<code>apply</code>来描述Scheme解释器的行为。我们在本节中开发的<a id="index-explicit_002dcontrol-evaluator"></a><em>显式控制求值器</em>展示了求值过程中使用的基本过程调用和参数传递机制如何用寄存器和栈上的操作来描述。此外，显式控制求值器可以作为Scheme解释器的一种实现，用与传统计算机原生机器语言非常相似的语言编写。该求值器可以由<a href="5_002e2_zh.xhtml#g_t5_002e2">5.2</a>的寄存器机器模拟器执行。或者，它可以作为构建Scheme求值器的机器语言实现，甚至用于求值Scheme表达式的专用机器的起点。<a href="#Figure-5_002e16">图5.16</a>展示了这样一种硬件实现：一块充当Scheme求值器的硅芯片。芯片设计者从类似于本节所述求值器的寄存器机器的数据通路和控制器规范开始，并使用设计自动化程序来构建集成电路布局。<a class="footnote_link" id="DOCF304" href="#FOOT304"><sup>304</sup></a></p>
+<figure class="float">
+<a id="Figure-5_002e16"></a>
+<object style="width: 52.41ex; height: 42.31ex;" data="fig/chap5/chip.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图5.16：</strong>Scheme求值器的硅芯片实现。</p>
+</figcaption>
+</figure>
+
+<a id="Registers-and-operations"></a>
+<h5 class="subsubheading">寄存器和操作</h5>
+
+<p>在设计显式控制求值器时，我们必须指定寄存器机器中要使用的操作。我们用抽象语法描述了元循环求值器，使用了诸如<code>quoted?</code>和<code>make-procedure</code>这样的过程。在实现寄存器机器时，我们可以将这些过程展开为基本表结构内存操作的序列，并在我们的寄存器机器上实现这些操作。然而，这会使我们的求值器非常长，用细节掩盖了基本结构。为了澄清表述，我们将把<a href="4_002e1_zh.xhtml#g_t4_002e1_002e2">4.1.2</a>中给出的语法过程以及<a href="4_002e1_zh.xhtml#g_t4_002e1_002e3">4.1.3</a>和<a href="4_002e1_zh.xhtml#g_t4_002e1_002e4">4.1.4</a>节中给出的用于表示环境和其他运行时数据的过程作为寄存器机器的基本操作包含进来。为了完全指定一个可以用低级机器语言编程或在硬件中实现的求值器，我们将使用<a href="5_002e3_zh.xhtml#g_t5_002e3">5.3</a>中描述的表结构实现，将这些操作替换为更基本的操作。</p>
+<p>我们的Scheme求值器寄存器机器包括一个栈和七个寄存器：<code>exp</code>、<code>env</code>、<code>val</code>、<code>continue</code>、<code>proc</code>、<code>argl</code>和<code>unev</code>。<code>Exp</code>用于保存要求值的表达式，<code>env</code>包含要在其中进行求值的环境。在一次求值结束时，<code>val</code>包含在指定环境中对该表达式求值所获得的值。<code>continue</code>寄存器用于实现递归，如<a href="5_002e1_zh.xhtml#g_t5_002e1_002e4">5.1.4</a>中所述。（求值器需要递归调用自身，因为求值一个表达式需要求值其子表达式。）寄存器<code>proc</code>、<code>argl</code>和<code>unev</code>用于求值组合式。</p>
+<p>我们不会提供数据通路图来展示求值器的寄存器和操作如何连接，也不会给出机器操作的完整列表。这些隐含在求值器的控制器中，将详细呈现。</p>
+
+<a id="g_t5_002e4_002e1"></a>
+<a id="The-Core-of-the-Explicit_002dControl-Evaluator"></a>
+<h4 class="subsection"><span class="secnum">5.4.1</span><span class="sectitle">显式控制求值器的核心</span></h4>
+
+<p>求值器中的核心元素是从<code>eval-dispatch</code>开始的一系列指令。这对应于<a href="4_002e1_zh.xhtml#g_t4_002e1_002e1">4.1.1</a>中描述的元循环求值器的<code>eval</code>过程。当控制器从<code>eval-dispatch</code>开始时，它在由<code>env</code>指定的环境中求值由<code>exp</code>指定的表达式。当求值完成时，控制器将转到存储在<code>continue</code>中的入口点，并且<code>val</code>寄存器将保存表达式的值。与元循环<code>eval</code>一样，<code>eval-dispatch</code>的结构是对要计算的表达式的语法类型进行情况分析。<a class="footnote_link" id="DOCF305" href="#FOOT305"><sup>305</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">eval-dispatch
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op self-evaluating?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-self-eval</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op variable?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-variable</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op quoted?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-quoted</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op assignment?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-assignment</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op definition?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-definition</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="kwd">if</span><span class="pun">?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-if</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="kwd">lambda</span><span class="pun">?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-lambda</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op </span><span class="kwd">begin</span><span class="pun">?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-begin</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op application?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-application</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label unknown-expression-type</span><span class="clo">))</span></pre></div>
+
+<a id="Evaluating-simple-expressions"></a>
+<h5 class="subsubheading">求值简单表达式</h5>
+
+<p>数和字符串（它们是自求值的）、变量、引用和<code>lambda</code>表达式没有需要求值的子表达式。对于这些，求值器只需将正确的值放入<code>val</code>寄存器，并在由<code>continue</code>指定的入口点继续执行。简单表达式的求值由以下控制器代码执行：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-self-eval
+  </span><span class="opn">(</span><span class="pln">assign val </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">))</span><span class="pln">
+ev-variable
+  </span><span class="opn">(</span><span class="pln">assign val
+          </span><span class="opn">(</span><span class="pln">op lookup-variable-value</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg env</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">))</span><span class="pln">
+ev-quoted
+  </span><span class="opn">(</span><span class="pln">assign val
+          </span><span class="opn">(</span><span class="pln">op text-of-quotation</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">))</span><span class="pln">
+ev-lambda
+  </span><span class="opn">(</span><span class="pln">assign unev
+          </span><span class="opn">(</span><span class="pln">op lambda-parameters</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign exp 
+          </span><span class="opn">(</span><span class="pln">op lambda-body</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign val 
+          </span><span class="opn">(</span><span class="pln">op make-procedure</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg env</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">))</span></pre></div>
+
+<p>观察<code>ev-lambda</code>如何使用<code>unev</code>和<code>exp</code>寄存器来保存lambda表达式的参数和体，以便它们可以与<code>env</code>中的环境一起传递给<code>make-procedure</code>操作。</p>
+<a id="Evaluating-procedure-applications"></a>
+<h5 class="subsubheading">求值过程应用</h5>
+
+<p>过程应用由包含运算符和运算对象的组合式指定。运算符是一个子表达式，其值是一个过程，而运算对象是子表达式，其值是过程应被应用到的参数。元循环<code>eval</code>通过递归调用自身来求值组合式的每个元素，然后将结果传递给<code>apply</code>，后者执行实际的过程应用，从而处理应用。显式控制求值器做同样的事情；这些递归调用由<code>goto</code>指令实现，同时使用栈来保存将在递归调用返回后恢复的寄存器。在每次调用之前，我们将小心地确定哪些寄存器必须保存（因为它们的值稍后将被需要）。<a class="footnote_link" id="DOCF306" href="#FOOT306"><sup>306</sup></a></p>
+<p>我们通过求值运算符以产生一个过程来开始应用求值，该过程稍后将应用于已求值的运算对象。为了求值运算符，我们将其移动到<code>exp</code>寄存器并转到<code>eval-dispatch</code>。<code>env</code>寄存器中的环境已经是求值运算符的正确环境。然而，我们保存<code>env</code>，因为稍后求值运算对象时需要它。我们还将运算对象提取到<code>unev</code>中并将此保存在栈上。我们设置<code>continue</code>，以便在运算符求值后，<code>eval-dispatch</code>将在<code>ev-appl-did-operator</code>处恢复。然而，首先我们保存<code>continue</code>的旧值，它告诉控制器在应用之后继续的位置。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-application
+  </span><span class="opn">(</span><span class="pln">save continue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign unev </span><span class="opn">(</span><span class="pln">op operands</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save unev</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign exp </span><span class="opn">(</span><span class="pln">op operator</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign
+   continue </span><span class="opn">(</span><span class="pln">label ev-appl-did-operator</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span></pre></div>
+
+<p>从求值运算符子表达式返回后，我们继续求值组合式的运算对象，并将结果参数累积在一个表中，该表保存在<code>argl</code>中。首先我们恢复未求值的运算对象和环境。我们将<code>argl</code>初始化为空表。然后我们将通过求值运算符产生的过程赋值给<code>proc</code>寄存器。如果没有运算对象，我们直接转到<code>apply-dispatch</code>。否则我们将<code>proc</code>保存在栈上并开始参数求值循环：<a class="footnote_link" id="DOCF307" href="#FOOT307"><sup>307</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-appl-did-operator
+  </span><span class="opn">(</span><span class="pln">restore unev</span><span class="clo">)</span><span class="pln">             </span><span class="roman"><span class="com">; the operands</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign argl </span><span class="opn">(</span><span class="pln">op empty-arglist</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign proc </span><span class="opn">(</span><span class="pln">reg val</span><span class="clo">))</span><span class="pln">    </span><span class="roman"><span class="com">; the operator</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op no-operands?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label apply-dispatch</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save proc</span><span class="clo">)</span></pre></div>
+
+<p>参数求值循环的每个周期从<code>unev</code>中的表求值一个运算对象，并将结果累积到<code>argl</code>中。为了求值一个运算对象，我们将其放入<code>exp</code>寄存器并转到<code>eval-dispatch</code>，在设置<code>continue</code>以便执行将在参数累积阶段恢复之后。但首先我们保存到目前为止累积的参数（保存在<code>argl</code>中）、环境（保存在<code>env</code>中）以及剩余要计算的运算对象（保存在<code>unev</code>中）。对最后一个运算对象的求值做了特殊处理，在<code>ev-appl-last-arg</code>处处理。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-appl-operand-loop
+  </span><span class="opn">(</span><span class="pln">save argl</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign exp
+          </span><span class="opn">(</span><span class="pln">op first-operand</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op last-operand?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-appl-last-arg</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save unev</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign continue 
+          </span><span class="opn">(</span><span class="pln">label ev-appl-accumulate-arg</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span></pre></div>
+
+<p>当一个运算对象被求值后，该值被累积到<code>argl</code>中保存的表里。然后该运算对象从<code>unev</code>中的未求值运算对象表中移除，参数求值继续。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-appl-accumulate-arg
+  </span><span class="opn">(</span><span class="pln">restore unev</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore argl</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign argl 
+          </span><span class="opn">(</span><span class="pln">op adjoin-arg</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg val</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg argl</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign unev
+          </span><span class="opn">(</span><span class="pln">op rest-operands</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label ev-appl-operand-loop</span><span class="clo">))</span></pre></div>
+
+<p>最后一个参数的求值处理方式不同。在转到<code>eval-dispatch</code>之前不需要保存环境或未求值运算对象表，因为在最后一个运算对象求值后它们将不再需要。因此，我们从求值返回到一个特殊入口点<code>ev-appl-accum-last-arg</code>，它恢复参数表，累积新参数，恢复保存的过程，并转去执行应用。<a class="footnote_link" id="DOCF308" href="#FOOT308"><sup>308</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-appl-last-arg
+  </span><span class="opn">(</span><span class="pln">assign continue 
+          </span><span class="opn">(</span><span class="pln">label ev-appl-accum-last-arg</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span><span class="pln">
+ev-appl-accum-last-arg
+  </span><span class="opn">(</span><span class="pln">restore argl</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign argl 
+          </span><span class="opn">(</span><span class="pln">op adjoin-arg</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg val</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg argl</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore proc</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label apply-dispatch</span><span class="clo">))</span></pre></div>
+
+<p>参数求值循环的细节决定了解释器求值组合式运算对象的顺序（例如，从左到右或从右到左——参见<a href="3_002e1_zh.xhtml#Exercise-3_002e8">习题3.8</a>）。这个顺序不是由元循环求值器决定的，元循环求值器从其实现所基于的Scheme继承控制结构。<a class="footnote_link" id="DOCF309" href="#FOOT309"><sup>309</sup></a>因为<code>first-operand</code>选择函数（在<code>ev-appl-operand-loop</code>中用于从<code>unev</code>中提取连续的运算对象）实现为<code>car</code>，而<code>rest-operands</code>选择函数实现为<code>cdr</code>，所以显式控制求值器将按从左到右的顺序求值组合式的运算对象。</p>
+<a id="Procedure-application"></a>
+<h5 class="subsubheading">过程应用</h5>
+
+<p>入口点 <code>apply-dispatch</code> 对应于元循环求值器的 <code>apply</code> 过程。当我们到达 <code>apply-dispatch</code> 时，<code>proc</code> 寄存器包含要应用的过程，<code>argl</code> 包含必须应用该过程的已求值参数的表。<code>continue</code> 的保存值（最初传递给 <code>eval-dispatch</code> 并在 <code>ev-application</code> 处保存），它指示在何处返回过程应用的结果，位于栈上。当应用完成时，控制器转移到由保存的 <code>continue</code> 指定的入口点，应用的结果在 <code>val</code> 中。与元循环 <code>apply</code> 一样，有两种情况需要考虑。要应用的过程要么是基本过程，要么是复合过程。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">apply-dispatch
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op primitive-procedure?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg proc</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label primitive-apply</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op compound-procedure?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg proc</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label compound-apply</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label unknown-procedure-type</span><span class="clo">))</span></pre></div>
+
+<p>我们假设每个基本过程的实现都从 <code>argl</code> 获取其参数，并将其结果放入 <code>val</code>。为了说明机器如何处理基本过程，我们必须提供一系列控制器指令来实现每个基本过程，并安排 <code>primitive-apply</code> 分派到由 <code>proc</code> 的内容所标识的基本过程的指令。由于我们感兴趣的是求值过程的结构而非基本过程的细节，我们将改为仅使用一个 <code>apply-primitive-procedure</code> 操作，将 <code>proc</code> 中的过程应用于 <code>argl</code> 中的参数。为了用 <a href="5_002e2_zh.xhtml#g_t5_002e2">5.2</a> 的模拟器模拟求值器，我们使用过程 <code>apply-primitive-procedure</code>，它调用底层的 Scheme 系统来执行应用，正如我们在 <a href="4_002e1_zh.xhtml#g_t4_002e1_002e4">4.1.4</a> 中对元循环求值器所做的那样。在计算基本过程应用的值之后，我们恢复 <code>continue</code> 并转到指定的入口点。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">primitive-apply
+  </span><span class="opn">(</span><span class="pln">assign val </span><span class="opn">(</span><span class="pln">op apply-primitive-procedure</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="pln">reg proc</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="pln">reg argl</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore continue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">))</span></pre></div>
+
+<p>要应用复合过程，我们就像元循环求值器那样进行。我们构造一个框架，将过程的形参绑定到实参上，使用这个框架来扩展过程所携带的环境，并在这个扩展环境中求值构成过程体的表达式序列。<code>Ev-sequence</code>，下面在 <a href="#g_t5_002e4_002e2">5.4.2</a> 中描述，处理序列的求值。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">compound-apply
+  </span><span class="opn">(</span><span class="pln">assign unev 
+          </span><span class="opn">(</span><span class="pln">op procedure-parameters</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg proc</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign env
+          </span><span class="opn">(</span><span class="pln">op procedure-environment</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg proc</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign env
+          </span><span class="opn">(</span><span class="pln">op extend-environment</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg argl</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg env</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign unev
+          </span><span class="opn">(</span><span class="pln">op procedure-body</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg proc</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label ev-sequence</span><span class="clo">))</span></pre></div>
+
+<p><code>Compound-apply</code> 是解释器中唯一给 <code>env</code> 寄存器赋新值的地方。正如在元循环求值器中一样，新环境由过程所携带的环境，连同参数表和要绑定的相应变量表一起构造。</p>
+<a id="g_t5_002e4_002e2"></a>
+<a id="Sequence-Evaluation-and-Tail-Recursion"></a>
+<h4 class="subsection"><span class="secnum">5.4.2</span><span class="sectitle">序列求值与尾递归</span></h4>
+
+<p>显式控制求值器中 <code>ev-sequence</code> 处的部分类似于元循环求值器的 <code>eval-sequence</code> 过程。它处理过程体或显式 <code>begin</code> 表达式中的表达式序列。</p>
+<p>显式 <code>begin</code> 表达式的求值方式是将要求值的表达式序列放入 <code>unev</code>，将 <code>continue</code> 保存在栈上，并跳转到 <code>ev-sequence</code>。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-begin
+  </span><span class="opn">(</span><span class="pln">assign unev
+          </span><span class="opn">(</span><span class="pln">op begin-actions</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save continue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label ev-sequence</span><span class="clo">))</span></pre></div>
+
+<p>过程体中的隐式序列通过从 <code>compound-apply</code> 跳转到 <code>ev-sequence</code> 来处理，此时 <code>continue</code> 已经在栈上，是在 <code>ev-application</code> 处保存的。</p>
+<p><code>ev-sequence</code> 和 <code>ev-sequence-continue</code> 处的入口形成一个循环，依次求值序列中的每个表达式。未求值表达式的表保存在 <code>unev</code> 中。在求值每个表达式之前，我们检查序列中是否还有要额外求值的表达式。如果有，我们保存剩余的未求值表达式（保存在 <code>unev</code> 中）以及必须求值这些表达式的环境（保存在 <code>env</code> 中），并调用 <code>eval-dispatch</code> 来求值该表达式。这两个保存的寄存器在从这次求值返回时，在 <code>ev-sequence-continue</code> 处恢复。</p>
+<p>序列中的最后一个表达式在入口点 <code>ev-sequence-last-exp</code> 处以不同方式处理。由于在这个表达式之后没有更多表达式需要求值，我们不必在转到 <code>eval-dispatch</code> 之前保存 <code>unev</code> 或 <code>env</code>。整个序列的值是最后一个表达式的值，因此在求值最后一个表达式之后，除了在当前保存在栈上的入口点继续之外（该入口点由 <code>ev-application</code> 或 <code>ev-begin</code> 保存），没有其他事情要做。与其设置 <code>continue</code> 来安排 <code>eval-dispatch</code> 返回到这里，然后从栈上恢复 <code>continue</code> 并在该入口点继续，我们不如在转到 <code>eval-dispatch</code> 之前从栈上恢复 <code>continue</code>，这样 <code>eval-dispatch</code> 将在求值该表达式之后在该入口点继续。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-sequence
+  </span><span class="opn">(</span><span class="pln">assign exp </span><span class="opn">(</span><span class="pln">op first-exp</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op last-exp?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-sequence-last-exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save unev</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign continue
+          </span><span class="opn">(</span><span class="pln">label ev-sequence-continue</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span><span class="pln">
+ev-sequence-continue
+  </span><span class="opn">(</span><span class="pln">restore env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore unev</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign unev
+          </span><span class="opn">(</span><span class="pln">op rest-exps</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label ev-sequence</span><span class="clo">))</span><span class="pln">
+ev-sequence-last-exp
+  </span><span class="opn">(</span><span class="pln">restore continue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span></pre></div>
+
+<a id="Tail-recursion"></a>
+<h5 class="subsubheading">尾递归</h5>
+
+<p>在 <a href="Chapter-1_zh.xhtml#Chapter-1">第 1 章</a>中，我们说过，由诸如以下过程描述的计算过程</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt-iter guess x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess x</span><span class="clo">)</span><span class="pln">
+      guess
+      </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="opn">(</span><span class="pln">improve guess x</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)))</span></pre></div>
+
+<p>是一个迭代计算过程。尽管该过程在语法上是递归的（用自身定义），但求值器在从一个 <code>sqrt-iter</code> 调用传递到下一个调用时，逻辑上并不需要保存信息。<a class="footnote_link" id="DOCF310" href="#FOOT310"><sup>310</sup></a> 一个能够执行诸如 <code>sqrt-iter</code> 这样的过程，而随着过程继续调用自身不需要增加存储的求值器，称为 <a id="index-tail_002drecursive-1"></a><em>尾递归</em>求值器。<a href="Chapter-4_zh.xhtml#Chapter-4">第 4 章</a>中求值器的元循环实现没有指定求值器是否是尾递归的，因为该求值器从底层 Scheme 继承其保存状态的机制。然而，使用显式控制求值器，我们可以追踪求值过程，以查看过程调用何时导致栈上信息的净累积。</p>
+<p>我们的求值器是尾递归的，因为为了求值序列的最后一个表达式，我们直接转移到 <code>eval-dispatch</code> 而不在栈上保存任何信息。因此，求值序列中的最后一个表达式——即使它是一个过程调用（如在 <code>sqrt-iter</code> 中，其中 <code>if</code> 表达式，即过程体中的最后一个表达式，归约为对 <code>sqrt-iter</code> 的调用）——不会导致任何信息在栈上累积。<a class="footnote_link" id="DOCF311" href="#FOOT311"><sup>311</sup></a></p>
+<p>如果我们没有想到利用在这种情况下不需要保存信息这一事实，我们可能会通过以相同方式处理序列中的所有表达式来实现<code>eval-sequence</code>——保存寄存器、求值表达式、返回以恢复寄存器，并重复此过程直到所有表达式都被求值：<a class="footnote_link" id="DOCF312" href="#FOOT312"><sup>312</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-sequence
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op no-more-exps?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-sequence-end</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign exp </span><span class="opn">(</span><span class="pln">op first-exp</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save unev</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign continue
+          </span><span class="opn">(</span><span class="pln">label ev-sequence-continue</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span><span class="pln">
+ev-sequence-continue
+  </span><span class="opn">(</span><span class="pln">restore env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore unev</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign unev </span><span class="opn">(</span><span class="pln">op rest-exps</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label ev-sequence</span><span class="clo">))</span><span class="pln">
+ev-sequence-end
+  </span><span class="opn">(</span><span class="pln">restore continue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">))</span></pre></div>
+
+<p>这看起来可能只是对我们之前用于求值序列的代码的一个微小改动：唯一的区别在于，我们不仅对其他表达式，而且对序列中的最后一个表达式也执行保存-恢复循环。解释器对于任何表达式仍然会给出相同的值。但这一改动对于尾递归实现是致命的，因为我们现在必须在求值序列中的最后一个表达式之后返回，以便撤销（无用的）寄存器保存。这些额外的保存在嵌套的过程调用期间会累积。因此，诸如<code>sqrt-iter</code>这样的计算过程将需要与迭代次数成比例的空间，而不是需要常量空间。这种差异可能很显著。例如，使用尾递归，可以仅用过程调用机制来表达一个无限循环：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">count n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">newline</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">count </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)))</span></pre></div>
+
+<p>如果没有尾递归，这样的过程最终会耗尽栈空间，而表达真正的迭代将需要某种过程调用之外的控制机制。</p>
+<a id="g_t5_002e4_002e3"></a>
+<a id="Conditionals_002c-Assignments_002c-and-Definitions"></a>
+<h4 class="subsection"><span class="secnum">5.4.3</span><span class="sectitle">条件式、赋值和定义</span></h4>
+
+<p>与元循环求值器一样，特殊形式通过选择性地求值表达式的片段来处理。对于<code>if</code>表达式，我们必须求值谓词，并根据谓词的值决定是求值结果表达式还是求值替代表达式。</p>
+<p>在求值谓词之前，我们保存<code>if</code>表达式本身，以便稍后能提取结果表达式或替代表达式。我们还保存环境，稍后求值结果表达式或替代表达式时需要它，并且我们保存<code>continue</code>，稍后返回等待<code>if</code>值的表达式的求值过程时需要它。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-if
+  </span><span class="opn">(</span><span class="pln">save exp</span><span class="clo">)</span><span class="pln">   </span><span class="roman"><span class="com">; save expression for later</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save continue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign continue </span><span class="opn">(</span><span class="pln">label ev-if-decide</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign exp </span><span class="opn">(</span><span class="pln">op if-predicate</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="roman"><span class="com">; evaluate the predicate:</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span><span class="pln">  </span></pre></div>
+
+<p>当我们从求值谓词返回时，我们测试它是真还是假，并根据结果，在转到<code>eval-dispatch</code>之前将结果表达式或替代表达式放入<code>exp</code>。注意，这里恢复<code>env</code>和<code>continue</code>使得<code>eval-dispatch</code>具有正确的环境，并在正确的位置继续以接收<code>if</code>表达式的值。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-if-decide
+  </span><span class="opn">(</span><span class="pln">restore continue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore exp</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">test </span><span class="opn">(</span><span class="pln">op true?</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg val</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">branch </span><span class="opn">(</span><span class="pln">label ev-if-consequent</span><span class="clo">))</span><span class="pln">
+ev-if-alternative
+  </span><span class="opn">(</span><span class="pln">assign exp </span><span class="opn">(</span><span class="pln">op if-alternative</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span><span class="pln">
+ev-if-consequent
+  </span><span class="opn">(</span><span class="pln">assign exp </span><span class="opn">(</span><span class="pln">op if-consequent</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span></pre></div>
+
+<a id="Assignments-and-definitions-1"></a>
+<h5 class="subsubheading">赋值和定义</h5>
+
+<p>赋值由<code>ev-assignment</code>处理，它从<code>eval-dispatch</code>到达，赋值表达式在<code>exp</code>中。<code>ev-assignment</code>处的代码首先求值表达式的值部分，然后将新值安装到环境中。假定<code>Set-variable-value!</code>可作为机器操作使用。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-assignment
+  </span><span class="opn">(</span><span class="pln">assign unev 
+          </span><span class="opn">(</span><span class="pln">op assignment-variable</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save unev</span><span class="clo">)</span><span class="pln">   </span><span class="roman"><span class="com">; save variable for later</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign exp
+          </span><span class="opn">(</span><span class="pln">op assignment-value</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save continue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign continue
+          </span><span class="opn">(</span><span class="pln">label ev-assignment-1</span><span class="clo">))</span><span class="pln">
+  </span><span class="roman"><span class="com">; evaluate the assignment value:</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span><span class="pln">  
+ev-assignment-1
+  </span><span class="opn">(</span><span class="pln">restore continue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore unev</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">perform </span><span class="opn">(</span><span class="pln">op set-variable-value!</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">reg val</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">reg env</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign val
+          </span><span class="opn">(</span><span class="pln">const ok</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">))</span></pre></div>
+
+<p>定义以类似方式处理：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">ev-definition
+  </span><span class="opn">(</span><span class="pln">assign unev 
+          </span><span class="opn">(</span><span class="pln">op definition-variable</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save unev</span><span class="clo">)</span><span class="pln">   </span><span class="roman"><span class="com">; save variable for later</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign exp 
+          </span><span class="opn">(</span><span class="pln">op definition-value</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">reg exp</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">save continue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign continue </span><span class="opn">(</span><span class="pln">label ev-definition-1</span><span class="clo">))</span><span class="pln">
+  </span><span class="roman"><span class="com">; evaluate the definition value:</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span><span class="pln">  
+ev-definition-1
+  </span><span class="opn">(</span><span class="pln">restore continue</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore env</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore unev</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">perform </span><span class="opn">(</span><span class="pln">op define-variable!</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">reg unev</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">reg val</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">reg env</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign val </span><span class="opn">(</span><span class="pln">const ok</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">reg continue</span><span class="clo">))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e23"></a>习题5.23：</strong>扩展求值器以处理派生表达式，例如<code>cond</code>、<code>let</code>等（<a href="4_002e1_zh.xhtml#g_t4_002e1_002e2">4.1.2</a>）。你可以“作弊”，假定诸如<code>cond-&gt;if</code>这样的语法转换器可作为机器操作使用。<a class="footnote_link" id="DOCF313" href="#FOOT313"><sup>313</sup></a></p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e24"></a>习题5.24：</strong>将<code>cond</code>实现为一个新的基本特殊形式，而不将其归约为<code>if</code>。你必须构造一个循环，测试相继的<code>cond</code>子句的谓词，直到找到一个为真的，然后使用<code>ev-sequence</code>来求值该子句的动作。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e25"></a>习题5.25：</strong>修改求值器，使其使用正则序求值，基于<a href="4_002e2_zh.xhtml#g_t4_002e2">4.2</a>的惰性求值器。</p></blockquote>
+
+<a id="g_t5_002e4_002e4"></a>
+<a id="Running-the-Evaluator"></a>
+<h4 class="subsection"><span class="secnum">5.4.4</span><span class="sectitle">运行求值器</span></h4>
+
+<p>随着显式控制求值器的实现，我们到达了一个始于<a href="Chapter-1_zh.xhtml#Chapter-1">第1章</a>的发展的终点，在其中我们探索了越来越精确的求值过程模型。我们从相对非正式的代换模型开始，然后在<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>中将其扩展到环境模型，这使我们能够处理状态和变化。在<a href="Chapter-4_zh.xhtml#Chapter-4">第4章</a>的元循环求值器中，我们使用Scheme本身作为一种语言，来更明确地表达在求值表达式期间构造的环境结构。现在，借助寄存器机器，我们仔细考察了求值器的存储管理、参数传递和控制机制。在每一个新的描述层次上，我们都不得不提出在前一个不那么精确的求值处理中不明显的问题并解决歧义。为了理解显式控制求值器的行为，我们可以模拟它并监视其性能。</p>
+<p>我们将在求值器机器中安装一个驱动循环。它扮演<a href="4_002e1_zh.xhtml#g_t4_002e1_002e4">4.1.4</a>中<code>driver-loop</code>过程的角色。求值器将反复打印提示符、读取表达式、通过转到<code>eval-dispatch</code>来求值表达式，并打印结果。以下指令构成显式控制求值器的控制器序列的开头：<a class="footnote_link" id="DOCF314" href="#FOOT314"><sup>314</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">read-eval-print-loop
+  </span><span class="opn">(</span><span class="pln">perform </span><span class="opn">(</span><span class="pln">op initialize-stack</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">perform </span><span class="opn">(</span><span class="pln">op prompt-for-input</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">const </span><span class="str">";;; EC-Eval input:"</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign exp </span><span class="opn">(</span><span class="pln">op read</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign env </span><span class="opn">(</span><span class="pln">op get-global-environment</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">assign continue </span><span class="opn">(</span><span class="pln">label print-result</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label eval-dispatch</span><span class="clo">))</span><span class="pln">
+print-result
+  </span><span class="opn">(</span><span class="pln">perform </span><span class="opn">(</span><span class="pln">op announce-output</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">const </span><span class="str">";;; EC-Eval value:"</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">perform </span><span class="opn">(</span><span class="pln">op user-print</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg val</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label read-eval-print-loop</span><span class="clo">))</span></pre></div>
+
+<p>当我们在过程中遇到错误（例如<code>apply-dispatch</code>处指示的“未知过程类型错误”）时，我们打印错误消息并返回驱动循环。<a class="footnote_link" id="DOCF315" href="#FOOT315"><sup>315</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">unknown-expression-type
+  </span><span class="opn">(</span><span class="pln">assign 
+   val
+   </span><span class="opn">(</span><span class="pln">const unknown-expression-type-error</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label signal-error</span><span class="clo">))</span><span class="pln">
+unknown-procedure-type
+  </span><span class="roman"><span class="com">; clean up stack (from </span><code><span class="com">apply-dispatch</span></code><span class="com">):</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">restore continue</span><span class="clo">)</span><span class="pln">    
+  </span><span class="opn">(</span><span class="pln">assign 
+   val
+   </span><span class="opn">(</span><span class="pln">const unknown-procedure-type-error</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label signal-error</span><span class="clo">))</span><span class="pln">
+signal-error
+  </span><span class="opn">(</span><span class="pln">perform </span><span class="opn">(</span><span class="pln">op user-print</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">reg val</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">goto </span><span class="opn">(</span><span class="pln">label read-eval-print-loop</span><span class="clo">))</span></pre></div>
+
+<p>为了模拟的目的，我们在每次通过驱动循环时初始化栈，因为在错误（例如未定义变量）中断求值之后，栈可能不是空的。<a class="footnote_link" id="DOCF316" href="#FOOT316"><sup>316</sup></a></p>
+<p>如果我们组合<a href="#g_t5_002e4_002e1">5.4.1</a>–<a href="#g_t5_002e4_002e4">5.4.4</a>中呈现的所有代码片段，我们就可以创建一个求值器机器模型，可以使用<a href="5_002e2_zh.xhtml#g_t5_002e2">5.2</a>的寄存器机器模拟器来运行它。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> eceval
+  </span><span class="opn">(</span><span class="pln">make-machine
+   </span><span class="lit">'</span><span class="opn">(</span><span class="pln">exp env val proc argl continue unev</span><span class="clo">)</span><span class="pln">
+   eceval-operations
+   </span><span class="lit">'</span><span class="opn">(</span><span class="pln">read-eval-print-loop
+     ⟨</span><em><span class="pln">entire machine controller</span></em><span class="pln"> 
+      </span><em><span class="pln">as given above</span></em><span class="pln">⟩</span><span class="clo">)))</span></pre></div>
+
+<p>我们必须定义Scheme过程来模拟求值器用作基本操作的那些操作。这些过程与我们在<a href="4_002e1_zh.xhtml#g_t4_002e1">4.1</a>中用于元循环求值器的过程相同，再加上在<a href="#g_t5_002e4">5.4</a>中脚注里定义的少数几个额外过程。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> eceval-operations
+  </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'self-evaluating?</span><span class="pln"> 
+              self-evaluating</span><span class="clo">)</span><span class="pln">
+        ⟨</span><em><span class="pln">complete list of operations</span></em><span class="pln"> 
+         </span><em><span class="pln">for eceval machine</span></em><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+
+<p>最后，我们可以初始化全局环境并运行求值器：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> the-global-environment
+  </span><span class="opn">(</span><span class="pln">setup-environment</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">start eceval</span><span class="clo">)</span><span class="pln">
+
+</span><i><span class="com">;;; EC-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">append x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? x</span><span class="clo">)</span><span class="pln">
+      y
+      </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">append </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> y</span><span class="clo">))))</span><span class="pln">
+
+</span><i><span class="com">;;; EC-Eval value:</span></i><span class="pln">
+</span><i><span class="pln">ok</span></i><span class="pln">
+
+</span><i><span class="com">;;; EC-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">append </span><span class="lit">'</span><span class="opn">(</span><span class="pln">a b c</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="pln">d e f</span><span class="clo">))</span><span class="pln">
+
+</span><i><span class="com">;;; EC-Eval value:</span></i><span class="pln">
+</span><i><span class="opn">(</span><span class="pln">a b c d e f</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>当然，以这种方式求值表达式会比我们直接将它们输入 Scheme 中花费长得多的时间，因为涉及了多层次的模拟。我们的表达式由显式控制求值器机器求值，该机器由一个 Scheme 程序模拟，而这个 Scheme 程序本身又由 Scheme 解释器求值。</p>
+<a id="Monitoring-the-performance-of-the-evaluator"></a>
+<h5 class="subsubheading">监控求值器的性能</h5>
+
+<p>模拟可以成为指导求值器实现的强大工具。模拟不仅便于探索寄存器机器设计的各种变体，还便于监控被模拟求值器的性能。例如，性能的一个重要因素是求值器使用栈的效率。我们可以通过用收集栈使用统计信息的模拟器版本（<a href="5_002e2_zh.xhtml#g_t5_002e2_002e4">5.2.4</a>）定义求值器寄存器机器，并在求值器的 <code>print-result</code> 入口点添加一条指令来打印统计信息，从而观察求值各种表达式所需的栈操作次数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="pln">print-result
+  </span><span class="roman"><span class="com">; added instruction:</span></span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">perform </span><span class="opn">(</span><span class="pln">op print-stack-statistics</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">perform </span><span class="opn">(</span><span class="pln">op announce-output</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">const </span><span class="str">";;; EC-Eval value:"</span><span class="clo">))</span><span class="pln">
+  </span><span class="roman"><span class="pun">…</span></span><span class="pln"> </span><span class="roman"><span class="com">; same as before</span></span>
+</pre></div>
+
+<p>现在与求值器的交互看起来像这样：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><i><span class="com">;;; EC-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))</span><span class="pln"> n</span><span class="clo">)))</span><span class="pln">
+</span><i><span class="opn">(</span><span class="pln">total-pushes </span><span class="pun">=</span><span class="pln"> </span><span class="lit">3</span><span class="pun">,</span><span class="pln"> maximum-depth </span><span class="pun">=</span><span class="pln"> </span><span class="lit">3</span><span class="clo">)</span></i><span class="pln">
+
+</span><i><span class="com">;;; EC-Eval value:</span></i><span class="pln">
+</span><i><span class="pln">ok</span></i><span class="pln">
+
+</span><i><span class="com">;;; EC-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">factorial </span><span class="lit">5</span><span class="clo">)</span><span class="pln">
+</span><i><span class="opn">(</span><span class="pln">total-pushes </span><span class="pun">=</span><span class="pln"> </span><span class="lit">144</span><span class="pun">,</span><span class="pln"> maximum-depth </span><span class="pun">=</span><span class="pln"> </span><span class="lit">28</span><span class="clo">)</span></i><span class="pln">
+
+</span><i><span class="com">;;; EC-Eval value:</span></i><span class="pln">
+</span><i><span class="lit">120</span></i>
+</pre></div>
+
+<p>注意，求值器的驱动循环在每次交互开始时重新初始化栈，因此打印的统计信息将仅涉及用于求值前一个表达式的栈操作。</p>
+<blockquote>
+<p><strong><a id="Exercise-5_002e26"></a>习题 5.26：</strong> 使用被监控的栈来探索求值器的尾递归性质（<a href="#g_t5_002e4_002e2">5.4.2</a>）。启动求值器并定义来自 <a href="1_002e2_zh.xhtml#g_t1_002e2_002e1">1.2.1</a> 的迭代 <code>factorial</code> 过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">iter product counter</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> counter n</span><span class="clo">)</span><span class="pln">
+        product
+        </span><span class="opn">(</span><span class="pln">iter </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> counter product</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> counter </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">iter </span><span class="lit">1</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))</span></pre></div>
+
+<p>用一些较小的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 值运行该过程。记录每个值计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math> 所需的最大栈深度和压栈次数。</p>
+<ol>
+<li>你会发现求值 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math> 所需的最大深度与 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 无关。那个深度是多少？</li><li>根据你的数据，确定一个以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 表示的公式，用于计算对任意 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>≥<!-- ≥ --></mo>
+    <mn>1</mn>
+  </mrow>
+</math> 求值 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math> 时使用的总压栈操作次数。注意，使用的操作次数是 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的线性函数，因此由两个常数确定。</li></ol>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e27"></a>习题 5.27：</strong> 为了与 <a href="#Exercise-5_002e26">习题 5.26</a> 进行比较，探索以下递归计算阶乘的过程的行为：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">1</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))</span><span class="pln"> n</span><span class="clo">)))</span></pre></div>
+
+<p>通过在监控栈的情况下运行此过程，确定作为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的函数，对 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>≥<!-- ≥ --></mo>
+    <mn>1</mn>
+  </mrow>
+</math> 求值 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>!</mo>
+  </mrow>
+</math> 时栈的最大深度和使用的总压栈次数。（同样，这些函数将是线性的。）用 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 表示的适当表达式填写下表来总结你的实验：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="left left left" rowspacing="4pt" columnspacing="1em" rowlines="none solid none solid none" columnlines="solid solid">
+    <mtr>
+      <mtd/>
+      <mtd>
+        <mtext>Maximum</mtext>
+      </mtd>
+      <mtd>
+        <mtext>Number of</mtext>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd>
+        <mtext>depth</mtext>
+      </mtd>
+      <mtd>
+        <mtext>pushes</mtext>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>Recursive</mtext>
+      </mtd>
+      <mtd/>
+      <mtd/>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>factorial</mtext>
+      </mtd>
+      <mtd/>
+      <mtd/>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>Iterative</mtext>
+      </mtd>
+      <mtd/>
+      <mtd/>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mtext>factorial</mtext>
+      </mtd>
+      <mtd/>
+      <mtd/>
+    </mtr>
+  </mtable>
+</math> 最大深度是求值器执行计算所用空间量的度量，而压栈次数与所需时间有很好的相关性。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e28"></a>习题 5.28：</strong> 按照 <a href="#g_t5_002e4_002e2">5.4.2</a> 中所述修改求值器的定义，改变 <code>eval-sequence</code>，使求值器不再是尾递归的。重新运行你在 <a href="#Exercise-5_002e26">习题 5.26</a> 和 <a href="#Exercise-5_002e27">习题 5.27</a> 中的实验，以证明两个版本的 <code>factorial</code> 过程现在都需要随输入线性增长的空间。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e29"></a>习题 5.29：</strong> 监控树形递归斐波那契 计算中的栈操作：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> n </span><span class="lit">2</span><span class="clo">)</span><span class="pln">
+      n
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fib </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">2</span><span class="clo">)))))</span></pre></div>
+
+<ol>
+<li>给出一个以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 表示的公式，用于计算对 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>≥<!-- ≥ --></mo>
+    <mn>2</mn>
+  </mrow>
+</math> 计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 所需的最大栈深度。提示：在 <a href="1_002e2_zh.xhtml#g_t1_002e2_002e2">1.2.2</a> 中我们论证了此计算过程使用的空间随 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 线性增长。</li><li>给出一个公式，用于计算对 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>≥<!-- ≥ --></mo>
+    <mn>2</mn>
+  </mrow>
+</math> 计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 所使用的总压栈次数。你应该会发现压栈次数（与所用时间有很好的相关性）随 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 指数增长。提示：令 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 为计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 所使用的压栈次数。你应该能够论证存在一个公式，用 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>−<!-- − --></mo>
+    <mn>2</mn>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 以及某个与 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 无关的固定“开销”常数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math> 来表示 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。给出该公式，并说明 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math> 是什么。然后证明 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 可以表示为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mo>⋅<!-- ⋅ --></mo>
+    <mtext>Fib</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo>+</mo>
+    <mi>b</mi>
+  </mrow>
+</math>，并给出 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> 的值。</li></ol>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-5_002e30"></a>习题 5.30：</strong> 我们的求值器目前只捕获并发出两种错误——未知表达式类型和未知过程类型。其他错误会使我们退出求值器的读取-求值-打印循环。当我们使用寄存器机器模拟器运行求值器时，这些错误由底层的 Scheme 系统捕获。这类似于用户程序出错时计算机崩溃。<a class="footnote_link" id="DOCF317" href="#FOOT317"><sup>317</sup></a> 使真正的错误系统工作是一个大项目，但理解这里涉及的内容是非常值得的。</p>
+<ol>
+<li>求值过程中发生的错误，例如试图访问未绑定的变量，可以通过更改查找操作使其返回一个特殊的条件码来捕获，该条件码不可能是任何用户变量的可能值。求值器可以测试此条件码，然后执行必要的操作以转到 <code>signal-error</code>。找出求值器中所有需要进行此类更改的地方并修复它们。这是大量的工作。</li><li>更糟糕的是处理由应用基本过程所引发的错误，例如试图除以零或试图提取符号的<code>car</code>。在专业编写的高质量系统中，每次基本过程应用都作为基本过程的一部分进行安全检查。例如，每次调用<code>car</code>都可以首先检查参数是否为序对。如果参数不是序对，应用将向求值器返回一个特殊的条件码，求值器随后报告失败。我们可以在寄存器机器模拟器中安排这一点，让每个基本过程检查适用性，并在失败时返回适当的特殊条件码。然后求值器中的<code>primitive-apply</code>代码可以检查条件码，并在必要时转到<code>signal-error</code>。构建这个结构并使其工作。这是一个大项目。</li></ol>
+</blockquote>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT304"><p><a class="footnote_backlink" href="#DOCF304"><sup>304</sup></a> 关于该芯片及其设计方法的更多信息，请参见<a href="References_zh.xhtml#Batali-et-al_002e-1982">Batali 等人1982</a>。</p>
+</div>
+<div id="FOOT305"><p><a class="footnote_backlink" href="#DOCF305"><sup>305</sup></a> 在我们的控制器中，分派被写成一串<code>test</code>和<code>branch</code>指令。或者，它也可以写成数据导向的风格（在真实系统中很可能就是这样），以避免执行顺序测试的需要，并便于定义新的表达式类型。设计用来运行 Lisp 的机器可能会包含一条<code>dispatch-on-type</code>指令，以高效地执行这种数据导向的分派。</p>
+</div>
+<div id="FOOT306"><p><a class="footnote_backlink" href="#DOCF306"><sup>306</sup></a> 这是将算法从过程式语言（如 Lisp）翻译到寄存器机器语言时一个重要但微妙的点。作为只保存所需内容的替代方案，我们可以在每次递归调用之前保存所有寄存器（除了<code>val</code>）。这被称为<a id="index-framed_002dstack"></a> <em>框架栈</em>规则。这样做可行，但可能会保存比必要更多的寄存器；在栈操作代价高昂的系统中，这可能是一个重要的考虑因素。保存那些以后不再需要的寄存器内容也可能保留住无用数据，而这些数据本来可以被垃圾回收，从而释放出可重用的空间。</p>
+</div>
+<div id="FOOT307"><p><a class="footnote_backlink" href="#DOCF307"><sup>307</sup></a> 我们在<a href="4_002e1_zh.xhtml#g_t4_002e1_002e3">4.1.3</a>中的求值器数据结构过程中添加以下两个用于操作参数表的过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">empty-arglist</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">adjoin-arg arg arglist</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">append arglist </span><span class="opn">(</span><span class="pln">list arg</span><span class="clo">)))</span></pre></div>
+
+<p>我们还使用一个额外的语法过程来测试组合式中的最后一个运算对象：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">last-operand? ops</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> ops</span><span class="clo">)))</span></pre></div>
+</div>
+<div id="FOOT308"><p><a class="footnote_backlink" href="#DOCF308"><sup>308</sup></a> 将最后一个运算对象特殊处理的优化被称为<a id="index-evlis-tail-recursion"></a> <em>evlis 尾递归</em>（参见<a href="References_zh.xhtml#Wand-1980">Wand 1980</a>）。如果我们把第一个运算对象的求值也作为特殊情况处理，参数求值循环可以更高效一些。这将允许我们将<code>argl</code>的初始化推迟到求值第一个运算对象之后，从而在这种情况下避免保存<code>argl</code>。<a href="5_002e5_zh.xhtml#g_t5_002e5">5.5</a>中的编译器执行了这种优化。（比较<a href="5_002e5_zh.xhtml#g_t5_002e5_002e3">5.5.3</a>中的<code>construct-arglist</code>过程。）</p>
+</div>
+<div id="FOOT309"><p><a class="footnote_backlink" href="#DOCF309"><sup>309</sup></a> 元循环求值器中运算对象的求值顺序由<a href="4_002e1_zh.xhtml#g_t4_002e1_002e1">4.1.1</a>中过程<code>list-of-values</code>里<code>cons</code>的参数的求值顺序决定（参见<a href="4_002e1_zh.xhtml#Exercise-4_002e1">习题4.1</a>）。</p>
+</div>
+<div id="FOOT310"><p><a class="footnote_backlink" href="#DOCF310"><sup>310</sup></a> 我们在<a href="5_002e1_zh.xhtml#g_t5_002e1">5.1</a>中看到了如何用没有栈的寄存器机器实现这样的计算过程；计算过程的状态存储在固定的寄存器集合中。</p>
+</div>
+<div id="FOOT311"><p><a class="footnote_backlink" href="#DOCF311"><sup>311</sup></a> 在<code>ev-sequence</code>中这种尾递归的实现是许多编译器所使用的一种著名优化技术的变体。在编译以过程调用结尾的过程时，可以用跳转到被调用过程的入口点来替换该调用。将这种策略内建到解释器中，正如我们在本节所做的那样，可以在整个语言中统一提供这种优化。</p>
+</div>
+<div id="FOOT312"><p><a class="footnote_backlink" href="#DOCF312"><sup>312</sup></a> 我们可以如下定义<code>no-more-exps?</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">no-more-exps? seq</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? seq</span><span class="clo">))</span></pre></div>
+</div>
+<div id="FOOT313"><p><a class="footnote_backlink" href="#DOCF313"><sup>313</sup></a> 这并不算作弊。在从零开始构建的实际实现中，我们会使用显式控制求值器来解释一个 Scheme 程序，该程序在执行之前的语法阶段执行像<code>cond-&gt;if</code>这样的源级变换。</p>
+</div>
+<div id="FOOT314"><p><a class="footnote_backlink" href="#DOCF314"><sup>314</sup></a> 我们这里假设<code>read</code>和各种打印操作作为基本机器操作可用，这对我们的模拟很有用，但在实践中完全不现实。这些实际上是极其复杂的操作。在实践中，它们会使用低层输入输出操作来实现，例如向设备传输单个字符或从设备接收单个字符。</p>
+<p>为了支持<code>get-global-environment</code>操作，我们定义</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> the-global-environment
+  </span><span class="opn">(</span><span class="pln">setup-environment</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-global-environment</span><span class="clo">)</span><span class="pln">
+  the-global-environment</span><span class="clo">)</span></pre></div>
+</div>
+<div id="FOOT315"><p><a class="footnote_backlink" href="#DOCF315"><sup>315</sup></a> 还有其他我们希望解释器处理的错误，但这些不那么简单。参见<a href="#Exercise-5_002e30">习题5.30</a>。</p>
+</div>
+<div id="FOOT316"><p><a class="footnote_backlink" href="#DOCF316"><sup>316</sup></a> 我们可以只在出错后执行栈初始化，但在驱动循环中执行它将便于监控求值器的性能，如下所述。</p>
+</div>
+<div id="FOOT317"><p><a class="footnote_backlink" href="#DOCF317"><sup>317</sup></a> 遗憾的是，在诸如 C 这样的传统基于编译器的语言系统中，这是正常情况。在<abbr>UNIX</abbr>(tm)中，系统会“生成内存转储”，而在<abbr>DOS</abbr>/Windows(tm)中，它会变得僵死。Macintosh(tm)会显示一张炸弹爆炸的图片，并给你机会重启计算机——如果你运气好的话。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="5_002e5_zh.xhtml#g_t5_002e5" accesskey="n" rel="next">5.5</a>, 上一节： <a href="5_002e3_zh.xhtml#g_t5_002e3" accesskey="p" rel="prev">5.3</a>, 上一级： <a href="#g_t5_002e4" accesskey="u" rel="prev">5.4</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：第4章</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: Chapter 4" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: Chapter 4" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="index_zh.xhtml#Top" rel="prev" title="Top" />
+<link href="4_002e1_zh.xhtml#g_t4_002e1" rel="next" title="4.1" />
+<link href="3_002e5_zh.xhtml#g_t3_002e5_002e5" rel="prev" title="3.5.5" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="Chapter-4"></a>
+<nav class="header">
+<p>下一节： <a href="4_002e1_zh.xhtml#g_t4_002e1" accesskey="n" rel="next">4.1</a>, 上一节： <a href="3_002e5_zh.xhtml#g_t3_002e5" accesskey="p" rel="prev">3.5</a>, 上一级： <a href="index_zh.xhtml#Top" accesskey="u" rel="prev">首页</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Metalinguistic-Abstraction"></a>
+<h2 class="chapter"><span class="chapnum">4</span><span class="chaptitle">元语言抽象</span></h2>
+
+<blockquote>
+<p>……魔力就在词语之中——阿布拉卡达布拉、芝麻开门，以及其他种种——但一个故事中的魔法词语在下一个故事中并不具有魔力。真正的魔法在于理解哪些词语有效，何时有效，对什么有效；诀窍在于学会这个诀窍。</p>
+<p>……而这些词语是由我们字母表中的字母构成的：二十几个我们可以用笔画的弯弯曲曲的线条。这就是钥匙！也是宝藏，只要我们能把它拿到手！就好像——就好像通往宝藏的钥匙<em>就是</em>宝藏！</p>
+<p>——约翰·巴思，<cite>《喀迈拉》</cite></p></blockquote>
+
+
+<p>在我们对程序设计的研究中，我们已经看到，专家程序员使用与所有复杂系统的设计者相同的一般技术来控制其设计的复杂性。他们将基本元素组合成复合对象，他们将复合对象抽象成更高层次的构建块，他们通过采用适当的系统结构整体视角来保持模块性。在说明这些技术时，我们使用 Lisp 作为描述计算过程以及构造计算数据对象和计算过程以模拟现实世界中复杂现象的语言。然而，当我们面对越来越复杂的问题时，我们会发现 Lisp，或者实际上任何固定的编程语言，都不足以满足我们的需求。我们必须不断转向新的语言，以便更有效地表达我们的思想。建立新语言是工程设计控制复杂性的一种强大策略；我们通常可以通过采用一种新语言来增强处理复杂问题的能力，这种语言使我们能够以不同的方式描述（并因此思考）问题，使用特别适合手头问题的基本元素、组合手段和抽象手段。<a class="footnote_link" id="DOCF205" href="#FOOT205"><sup>205</sup></a></p>
+<p>编程被赋予了众多的语言。有物理语言，例如特定计算机的机器语言。这些语言关注的是以单个存储位和基本机器指令来表示数据和控制。机器语言程序员关注的是使用给定的硬件来构建系统和实用程序，以高效实现资源受限的计算。建立在机器语言基础之上的高级语言，使我们不必关注如何将数据表示为位的集合，以及如何将程序表示为基本指令序列。这些语言具有组合和抽象的手段，例如过程定义，适合系统更大规模的组织。</p>
+<a id="index-Metalinguistic-abstraction"></a>
+<p><em>元语言抽象</em>——建立新语言——在工程设计的所有分支中都扮演着重要角色。它对计算机编程尤为重要，因为在编程中，我们不仅可以制定新语言，还可以通过构造求值器来实现这些语言。编程语言的<a id="index-evaluator"></a><em>求值器</em>（或<a id="index-interpreter-1"></a><em>解释器</em>）是一个过程，当它应用于该语言的表达式时，执行求值该表达式所需的动作。</p>
+<p>将其视为编程中最根本的思想，一点也不夸张：</p>
+<blockquote>
+<p>求值器，它决定了编程语言中表达式的含义，只不过是另一个程序。</p></blockquote>
+
+<p>领会这一点，就是改变我们作为程序员的自我形象。我们开始将自己视为语言的设计者，而不仅仅是他人设计的语言的使用者。</p>
+<p>事实上，我们几乎可以把任何程序都看作某种语言的求值器。例如，<a href="2_002e5_zh.xhtml#g_t2_002e5_002e3">2.5.3</a>中的多项式操作体系体现了多项式算术的规则，并用对表结构数据的操作来实现这些规则。如果我们为这个系统增加读取和打印多项式表达式的过程，就得到了一个用于处理符号数学问题的专用语言的核心。<a href="3_002e3_zh.xhtml#g_t3_002e3_002e4">3.3.4</a>中的数字逻辑模拟器和<a href="3_002e3_zh.xhtml#g_t3_002e3_002e5">3.3.5</a>中的约束传播器本身就是名副其实的语言，各自有自己的基本元素、组合方式和抽象方式。从这个角度看，处理大规模计算机系统的技术与构造新计算机语言的技术融合在一起，而计算机科学本身也就变成了（不多也不少）构造合适的描述性语言的学科。</p>
+<p>我们现在开始巡览以其他语言为基础建立语言的技术。在本章中，我们将以 Lisp 为基础，把求值器实现为 Lisp 过程。Lisp 特别适合这项任务，因为它能够表示和操作符号表达式。我们将通过为 Lisp 本身构造一个求值器，迈出理解语言如何实现的第一步。我们的求值器所实现的语言将是本书中使用的 Lisp 的 Scheme 方言的一个子集。尽管本章描述的求值器是为 Lisp 的一个特定方言编写的，但它包含了为顺序机器编写程序的任何面向表达式的语言的求值器的基本结构。（事实上，大多数语言处理器深处都包含一个小小的“Lisp”求值器。）为了便于说明和讨论，这个求值器已经做了简化，并且省略了一些对于达到实际应用质量要求的 Lisp 系统来说很重要的特性。尽管如此，这个简单的求值器足以执行本书中的大部分程序。<a class="footnote_link" id="DOCF206" href="#FOOT206"><sup>206</sup></a></p>
+<p>让求值器可以作为 Lisp 程序访问的一个重要优势是，我们可以通过把替代的求值规则描述为对求值器程序的修改来实现它们。我们可以利用这种能力取得良好效果的一个地方，是对计算模型体现时间概念的方式获得额外的控制，而时间概念在<a href="Chapter-3_zh.xhtml#Chapter-3">第3</a>章的讨论中如此核心。在那里，我们通过使用流将世界中时间的表示与计算机中的时间解耦，缓解了状态和赋值带来的一些复杂性。然而，我们的流程序有时很笨拙，因为它们受到 Scheme 的应用序求值的约束。在<a href="4_002e2_zh.xhtml#g_t4_002e2">4.2</a>中，我们将通过修改求值器以提供<a id="index-normal_002dorder-evaluation-1"></a> <em>正则序求值</em>，来改变底层语言，从而提供一种更优雅的方法。</p>
+<p><a href="4_002e3_zh.xhtml#g_t4_002e3">4.3</a>节实现了一种更具雄心的语言变化，其中表达式有许多值，而不是只有一个值。在这种<a id="index-nondeterministic-computing"></a> <em>非确定性计算</em>的语言中，很自然地表达那些生成表达式的所有可能值、然后搜索满足某些约束的那些值的计算过程。就计算和时间的模型而言，这就像让时间分支成一组“可能的未来”，然后搜索合适的时间线。有了我们的非确定性求值器，跟踪多个值和执行搜索都由语言的底层机制自动处理。</p>
+<p>在<a href="4_002e4_zh.xhtml#g_t4_002e4">4.4</a>中，我们实现了一种<a id="index-logic_002dprogramming"></a> <em>逻辑程序设计</em>语言，其中知识以关系的形式表达，而不是以带有输入和输出的计算的形式表达。尽管这使得该语言与 Lisp 或任何传统语言截然不同，但我们将看到逻辑程序设计求值器与 Lisp 求值器共享基本结构。</p>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT205"><p><a class="footnote_backlink" href="#DOCF205"><sup>205</sup></a>同样的思想贯穿于整个工程领域。例如，电气工程师使用许多不同的语言来描述电路。其中两种是电<a id="index-networks"></a> <em>网络</em>的语言和电<a id="index-systems"></a> <em>系统</em>的语言。网络语言强调用离散电气元件对器件进行物理建模。网络语言的基本对象是基本电气元件，如电阻、电容、电感和晶体管，它们用称为电压和电流的物理变量来表征。当用网络语言描述电路时，工程师关心的是设计的物理特性。相比之下，系统语言的基本对象是信号处理模块，如滤波器和放大器。只有模块的功能行为是相关的，信号的操纵不关心其作为电压和电流的物理实现。系统语言建立在网络语言之上，其意义在于，信号处理系统的元件是由电气网络构造的。然而，这里关心的是电气设备的大规模组织以解决给定的应用问题；部件的物理可行性是假定的。这种分层语言集合是<a href="2_002e2_zh.xhtml#g_t2_002e2_002e4">2.2.4</a>的图画语言所说明的分层设计技术的另一个例子。</p>
+</div>
+<div id="FOOT206"><p><a class="footnote_backlink" href="#DOCF206"><sup>206</sup></a>我们的求值器所遗漏的最重要特性是处理错误和支持调试的机制。关于求值器的更广泛讨论，请参见<a href="References_zh.xhtml#Friedman-et-al_002e-1992">Friedman 等人1992</a>，其中通过一系列用 Scheme 编写的求值器来阐述编程语言。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="4_002e1_zh.xhtml#g_t4_002e1" accesskey="n" rel="next">4.1</a>, 上一节： <a href="3_002e5_zh.xhtml#g_t3_002e5" accesskey="p" rel="prev">3.5</a>, 上一级： <a href="index_zh.xhtml#Top" accesskey="u" rel="prev">首页</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

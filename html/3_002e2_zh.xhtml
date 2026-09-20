@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：3.2</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 3.2" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 3.2" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-3_zh.xhtml#Chapter-3" rel="prev" title="Chapter 3" />
+<link href="3_002e3_zh.xhtml#g_t3_002e3" rel="next" title="3.3" />
+<link href="3_002e1_zh.xhtml#g_t3_002e1_002e3" rel="prev" title="3.1.3" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t3_002e2"></a>
+<nav class="header">
+<p>下一节： <a href="3_002e3_zh.xhtml#g_t3_002e3" accesskey="n" rel="next">3.3</a>, 上一节： <a href="3_002e1_zh.xhtml#g_t3_002e1" accesskey="p" rel="prev">3.1</a>, 上一级： <a href="Chapter-3_zh.xhtml#Chapter-3" accesskey="u" rel="prev">第3章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="The-Environment-Model-of-Evaluation"></a>
+<h3 class="section"><span class="secnum">3.2</span><span class="sectitle">求值的环境模型</span></h3>
+
+<p>当我们在<a href="Chapter-1_zh.xhtml#Chapter-1">第 1</a>章中引入复合过程时，我们使用代换模型（<a href="1_002e1_zh.xhtml#g_t1_002e1_002e5">1.1.5</a>）来定义将过程应用于参数意味着什么：</p>
+<ul>
+<li>要将复合过程应用于参数，就用相应的参数替换过程体中的每个形式参数，然后对过程体求值。</li></ul>
+
+<p>一旦我们在程序设计语言中允许赋值，这样的定义就不再充分了。特别是，<a href="3_002e1_zh.xhtml#g_t3_002e1_002e3">3.1.3</a>论证了，在存在赋值的情况下，变量不再能被看作仅仅是值的名字。相反，变量必须以某种方式指代一个可以存储值的“位置”。在我们的新求值模型中，这些位置将保存在称为<a id="index-environments"></a><em>环境</em>的结构中。</p>
+<p>环境是一系列<a id="index-frames"></a><em>框架</em>。每个框架都是一张（可能为空的）<a id="index-bindings"></a><em>绑定</em>表，这些绑定将变量名与它们对应的值关联起来。（单个框架对于任何变量至多包含一个绑定。）每个框架还有一个指向其<a id="index-enclosing-environment"></a><em>外围环境</em>的指针，除非为了讨论的目的，该框架被认为是<a id="index-global-1"></a><em>全局</em>的。变量相对于某个环境的<a id="index-value-of-a-variable"></a><em>值</em>，是该环境中第一个包含该变量绑定的框架中该变量的绑定所给出的值。如果序列中没有框架为该变量指定绑定，则称该变量在该环境中是<a id="index-unbound"></a><em>未绑定</em>的。</p>
+<p><a href="#Figure-3_002e1">图 3.1</a>展示了一个简单的环境结构，由三个框架组成，分别标记为 I、II 和 III。在图中，A、B、C 和 D 是指向环境的指针。C 和 D 指向同一个环境。变量 <code>z</code> 和 <code>x</code> 绑定在框架 II 中，而 <code>y</code> 和 <code>x</code> 绑定在框架 I 中。<code>x</code> 在环境 D 中的值是 3。<code>x</code> 相对于环境 B 的值也是 3。这确定如下：我们检查序列中的第一个框架（框架 III），没有找到 <code>x</code> 的绑定，于是我们继续到外围环境 D，并在框架 I 中找到该绑定。另一方面，<code>x</code> 在环境 A 中的值是 7，因为序列中的第一个框架（框架 II）包含 <code>x</code> 到 7 的绑定。相对于环境 A，框架 II 中 <code>x</code> 到 7 的绑定被称为<a id="index-shadow"></a><em>遮蔽</em>框架 I 中 <code>x</code> 到 3 的绑定。</p>
+<figure class="float">
+<a id="Figure-3_002e1"></a>
+<object style="width: 26.51ex; height: 23.31ex;" data="fig/chap3/Fig3.1b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.1：</strong>一个简单的环境结构。</p>
+</figcaption>
+</figure>
+
+<p>环境对求值过程至关重要，因为它决定了表达式应当在什么上下文中求值。的确，人们可以说，程序设计语言中的表达式本身没有任何意义。相反，表达式只有相对于某个对其进行求值的环境才获得意义。甚至像 <code>(+ 1 1)</code> 这样直白的表达式的解释，也依赖于理解我们是在一个 <code>+</code> 是加法符号的上下文中操作。因此，在我们的求值模型中，我们将始终谈论相对于某个环境对表达式求值。为了描述与解释器的交互，我们将假定存在一个全局环境，它由单个框架（没有外围环境）组成，其中包含与基本过程相关联的符号的值。例如，<code>+</code> 是加法符号这一观念，可以通过说符号 <code>+</code> 在全局环境中绑定到基本加法过程来体现。</p>
+
+<a id="g_t3_002e2_002e1"></a>
+<a id="The-Rules-for-Evaluation"></a>
+<h4 class="subsection"><span class="secnum">3.2.1</span><span class="sectitle">求值规则</span></h4>
+
+<p>关于解释器如何对组合式求值的总体规定，与我们最初在<a href="1_002e1_zh.xhtml#g_t1_002e1_002e3">1.1.3</a>中引入它时相同：</p>
+<ul>
+<li>要对组合式求值：</li></ul>
+
+<ol>
+<li>求值该组合式的子表达式。<a class="footnote_link" id="DOCF140" href="#FOOT140"><sup>140</sup></a></li><li>将运算符子表达式的值应用于运算对象子表达式的值。</li></ol>
+
+<p>求值的环境模型取代了代换模型，用来规定将复合过程应用于参数意味着什么。</p>
+<p>在求值的环境模型中，过程始终是一个序对，由一些代码和一个指向环境的指针组成。过程只能通过一种方式创建：求值一个 λ 表达式。这会生成一个过程，其代码来自 λ 表达式的文本，其环境是求值该 λ 表达式以生成过程时所处的环境。例如，考虑过程定义</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">))</span></pre></div>
+
+<p>在全局环境中求值。过程定义语法只是底层隐式 λ 表达式的语法糖。使用以下形式本应是等价的</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> square
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">)))</span></pre></div>
+
+<p>它在全局环境中求值 <code>(lambda (x) (* x x))</code> 并将 <code>square</code> 绑定到结果值。</p>
+<p><a href="#Figure-3_002e2">图 3.2</a> 展示了求值这个 <code>define</code> 表达式的结果。过程对象是一个序对，其代码指明该过程有一个形参，即 <code>x</code>，以及一个过程体 <code>(* x x)</code>。过程的环境部分是一个指向全局环境的指针，因为那正是求值该 λ 表达式以生成过程时所处的环境。一个将过程对象与符号 <code>square</code> 关联起来的新绑定已被添加到全局框架中。一般来说，<code>define</code> 通过向框架添加绑定来创建定义。</p>
+<figure class="float">
+<a id="Figure-3_002e2"></a>
+<object style="width: 33.85ex; height: 27.37ex;" data="fig/chap3/Fig3.2b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.2：</strong> 在全局环境中求值 <code>(define (square x) (* x x))</code> 所产生的环境结构。</p>
+</figcaption>
+</figure>
+
+<p>既然我们已经看到了过程是如何创建的，我们就可以描述过程是如何应用的。环境模型规定：要将过程应用于参数，就创建一个新环境，其中包含一个将形参绑定到参数值的框架。这个框架的外围环境是由过程指定的环境。现在，在这个新环境中，求值过程体。</p>
+<p>为了展示如何遵循这条规则，<a href="#Figure-3_002e3">图 3.3</a> 展示了在全局环境中求值表达式 <code>(square 5)</code> 所创建的环境结构，其中 <code>square</code> 是在 <a href="#Figure-3_002e2">图 3.2</a> 中生成的过程。应用该过程会创建一个新环境，在图中标记为 E1，它以一个框架开始，其中 <code>x</code>，即该过程的形参，被绑定到参数 5。从这个框架向上引出的指针表明该框架的外围环境是全局环境。这里选择全局环境，因为这是 <code>square</code> 过程对象中指示的环境。在 E1 中，我们求值过程体 <code>(* x x)</code>。由于 <code>x</code> 在 E1 中的值是 5，结果是 <code>(* 5 5)</code>，即 25。</p>
+<figure class="float">
+<a id="Figure-3_002e3"></a>
+<object style="width: 52.49ex; height: 27.37ex;" data="fig/chap3/Fig3.3b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.3：</strong> 在全局环境中求值 <code>(square 5)</code> 所创建的环境。</p>
+</figcaption>
+</figure>
+
+<p>过程应用的环境模型可以总结为两条规则：</p>
+<ul>
+<li>将一个过程对象应用于一组参数时，构造一个框架，将过程的形参绑定到调用的参数，然后在新构造的环境上下文中求值过程体。新框架的外围环境是所应用的过程对象的环境部分。</li><li>过程是通过相对于给定环境求值一个 λ 表达式来创建的。得到的过程对象是一个序对，由 λ 表达式的文本和一个指向创建该过程时所处环境的指针组成。</li></ul>
+
+<p>我们还规定，使用 <code>define</code> 定义符号会在当前环境框架中创建一个绑定，并将指示的值赋给该符号。<a class="footnote_link" id="DOCF141" href="#FOOT141"><sup>141</sup></a> 最后，我们规定 <code>set!</code> 的行为，正是这个操作最初迫使我们引入环境模型。在某个环境中求值表达式 <code>(set! ⟨<var>variable</var>⟩ ⟨<var>value</var>⟩)</code> 会在环境中定位该变量的绑定，并更改该绑定以指示新值。也就是说，找到环境中第一个包含该变量绑定的框架并修改该框架。如果该变量在环境中未绑定，那么 <code>set!</code> 会发出错误信号。</p>
+<p>这些求值规则虽然比代换模型复杂得多，但仍然相当直接。此外，这个求值模型虽然是抽象的，却正确地描述了解释器如何求值表达式。在 <a href="Chapter-4_zh.xhtml#Chapter-4">第 4</a> 章中，我们将看到这个模型如何能作为实现一个可工作的解释器的蓝图。以下各节通过分析一些示例程序来详细阐述该模型的细节。</p>
+<a id="g_t3_002e2_002e2"></a>
+<a id="Applying-Simple-Procedures"></a>
+<h4 class="subsection"><span class="secnum">3.2.2</span><span class="sectitle">应用简单过程</span></h4>
+
+<p>当我们在 <a href="1_002e1_zh.xhtml#g_t1_002e1_002e5">1.1.5</a> 中引入代换模型时，我们展示了在给定以下过程定义的情况下，组合式 <code>(f 5)</code> 如何求值为 136：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum-of-squares x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">)))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f a</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sum-of-squares </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a </span><span class="lit">2</span><span class="clo">)))</span></pre></div>
+
+<p>我们可以使用环境模型来分析同一个例子。<a href="#Figure-3_002e4">图 3.4</a> 展示了在全局环境中求值 <code>f</code>、<code>square</code> 和 <code>sum-of-squares</code> 的定义所创建的三个过程对象。每个过程对象由一些代码以及一个指向全局环境的指针组成。</p>
+<figure class="float">
+<a id="Figure-3_002e4"></a>
+<object style="width: 54.14ex; height: 35.83ex;" data="fig/chap3/Fig3.4b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.4：</strong> 全局框架中的过程对象。</p>
+</figcaption>
+</figure>
+
+<p>在 <a href="#Figure-3_002e5">图 3.5</a> 中，我们看到求值表达式 <code>(f 5)</code> 所创建的环境结构。对 <code>f</code> 的调用创建了一个新环境 E1，它以一个框架开始，其中 <code>a</code>，即 <code>f</code> 的形参，被绑定到参数 5。在 E1 中，我们求值 <code>f</code> 的过程体：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">sum-of-squares </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a </span><span class="lit">2</span><span class="clo">))</span></pre></div>
+
+<figure class="float">
+<a id="Figure-3_002e5"></a>
+<object style="width: 57.93ex; height: 31.17ex;" data="fig/chap3/Fig3.5b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.5：</strong> 使用<!-- /@w --> <a href="#Figure-3_002e4">图 3.4</a> 中的过程求值 <code>(f 5)</code> 所创建的环境。</p>
+</figcaption>
+</figure>
+
+<p>为了求值这个组合式，我们首先求值各子表达式。第一个子表达式<code>sum-of-squares</code>的值是一个过程对象。（注意这个值是如何找到的：我们首先查看 E1 的第一个框架，其中不包含<code>sum-of-squares</code>的绑定。然后我们继续到外围环境，即全局环境，并找到<a href="#Figure-3_002e4">图 3.4</a>中所示的绑定。）另外两个子表达式通过应用基本运算<code>+</code>和<code>*</code>来求值，分别求值两个组合式<code>(+ a 1)</code>和<code>(* a 2)</code>以得到6和10。</p>
+<p>现在我们将过程对象<code>sum-of-squares</code>应用于实参6和10。这产生一个新环境 E2，其中形式参数<code>x</code>和<code>y</code>被绑定到实参。在 E2 中，我们求值组合式<code>(+ (square x) (square y))</code>。这引导我们求值<code>(square x)</code>，其中<code>square</code>在全局框架中找到，而<code>x</code>是6。我们再次建立一个新环境 E3，其中<code>x</code>被绑定到6，并在其中求值<code>square</code>的主体，即<code>(* x x)</code>。同样作为应用<code>sum-of-squares</code>的一部分，我们必须求值子表达式<code>(square y)</code>，其中<code>y</code>是10。这第二次调用<code>square</code>创建另一个环境 E4，其中<code>x</code>，即<code>square</code>的形式参数，被绑定到10。而在 E4 中，我们必须求值<code>(* x x)</code>。</p>
+<p>要注意的重要一点是，每次调用<code>square</code>都会创建一个新环境，其中包含<code>x</code>的绑定。我们可以在这里看到不同的框架如何用于将都名为<code>x</code>的不同局部变量分开。注意，由<code>square</code>创建的每个框架都指向全局环境，因为这是<code>square</code>过程对象所指示的环境。</p>
+<p>子表达式求值后，结果被返回。两次调用<code>square</code>产生的值由<code>sum-of-squares</code>相加，而这个结果由<code>f</code>返回。由于我们这里关注的是环境结构，我们不会详述这些返回值如何在调用之间传递；然而，这也是求值过程的一个重要方面，我们将在<a href="Chapter-5_zh.xhtml#Chapter-5">第 5</a>章中详细讨论它。</p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e9"></a>习题 3.9：</strong>在<a href="1_002e2_zh.xhtml#g_t1_002e2_002e1">1.2.1</a>中，我们使用代换模型分析了两个计算阶乘的过程，一个递归版本</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">1</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> n </span><span class="opn">(</span><span class="pln">factorial </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">)))))</span></pre></div>
+
+<p>和一个迭代版本</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">factorial n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fact-iter </span><span class="lit">1</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> n</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fact-iter product 
+                   counter 
+                   max-count</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> counter max-count</span><span class="clo">)</span><span class="pln">
+      product
+      </span><span class="opn">(</span><span class="pln">fact-iter </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> counter product</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> counter </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+                 max-count</span><span class="clo">)))</span></pre></div>
+
+<p>展示使用<code>factorial</code>过程的每个版本求值<code>(factorial 6)</code>所创建的环境结构。<a class="footnote_link" id="DOCF142" href="#FOOT142"><sup>142</sup></a></p></blockquote>
+
+<a id="g_t3_002e2_002e3"></a>
+<a id="Frames-as-the-Repository-of-Local-State"></a>
+<h4 class="subsection"><span class="secnum">3.2.3</span><span class="sectitle">框架作为局部状态的仓库</span></h4>
+
+<p>我们可以转向环境模型，看看过程和赋值如何用于表示具有局部状态的对象。作为一个例子，考虑由调用以下过程创建的<a href="3_002e1_zh.xhtml#g_t3_002e1_002e1">3.1.1</a>中的“取款处理器”</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-withdraw balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> balance amount</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance 
+                     </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+               balance</span><span class="clo">)</span><span class="pln">
+        </span><span class="str">"Insufficient funds"</span><span class="clo">)))</span></pre></div>
+
+<p>让我们描述以下表达式的求值</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> W1 </span><span class="opn">(</span><span class="pln">make-withdraw </span><span class="lit">100</span><span class="clo">))</span></pre></div>
+
+<p>接着是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">W1 </span><span class="lit">50</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">50</span></i>
+</pre></div>
+
+<p><a href="#Figure-3_002e6">图 3.6</a>显示了在全局环境中定义<code>make-withdraw</code>过程的结果。这产生一个过程对象，其中包含指向全局环境的指针。到目前为止，这与我们已经看到的例子没有什么不同，除了过程的主体本身是一个 λ 表达式。</p>
+<figure class="float">
+<a id="Figure-3_002e6"></a>
+<object style="width: 51.72ex; height: 36.87ex;" data="fig/chap3/Fig3.6c.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.6：</strong>在全局环境中定义<code>make-withdraw</code>的结果。</p>
+</figcaption>
+</figure>
+
+<p>计算中有趣的部分发生在我们把过程<code>make-withdraw</code>应用于一个实参时：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> W1 </span><span class="opn">(</span><span class="pln">make-withdraw </span><span class="lit">100</span><span class="clo">))</span></pre></div>
+
+<p>我们像往常一样开始，建立一个环境 E1，其中形式参数<code>balance</code>被绑定到实参100。在这个环境中，我们求值<code>make-withdraw</code>的主体，即那个 λ 表达式。这构造了一个新的过程对象，其代码由<code>lambda</code>指定，其环境是 E1，即求值<code>lambda</code>以产生该过程时所处的环境。得到的过程对象就是调用<code>make-withdraw</code>所返回的值。它被绑定到全局环境中的<code>W1</code>，因为<code>define</code>本身是在全局环境中求值的。<a href="#Figure-3_002e7">图 3.7</a>显示了得到的环境结构。</p>
+<figure class="float">
+<a id="Figure-3_002e7"></a>
+<object style="width: 59.06ex; height: 40.41ex;" data="fig/chap3/Fig3.7b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.7：</strong>求值<code>(define W1 (make-withdraw 100))</code>的结果。</p>
+</figcaption>
+</figure>
+
+<p>现在我们可以分析当<code>W1</code>应用于一个实参时会发生什么：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">W1 </span><span class="lit">50</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">50</span></i>
+</pre></div>
+
+<p>我们首先构造一个框架，其中<code>amount</code>，即<code>W1</code>的形式参数，被绑定到实参50。要注意的关键点是，这个框架的外围环境不是全局环境，而是环境 E1，因为这是<code>W1</code>过程对象所指定的环境。在这个新环境中，我们求值过程的主体：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> balance amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+           balance</span><span class="clo">)</span><span class="pln">
+    </span><span class="str">"Insufficient funds"</span><span class="clo">)</span></pre></div>
+
+<p>得到的环境结构显示在<a href="#Figure-3_002e8">图 3.8</a>中。正在求值的表达式同时引用<code>amount</code>和<code>balance</code>。<code>Amount</code>将在环境的第一个框架中找到，而<code>balance</code>将通过沿着外围环境指针到 E1 找到。</p>
+<figure class="float">
+<a id="Figure-3_002e8"></a>
+<object style="width: 58.97ex; height: 43.69ex;" data="fig/chap3/Fig3.8c.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.8：</strong>应用过程对象<code>W1</code>所创建的环境。</p>
+</figcaption>
+</figure>
+
+<p>当执行<code>set!</code>时，E1中<code>balance</code>的绑定被改变。在调用<code>W1</code>完成时，<code>balance</code>为50，并且包含<code>balance</code>的框架仍然被过程对象<code>W1</code>指向。绑定<code>amount</code>的框架（我们在其中执行了改变<code>balance</code>的代码）不再相关，因为构造它的过程调用已经终止，并且环境中的其他部分没有指向该框架的指针。下一次调用<code>W1</code>时，这将构建一个新的框架，该框架绑定<code>amount</code>，其外围环境是E1。我们看到E1充当了保存过程对象<code>W1</code>的局部状态变量的“位置”。<a href="#Figure-3_002e9">图3.9</a>展示了调用<code>W1</code>之后的情况。</p>
+<figure class="float">
+<a id="Figure-3_002e9"></a>
+<object style="width: 59.49ex; height: 32.72ex;" data="fig/chap3/Fig3.9b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.9：</strong>调用<code>W1</code>之后的环境。</p>
+</figcaption>
+</figure>
+
+<p>观察当我们通过再次调用<code>make-withdraw</code>创建第二个“withdraw”对象时会发生什么：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> W2 </span><span class="opn">(</span><span class="pln">make-withdraw </span><span class="lit">100</span><span class="clo">))</span></pre></div>
+
+<p>这产生了<a href="#Figure-3_002e10">图3.10</a>的环境结构，它表明<code>W2</code>是一个过程对象，即一个带有某些代码和一个环境的序对。<code>W2</code>的环境E2是由调用<code>make-withdraw</code>创建的。它包含一个框架，其中带有自己的局部绑定<code>balance</code>。另一方面，<code>W1</code>和<code>W2</code>具有相同的代码：由<code>make-withdraw</code>主体中的λ表达式所指定的代码。<a class="footnote_link" id="DOCF143" href="#FOOT143"><sup>143</sup></a>我们在这里看到为什么<code>W1</code>和<code>W2</code>表现为独立的对象。对<code>W1</code>的调用引用存储在E1中的状态变量<code>balance</code>，而对<code>W2</code>的调用引用存储在E2中的<code>balance</code>。因此，对一个对象的局部状态的更改不会影响另一个对象。</p>
+<figure class="float">
+<a id="Figure-3_002e10"></a>
+<object style="width: 59.66ex; height: 38.68ex;" data="fig/chap3/Fig3.10b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.10：</strong>使用<code>(define W2 (make-withdraw 100))</code>创建第二个对象。</p>
+</figcaption>
+</figure>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e10"></a>习题3.10：</strong>在<code>make-withdraw</code>过程中，局部变量<code>balance</code>是作为<code>make-withdraw</code>的参数创建的。我们也可以使用<code>let</code>显式地创建局部状态变量，如下所示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-withdraw initial-amount</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">balance initial-amount</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">amount</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> balance amount</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance 
+                       </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+                 balance</span><span class="clo">)</span><span class="pln">
+          </span><span class="str">"Insufficient funds"</span><span class="clo">))))</span></pre></div>
+
+<p>回想<a href="1_002e3_zh.xhtml#g_t1_002e3_002e2">1.3.2</a>，<code>let</code>只是过程调用的语法糖：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">⟨</span><var><span class="pln">var</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">exp</span></var><span class="pln">⟩</span><span class="clo">))</span><span class="pln"> ⟨</span><var><span class="pln">body</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>被解释为另一种语法，用于</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">var</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln"> ⟨</span><var><span class="pln">body</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln"> ⟨</span><var><span class="pln">exp</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>使用环境模型来分析这个<code>make-withdraw</code>的替代版本，绘制像上面那样的图来说明这些交互</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> W1 </span><span class="opn">(</span><span class="pln">make-withdraw </span><span class="lit">100</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">W1 </span><span class="lit">50</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> W2 </span><span class="opn">(</span><span class="pln">make-withdraw </span><span class="lit">100</span><span class="clo">))</span></pre></div>
+
+<p>证明<code>make-withdraw</code>的两个版本创建的对象具有相同的行为。两个版本的环境结构有何不同？</p></blockquote>
+
+<a id="g_t3_002e2_002e4"></a>
+<a id="Internal-Definitions"></a>
+<h4 class="subsection"><span class="secnum">3.2.4</span><span class="sectitle">内部定义</span></h4>
+
+<p><a href="1_002e1_zh.xhtml#g_t1_002e1_002e8">1.1.8</a>节介绍了过程可以有内部定义的想法，从而引出了块结构，如下面计算平方根的过程所示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square guess</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">improve guess</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">average guess </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x guess</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt-iter guess</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess</span><span class="clo">)</span><span class="pln">
+        guess
+        </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="opn">(</span><span class="pln">improve guess</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sqrt-iter </span><span class="lit">1.0</span><span class="clo">))</span></pre></div>
+
+<p>现在我们可以使用环境模型来理解为什么这些内部定义能按期望的方式工作。<a href="#Figure-3_002e11">图3.11</a>显示了表达式<code>(sqrt 2)</code>求值过程中的一个时刻，此时内部过程<code>good-enough?</code>第一次被调用，其中<code>guess</code>等于1。</p>
+<figure class="float">
+<a id="Figure-3_002e11"></a>
+<object style="width: 60.01ex; height: 56.90ex;" data="fig/chap3/Fig3.11b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.11：</strong>带有内部定义的<code>Sqrt</code>过程。</p>
+</figcaption>
+</figure>
+
+<p>观察环境的结构。<code>Sqrt</code>是全局环境中的一个符号，它绑定到一个过程对象，该对象关联的环境是全局环境。当<code>sqrt</code>被调用时，形成了一个新环境E1，它从属于全局环境，其中参数<code>x</code>绑定到2。然后<code>sqrt</code>的主体在E1中求值。由于<code>sqrt</code>主体中的第一个表达式是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">good-enough? guess</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square guess</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">))</span></pre></div>
+
+<p>对这个表达式求值在环境E1中定义了过程<code>good-enough?</code>。更确切地说，符号<code>good-enough?</code>被添加到E1的第一个框架中，绑定到一个过程对象，该对象关联的环境是E1。类似地，<code>improve</code>和<code>sqrt-iter</code>被定义为E1中的过程。为简洁起见，<a href="#Figure-3_002e11">图3.11</a>只显示了<code>good-enough?</code>的过程对象。</p>
+<p>在局部过程定义之后，表达式<code>(sqrt-iter 1.0)</code>被求值，仍然在环境E1中。因此，绑定到E1中<code>sqrt-iter</code>的过程对象被调用，以1作为参数。这创建了一个环境E2，其中<code>guess</code>，即<code>sqrt-iter</code>的参数，绑定到1。<code>Sqrt-iter</code>又调用<code>good-enough?</code>，以<code>guess</code>的值（来自E2）作为<code>good-enough?</code>的参数。这建立了另一个环境E3，其中<code>guess</code>（<code>good-enough?</code>的参数）绑定到1。尽管<code>sqrt-iter</code>和<code>good-enough?</code>都有一个名为<code>guess</code>的参数，但它们是位于不同框架中的两个不同的局部变量。此外，E2和E3都以E1作为它们的外围环境，因为<code>sqrt-iter</code>和<code>good-enough?</code>过程都以E1作为它们的环境部分。这样做的一个结果是，出现在<code>good-enough?</code>主体中的符号<code>x</code>将引用出现在E1中的<code>x</code>的绑定，即调用原始<code>sqrt</code>过程时所用的<code>x</code>的值。</p>
+<p>环境模型由此解释了使局部过程定义成为模块化程序的有用技术的两个关键性质：</p>
+<ul>
+<li>局部过程的名称不会与外围过程外部的名称冲突，因为局部过程名称将绑定在过程运行时创建的框架中，而不是绑定在全局环境中。</li><li>局部过程可以访问外围过程的参数，只需将参数名用作自由变量即可。这是因为局部过程的主体是在从属于外围过程求值环境的环境中求值的。</li></ul>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e11"></a>习题3.11：</strong>在<a href="#g_t3_002e2_002e3">3.2.3</a>中，我们看到了环境模型如何描述带有局部状态的过程的行为。现在我们已经看到了内部定义如何工作。一个典型的消息传递过程包含这两个方面。考虑<a href="3_002e1_zh.xhtml#g_t3_002e1_002e1">3.1.1</a>中的银行账户过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-account balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">withdraw amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> balance amount</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance 
+                     </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance 
+                        amount</span><span class="clo">))</span><span class="pln">
+               balance</span><span class="clo">)</span><span class="pln">
+        </span><span class="str">"Insufficient funds"</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">deposit amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+    balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">dispatch m</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'withdraw</span><span class="clo">)</span><span class="pln"> withdraw</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> m </span><span class="lit">'deposit</span><span class="clo">)</span><span class="pln"> deposit</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown request: 
+                        MAKE-ACCOUNT"</span><span class="pln"> 
+                       m</span><span class="clo">))))</span><span class="pln">
+  dispatch</span><span class="clo">)</span></pre></div>
+
+<p>展示由交互序列生成的环境结构</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> acc </span><span class="opn">(</span><span class="pln">make-account </span><span class="lit">50</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">((</span><span class="pln">acc </span><span class="lit">'deposit</span><span class="clo">)</span><span class="pln"> </span><span class="lit">40</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">90</span></i><span class="pln">
+
+</span><span class="opn">((</span><span class="pln">acc </span><span class="lit">'withdraw</span><span class="clo">)</span><span class="pln"> </span><span class="lit">60</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">30</span></i>
+</pre></div>
+
+<p><code>acc</code>的局部状态保存在哪里？假设我们定义另一个账户</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> acc2 </span><span class="opn">(</span><span class="pln">make-account </span><span class="lit">100</span><span class="clo">))</span></pre></div>
+
+<p>两个账户的局部状态如何保持不同？环境结构的哪些部分在<code>acc</code>和<code>acc2</code>之间共享？</p></blockquote>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT140"><p><a class="footnote_backlink" href="#DOCF140"><sup>140</sup></a>赋值给求值规则的第1步引入了一个微妙之处。如<a href="3_002e1_zh.xhtml#Exercise-3_002e8">习题3.8</a>所示，赋值的存在允许我们编写这样的表达式：其产生的值取决于组合式中子表达式的求值顺序。因此，为精确起见，我们应该在第1步中指定一个求值顺序（例如，从左到右或从右到左）。然而，这个顺序应始终被视为实现细节，人们绝不应该编写依赖于某种特定顺序的程序。例如，一个精巧的编译器可能通过改变子表达式的求值顺序来优化程序。</p>
+</div>
+<div id="FOOT141"><p><a class="footnote_backlink" href="#DOCF141"><sup>141</sup></a> 如果当前框架中已经存在该变量的绑定，那么该绑定被改变。这很方便，因为它允许重新定义符号；然而，这也意味着<code>define</code>可以用来改变值，这引出了不显式使用<code>set!</code>的赋值问题。因此，有些人更倾向于让对现有符号的重新定义发出错误或警告信号。</p>
+</div>
+<div id="FOOT142"><p><a class="footnote_backlink" href="#DOCF142"><sup>142</sup></a> 环境模型不会阐明我们在<a href="1_002e2_zh.xhtml#g_t1_002e2_002e1">1.2.1</a>中的断言，即解释器可以使用尾递归在常量空间中执行诸如<code>fact-iter</code>这样的过程。我们将在<a href="5_002e4_zh.xhtml#g_t5_002e4">5.4</a>中处理解释器的控制结构时讨论尾递归。</p>
+</div>
+<div id="FOOT143"><p><a class="footnote_backlink" href="#DOCF143"><sup>143</sup></a> <code>W1</code>和<code>W2</code>是否共享存储在计算机中的同一物理代码，或者它们是否各自保留一份代码副本，是实现细节。对于我们在<a href="Chapter-4_zh.xhtml#Chapter-4">第4章</a>中实现的解释器，代码实际上是共享的。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="3_002e3_zh.xhtml#g_t3_002e3" accesskey="n" rel="next">3.3</a>, 上一节： <a href="3_002e1_zh.xhtml#g_t3_002e1" accesskey="p" rel="prev">3.1</a>, 上一级： <a href="#g_t3_002e2" accesskey="u" rel="prev">3.2</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

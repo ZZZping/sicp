@@ -1,0 +1,3490 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：3.5</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 3.5" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 3.5" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-3_zh.xhtml#Chapter-3" rel="prev" title="Chapter 3" />
+<link href="Chapter-4_zh.xhtml#Chapter-4" rel="next" title="Chapter 4" />
+<link href="3_002e4_zh.xhtml#g_t3_002e4_002e2" rel="prev" title="3.4.2" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t3_002e5"></a>
+<nav class="header">
+<p>下一节： <a href="Chapter-4_zh.xhtml#Chapter-4" accesskey="n" rel="next">第4章</a>, 上一节： <a href="3_002e4_zh.xhtml#g_t3_002e4" accesskey="p" rel="prev">3.4</a>, 上一级： <a href="Chapter-3_zh.xhtml#Chapter-3" accesskey="u" rel="prev">第3章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Streams"></a>
+<h3 class="section"><span class="secnum">3.5</span><span class="sectitle">流</span></h3>
+
+<p>我们已经很好地理解了赋值作为建模工具的作用，也认识到了赋值所引发的复杂问题。现在是时候问一问，我们是否可以用另一种方式来行事，从而避免其中一些问题。在本节中，我们探索一种基于称为<a id="index-streams-1"></a> <em>流</em>的数据结构的建模状态的替代方法。正如我们将看到的，流可以减轻建模状态的一些复杂性。</p>
+<p>让我们退一步，回顾一下这种复杂性来自何处。在试图对现实世界现象建模时，我们做出了一些看似合理的决定：我们用带有局部变量的计算对象来对具有局部状态的现实世界对象建模。我们将现实世界中的时间变化与计算机中的时间变化等同起来。我们通过对模型对象的局部变量赋值，在计算机中实现了模型对象状态的时间变化。</p>
+<p>有没有另一种方法？我们能否避免将计算机中的时间与被建模世界中的时间等同起来？为了对变化世界中的现象建模，我们必须让模型随时间变化吗？从数学函数的角度来思考这个问题。我们可以将量<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>随时间变化的行为描述为时间的函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">(</mo>
+    <mi>t</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。如果我们一个瞬间一个瞬间地关注<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>，我们会把它看作一个变化的量。然而，如果我们关注值的整个时间历史，我们就不强调变化——函数本身并不改变。<a class="footnote_link" id="DOCF180" href="#FOOT180"><sup>180</sup></a></p>
+<p>如果时间以离散的步长来度量，那么我们可以将时间函数建模为一个（可能是无限的）序列。在本节中，我们将看到如何用表示被建模系统时间历史的序列来对变化建模。为了实现这一点，我们引入了称为<a id="index-streams-2"></a> <em>流</em>的新数据结构。从抽象的角度来看，流就是一个序列。然而，我们会发现，将流直接实现为表（如<a href="2_002e2_zh.xhtml#g_t2_002e2_002e1">2.2.1</a>中那样）并不能完全揭示流处理的威力。作为替代，我们引入了<a id="index-delayed-evaluation-1"></a> <em>延迟求值</em>的技术，它使我们能够将非常大（甚至无限）的序列表示为流。</p>
+<p>流处理让我们能够对具有状态的系统建模，而无需使用赋值或可变数据。这具有重要的理论和实践意义，因为我们可以构建避免引入赋值所固有缺点的模型。另一方面，流框架也带来了自身的困难，而哪种建模技术能带来更模块化、更易于维护的系统，这个问题仍然悬而未决。</p>
+
+<a id="g_t3_002e5_002e1"></a>
+<a id="Streams-Are-Delayed-Lists"></a>
+<h4 class="subsection"><span class="secnum">3.5.1</span><span class="sectitle">流是延迟的表</span></h4>
+
+<p>正如我们在<a href="2_002e2_zh.xhtml#g_t2_002e2_002e3">2.2.3</a>中看到的，序列可以作为组合程序模块的标准接口。我们为操作序列制定了强大的抽象，例如<code>map</code>、<code>filter</code>和<code>accumulate</code>，它们以既简洁又优雅的方式捕捉了各种各样的操作。</p>
+<p>不幸的是，如果我们把序列表示为表，这种优雅是以计算所需的时间和空间方面的严重低效为代价的。当我们把对序列的操作表示为表的变换时，我们的程序必须在过程的每一步构造和复制数据结构（这些结构可能非常巨大）。</p>
+<p>为了理解为什么这是真的，让我们比较两个计算区间内所有素数之和的程序。第一个程序用标准的迭代风格编写：<a class="footnote_link" id="DOCF181" href="#FOOT181"><sup>181</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum-primes a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">iter count accum</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">&gt;</span><span class="pln"> count b</span><span class="clo">)</span><span class="pln"> accum</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">((</span><span class="pln">prime? count</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">iter </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> count </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> count accum</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pln">iter </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> count </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> accum</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">iter a </span><span class="lit">0</span><span class="clo">))</span></pre></div>
+
+<p>第二个程序使用<a href="2_002e2_zh.xhtml#g_t2_002e2_002e3">2.2.3</a>的序列操作执行相同的计算：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum-primes a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">accumulate 
+   </span><span class="pun">+</span><span class="pln">
+   </span><span class="lit">0</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">filter prime? </span><span class="opn">(</span><span class="pln">enumerate-interval a b</span><span class="clo">))))</span></pre></div>
+
+<p>在执行计算时，第一个程序只需要存储正在累加的和。相比之下，第二个程序中的filter在<code>enumerate-interval</code>构造出区间内数字的完整表之前无法进行任何测试。filter生成另一个表，这个表在被折叠成和之前又被传递给<code>accumulate</code>。第一个程序不需要这样大的中间存储，我们可以把它看作增量地枚举区间，每生成一个素数就把它加到和中。</p>
+<p>如果我们使用序列范式，通过求值表达式来计算从10,000到1,000,000区间内的第二个素数，使用表的低效就变得极其明显</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">car</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> 
+      </span><span class="opn">(</span><span class="pln">filter 
+       prime?
+       </span><span class="opn">(</span><span class="pln">enumerate-interval </span><span class="lit">10000</span><span class="pln"> </span><span class="lit">1000000</span><span class="clo">))))</span></pre></div>
+
+<p>这个表达式确实找到了第二个素数，但计算开销大得离谱。我们构造了一个包含近一百万个整数的表，通过对每个元素进行素数测试来过滤这个表，然后忽略几乎所有的结果。在更传统的编程风格中，我们会将枚举和过滤交错进行，并在到达第二个素数时停止。</p>
+<p>流是一种巧妙的想法，它允许人们使用序列操作而不必承担将序列作为表来操作的开销。使用流，我们可以兼得两者的优点：我们可以优雅地将程序表述为序列操作，同时获得增量计算的效率。基本思想是安排只部分地构造一个流，并将这个部分构造传递给消费该流的程序。如果消费者试图访问流中尚未构造的部分，流将自动地构造出足够多的自身来产生所需的部分，从而保持整个流都存在的假象。换句话说，尽管我们编写程序时就像在处理完整的序列，但我们设计流实现时，让流的构造与其使用自动且透明地交错进行。</p>
+<p>从表面上看，流只不过是对操作它们的那些过程使用了不同名称的表。有一个构造函数 <code>cons-stream</code>，以及两个选择函数 <code>stream-car</code> 和 <code>stream-cdr</code>，它们满足以下约束</p>
+<div class="example">
+<pre class="example">(stream-car (cons-stream x y)) = x
+(stream-cdr (cons-stream x y)) = y
+</pre></div>
+
+<p>有一个可区分的对象 <code>the-empty-stream</code>，它不可能是任何 <code>cons-stream</code> 操作的结果，并且可以用谓词 <code>stream-null?</code> 来识别。<a class="footnote_link" id="DOCF182" href="#FOOT182"><sup>182</sup></a> 因此，我们可以像构造和使用表一样构造和使用流，来表示按序列排列的聚合数据。特别地，我们可以为 <a href="Chapter-2_zh.xhtml#Chapter-2">第 2 章</a> 中的表操作构建流的类似物，例如 <code>list-ref</code>、<code>map</code> 和 <code>for-each</code>：<a class="footnote_link" id="DOCF183" href="#FOOT183"><sup>183</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-ref s n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> n </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">stream-car s</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">stream-ref </span><span class="opn">(</span><span class="pln">stream-cdr s</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-map proc s</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-null? s</span><span class="clo">)</span><span class="pln">
+      the-empty-stream
+      </span><span class="opn">(</span><span class="pln">cons-stream 
+       </span><span class="opn">(</span><span class="pln">proc </span><span class="opn">(</span><span class="pln">stream-car s</span><span class="clo">))</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">stream-map proc </span><span class="opn">(</span><span class="pln">stream-cdr s</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-for-each proc s</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-null? s</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">'done</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pln">proc </span><span class="opn">(</span><span class="pln">stream-car s</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">stream-for-each proc 
+                         </span><span class="opn">(</span><span class="pln">stream-cdr s</span><span class="clo">)))))</span></pre></div>
+
+<p><code>Stream-for-each</code> 对于查看流很有用：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">display-stream s</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">stream-for-each display-line s</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">display-line x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">newline</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display x</span><span class="clo">))</span></pre></div>
+
+<p>为了使流的实现自动且透明地将流的构造与其使用交错进行，我们将安排流的 <code>cdr</code> 在被 <code>stream-cdr</code> 过程访问时求值，而不是在流由 <code>cons-stream</code> 构造时求值。这一实现选择让人想起我们在 <a href="2_002e1_zh.xhtml#g_t2_002e1_002e2">2.1.2</a> 中对有理数的讨论，在那里我们看到，可以选择实现有理数，使得分子和分母约简到最简形式要么在构造时执行，要么在选择时执行。这两种有理数实现产生相同的数据抽象，但这一选择对效率有影响。流与普通表之间也有类似的关系。作为一种数据抽象，流与表相同。区别在于元素求值的时间。对于普通表，<code>car</code> 和 <code>cdr</code> 都在构造时求值。对于流，<code>cdr</code> 在选择时求值。</p>
+<p>我们对流的实现将基于一个称为 <code>delay</code> 的特殊形式。求值 <code>(delay ⟨<var>exp</var>⟩)</code> 不会求值表达式 <code>⟨</code><var>exp</var><code>⟩</code>，而是返回一个所谓的 <a id="index-delayed-object"></a><em>延迟对象</em>，我们可以把它看作一个在将来某个时候求值 <code>⟨</code><var>exp</var><code>⟩</code> 的“承诺”。作为 <code>delay</code> 的同伴，有一个称为 <code>force</code> 的过程，它接受一个延迟对象作为参数并执行求值——实际上就是迫使 <code>delay</code> 履行其承诺。我们将在下面看到 <code>delay</code> 和 <code>force</code> 如何实现，但首先让我们用它们来构造流。</p>
+<p><code>Cons-stream</code> 是一个特殊形式，其定义使得</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">cons-stream ⟨</span><var><span class="pln">a</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">b</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>等价于</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> ⟨</span><var><span class="pln">a</span></var><span class="pln">⟩ </span><span class="opn">(</span><span class="kwd">delay</span><span class="pln"> ⟨</span><var><span class="pln">b</span></var><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+
+<p>这意味着我们将使用序对来构造流。然而，我们不是把流的其余部分的值放入序对的 <code>cdr</code> 中，而是在那里放入一个承诺，以便在需要时计算其余部分。<code>Stream-car</code> 和 <code>stream-cdr</code> 现在可以定义为过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-car stream</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> stream</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-cdr stream</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">force </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> stream</span><span class="clo">)))</span></pre></div>
+
+<p><code>Stream-car</code> 选择序对的 <code>car</code>；<code>stream-cdr</code> 选择序对的 <code>cdr</code> 并求值在那里找到的延迟表达式，以获得流的其余部分。<a class="footnote_link" id="DOCF184" href="#FOOT184"><sup>184</sup></a></p>
+<a id="The-stream-implementation-in-action"></a>
+<h5 class="subsubheading">流实现的实际运作</h5>
+
+<p>为了看清这一实现的行为，让我们分析上面看到的那个“离谱的”素数计算，用流重新表述：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">stream-car 
+ </span><span class="opn">(</span><span class="pln">stream-cdr
+  </span><span class="opn">(</span><span class="pln">stream-filter 
+   prime? </span><span class="opn">(</span><span class="pln">stream-enumerate-interval 
+           </span><span class="lit">10000</span><span class="pln"> </span><span class="lit">1000000</span><span class="clo">))))</span></pre></div>
+
+<p>我们将看到它确实高效地工作。</p>
+<p>我们首先以参数 10,000 和 1,000,000 调用 <code>stream-enumerate-interval</code>。<code>Stream-enumerate-interval</code> 是 <code>enumerate-interval</code>（<a href="2_002e2_zh.xhtml#g_t2_002e2_002e3">2.2.3</a>）的流类似物：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-enumerate-interval low high</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> low high</span><span class="clo">)</span><span class="pln">
+      the-empty-stream
+      </span><span class="opn">(</span><span class="pln">cons-stream
+       low
+       </span><span class="opn">(</span><span class="pln">stream-enumerate-interval </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> low </span><span class="lit">1</span><span class="clo">)</span><span class="pln">
+                                  high</span><span class="clo">))))</span></pre></div>
+
+<p>因此，由 <code>cons-stream</code> 形成的、<code>stream-enumerate-interval</code> 返回的结果是<a class="footnote_link" id="DOCF185" href="#FOOT185"><sup>185</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">10000</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">delay</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pln">stream-enumerate-interval 
+         </span><span class="lit">10001</span><span class="pln"> 
+         </span><span class="lit">1000000</span><span class="clo">)))</span></pre></div>
+
+<p>也就是说，<code>stream-enumerate-interval</code> 返回一个表示为序对的流，其 <code>car</code> 是 10,000，其 <code>cdr</code> 是一个在需要时枚举区间更多部分的承诺。这个流现在被过滤以找出素数，使用 <code>filter</code> 过程的流类似物（<a href="2_002e2_zh.xhtml#g_t2_002e2_002e3">2.2.3</a>）：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-filter pred stream</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">stream-null? stream</span><span class="clo">)</span><span class="pln"> 
+         the-empty-stream</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">pred </span><span class="opn">(</span><span class="pln">stream-car stream</span><span class="clo">))</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">cons-stream 
+          </span><span class="opn">(</span><span class="pln">stream-car stream</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">stream-filter 
+           pred
+           </span><span class="opn">(</span><span class="pln">stream-cdr stream</span><span class="clo">))))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-filter 
+               pred 
+               </span><span class="opn">(</span><span class="pln">stream-cdr stream</span><span class="clo">)))))</span></pre></div>
+
+<p><code>Stream-filter</code> 测试流的 <code>stream-car</code>（序对的 <code>car</code>，即 10,000）。由于这不是素数，<code>stream-filter</code> 检查其输入流的 <code>stream-cdr</code>。对 <code>stream-cdr</code> 的调用迫使求值延迟的 <code>stream-enumerate-interval</code>，它现在返回</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">10001</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">delay</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pln">stream-enumerate-interval 
+         </span><span class="lit">10002</span><span class="pln"> 
+         </span><span class="lit">1000000</span><span class="clo">)))</span></pre></div>
+
+<p><code>Stream-filter</code> 现在查看这个流的 <code>stream-car</code>，即 10,001，看到这也不是素数，迫使另一个 <code>stream-cdr</code>，如此继续，直到 <code>stream-enumerate-interval</code> 产生素数 10,007，于是 <code>stream-filter</code> 根据其定义返回</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">cons-stream 
+ </span><span class="opn">(</span><span class="pln">stream-car stream</span><span class="clo">)</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">stream-filter pred </span><span class="opn">(</span><span class="pln">stream-cdr stream</span><span class="clo">)))</span></pre></div>
+
+<p>在这个情况下就是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">10007</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">delay</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">stream-filter
+         prime?
+         </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">10008</span><span class="pln">
+               </span><span class="opn">(</span><span class="kwd">delay</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">stream-enumerate-interval 
+                  </span><span class="lit">10009</span><span class="pln"> </span><span class="lit">1000000</span><span class="clo">))))))</span></pre></div>
+
+<p>这个结果现在被传递给原表达式中的 <code>stream-cdr</code>。这迫使延迟的 <code>stream-filter</code>，后者又不断迫使延迟的 <code>stream-enumerate-interval</code>，直到找到下一个素数，即 10,009。最后，传递给原表达式中 <code>stream-car</code> 的结果是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">10009</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">delay</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">stream-filter
+         prime?
+         </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> </span><span class="lit">10010</span><span class="pln">
+               </span><span class="opn">(</span><span class="kwd">delay</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">stream-enumerate-interval 
+                  </span><span class="lit">10011</span><span class="pln"> </span><span class="lit">1000000</span><span class="clo">))))))</span></pre></div>
+
+<p><code>Stream-car</code> 返回 10,009，计算完成。只有为了找到第二个素数所必需的那么多个整数被测试了素性，并且区间只被枚举到足以供给素数过滤器为止。</p>
+<p>一般来说，我们可以把延迟求值看作“需求驱动”式编程，其中流处理过程中的每个阶段只被激活到足以满足下一阶段的程度。我们所做的是把计算中事件的实际顺序与我们过程表面上的结构解耦。我们编写过程时就好像流是“一下子”全部存在，而实际上计算是像传统编程风格那样增量地进行的。</p>
+<a id="Implementing-delay-and-force"></a>
+<h5 class="subsubheading">实现 <code>delay</code> 和 <code>force</code></h5>
+
+<p>尽管 <code>delay</code> 和 <code>force</code> 看起来像是神秘的操作，但它们的实现其实相当直接。<code>Delay</code> 必须把表达式打包起来，以便以后可以按需求值，而我们可以简单地把该表达式当作一个过程的主体来做到这一点。<code>Delay</code> 可以是一个特殊形式，使得</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">delay</span><span class="pln"> ⟨</span><var><span class="pln">exp</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>是以下形式的语法糖</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> ⟨</span><var><span class="pln">exp</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p><code>Force</code> 只是调用由 <code>delay</code> 产生的（无参数）过程，所以我们可以把 <code>force</code> 实现为一个过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">force delayed-object</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">delayed-object</span><span class="clo">))</span></pre></div>
+
+<p>这个实现足以让 <code>delay</code> 和 <code>force</code> 如所宣称的那样工作，但我们可以加入一个重要的优化。在许多应用中，我们最终会多次强制同一个延迟对象。这可能导致涉及流的递归程序严重低效。（见 <a href="#Exercise-3_002e57">习题 3.57</a>。）解决办法是构造延迟对象，使得它们第一次被强制时，就存储计算出的值。后续的强制将简单地返回所存储的值，而不重复计算。换句话说，我们把 <code>delay</code> 实现为一个专用记忆化过程，类似于 <a href="3_002e3_zh.xhtml#Exercise-3_002e27">习题 3.27</a> 中描述的那个过程。做到这一点的一种方法是使用以下过程，它以一个（无参数的）过程为参数，并返回该过程的一个记忆化版本。记忆化过程第一次运行时，它会保存计算出的结果。在后续求值中，它只是返回该结果。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">memo-proc proc</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">already-run? false</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">result false</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">not already-run?</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> result </span><span class="opn">(</span><span class="pln">proc</span><span class="clo">))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> already-run? true</span><span class="clo">)</span><span class="pln">
+                 result</span><span class="clo">)</span><span class="pln">
+          result</span><span class="clo">))))</span></pre></div>
+
+<p>然后定义 <code>Delay</code>，使得 <code>(delay ⟨<var>exp</var>⟩)</code> 等价于</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">memo-proc </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> ⟨</span><var><span class="pln">exp</span></var><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+
+<p>而 <code>force</code> 如前所定义。<a class="footnote_link" id="DOCF186" href="#FOOT186"><sup>186</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e50"></a>习题 3.50：</strong>完成下面的定义，它推广了<code>stream-map</code>，以允许接受多个参数的过程，类似于<a href="2_002e2_zh.xhtml#g_t2_002e2_002e1">2.2.1</a>中的<code>map</code>，<a href="2_002e2_zh.xhtml#Footnote-78">脚注 78</a>。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-map proc </span><span class="pun">.</span><span class="pln"> argstreams</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">⟨</span><span class="pun">??</span><span class="pln">⟩ </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> argstreams</span><span class="clo">))</span><span class="pln">
+      the-empty-stream
+      </span><span class="opn">(</span><span class="pln">⟨</span><span class="pun">??</span><span class="pln">⟩
+       </span><span class="opn">(</span><span class="pln">apply proc </span><span class="opn">(</span><span class="pln">map ⟨</span><span class="pun">??</span><span class="pln">⟩ argstreams</span><span class="clo">))</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">apply stream-map
+              </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> proc 
+                    </span><span class="opn">(</span><span class="pln">map ⟨</span><span class="pun">??</span><span class="pln">⟩ 
+                         argstreams</span><span class="clo">))))))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e51"></a>习题 3.51：</strong>为了更仔细地考察延迟求值，我们将使用下面的过程，它在打印其参数后简单地返回该参数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">show x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">display-line x</span><span class="clo">)</span><span class="pln">
+  x</span><span class="clo">)</span></pre></div>
+
+<p>解释器在求值下面序列中的每个表达式时会打印什么？<a class="footnote_link" id="DOCF187" href="#FOOT187"><sup>187</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> x 
+  </span><span class="opn">(</span><span class="pln">stream-map 
+   show 
+   </span><span class="opn">(</span><span class="pln">stream-enumerate-interval </span><span class="lit">0</span><span class="pln"> </span><span class="lit">10</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">stream-ref x </span><span class="lit">5</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">stream-ref x </span><span class="lit">7</span><span class="clo">)</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e52"></a>习题 3.52：</strong>考虑下面这组表达式</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> sum </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">accum x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> sum </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x sum</span><span class="clo">))</span><span class="pln">
+  sum</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> seq 
+  </span><span class="opn">(</span><span class="pln">stream-map 
+   accum 
+   </span><span class="opn">(</span><span class="pln">stream-enumerate-interval </span><span class="lit">1</span><span class="pln"> </span><span class="lit">20</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> y </span><span class="opn">(</span><span class="pln">stream-filter even? seq</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> z 
+  </span><span class="opn">(</span><span class="pln">stream-filter 
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> 
+     </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">remainder x </span><span class="lit">5</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">))</span><span class="pln"> seq</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">stream-ref y </span><span class="lit">7</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pln">display-stream z</span><span class="clo">)</span></pre></div>
+
+<p>在求值上述每个表达式之后，<code>sum</code>的值是什么？求值<code>stream-ref</code>和<code>display-stream</code>表达式时打印的响应是什么？如果我们把<code>(delay ⟨<var>exp</var>⟩)</code>简单地实现为<code>(lambda () ⟨<var>exp</var>⟩)</code>而不使用<code>memo-proc</code>提供的优化，这些响应会不同吗？解释。</p></blockquote>
+
+<a id="g_t3_002e5_002e2"></a>
+<a id="Infinite-Streams"></a>
+<h4 class="subsection"><span class="secnum">3.5.2</span><span class="sectitle">无穷流</span></h4>
+
+<p>我们已经看到如何支持把流当作完整实体来操作的幻觉，尽管实际上我们只计算需要访问的那部分流。我们可以利用这一技术，把序列高效地表示为流，即使序列非常长。更引人注目的是，我们可以用流来表示无穷长的序列。例如，考虑下面正整数的流的定义：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">integers-starting-from n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream 
+   n </span><span class="opn">(</span><span class="pln">integers-starting-from </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> integers </span><span class="opn">(</span><span class="pln">integers-starting-from </span><span class="lit">1</span><span class="clo">))</span></pre></div>
+
+<p>这是合理的，因为<code>integers</code>将是一个序对，其<code>car</code>是1，其<code>cdr</code>是产生从2开始的整数的承诺。这是一个无穷长的流，但在任何给定时刻我们只能检查它的有限部分。因此，我们的程序永远不会知道整个无穷流并不存在。</p>
+<p>使用<code>integers</code>，我们可以定义其他无穷流，例如不能被7整除的整数的流：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">divisible? x y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">remainder x y</span><span class="clo">)</span><span class="pln"> </span><span class="lit">0</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> no-sevens
+  </span><span class="opn">(</span><span class="pln">stream-filter </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> 
+                   </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pln">divisible? x </span><span class="lit">7</span><span class="clo">)))</span><span class="pln">
+                 integers</span><span class="clo">))</span></pre></div>
+
+<p>然后，我们只需访问这个流中的元素，就能找到不能被7整除的整数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">stream-ref no-sevens </span><span class="lit">100</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">117</span></i>
+</pre></div>
+
+<p>类似于<code>integers</code>，我们可以定义斐波那契数的无穷流：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fibgen a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream a </span><span class="opn">(</span><span class="pln">fibgen b </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a b</span><span class="clo">))))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> fibs </span><span class="opn">(</span><span class="pln">fibgen </span><span class="lit">0</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))</span></pre></div>
+
+<p><code>Fibs</code>是一个序对，其<code>car</code>是0，其<code>cdr</code>是求值<code>(fibgen 1 1)</code>的承诺。当我们求值这个被延迟的<code>(fibgen 1
+1)</code>时，它将产生一个序对，其<code>car</code>是1，其<code>cdr</code>是求值<code>(fibgen 1 2)</code>的承诺，依此类推。</p>
+<p>为了看看一个更令人兴奋的无穷流，我们可以推广 <code>no-sevens</code> 的例子来构造素数的无穷流，使用一种称为 <a id="index-sieve-of-Eratosthenes"></a> <em>埃拉托斯特尼筛法</em> 的方法。<a class="footnote_link" id="DOCF188" href="#FOOT188"><sup>188</sup></a> 我们从以 2 开头的整数开始，它是第一个素数。为了得到其余的素数，我们首先从其余的整数中过滤掉 2 的倍数。这留下一个以 3 开头的流，它是下一个素数。现在我们从这个流的其余部分中过滤掉 3 的倍数。这留下一个以 5 开头的流，它是下一个素数，依此类推。换句话说，我们通过一个筛选过程来构造素数，描述如下：要筛选一个流 <code>S</code>，形成一个流，其第一个元素是 <code>S</code> 的第一个元素，而其余部分则是通过从 <code>S</code> 的其余部分中过滤掉 <code>S</code> 的第一个元素的所有倍数，并对结果进行筛选而得到的。这个过程用流操作很容易描述：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sieve stream</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream
+   </span><span class="opn">(</span><span class="pln">stream-car stream</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">sieve </span><span class="opn">(</span><span class="pln">stream-filter
+           </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln">
+             </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pln">divisible? 
+                   x </span><span class="opn">(</span><span class="pln">stream-car stream</span><span class="clo">))))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">stream-cdr stream</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> primes 
+  </span><span class="opn">(</span><span class="pln">sieve </span><span class="opn">(</span><span class="pln">integers-starting-from </span><span class="lit">2</span><span class="clo">)))</span></pre></div>
+
+<p>现在要找到一个特定的素数，我们只需请求它：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">stream-ref primes </span><span class="lit">50</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">233</span></i>
+</pre></div>
+
+<p>思考由<code>sieve</code>建立的信号处理系统是很有趣的，如<a href="#Figure-3_002e31">图 3.31</a>中的“Henderson 图”所示。<a class="footnote_link" id="DOCF189" href="#FOOT189"><sup>189</sup></a>输入流馈入一个“un<code>cons</code>er”，它将流的第一个元素与流的其余部分分开。第一个元素用于构造一个整除性过滤器，其余部分通过该过滤器，过滤器的输出馈入另一个筛选盒。然后，原来的第一个元素被<code>cons</code>到内部筛选器的输出上，形成输出流。因此，不仅流是无穷的，信号处理器也是无穷的，因为筛选器内部包含一个筛选器。</p>
+<figure class="float">
+<a id="Figure-3_002e31"></a>
+<object style="width: 54.05ex; height: 27.89ex;" data="fig/chap3/Fig3.31a.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图 3.31：</strong>被视为信号处理系统的素数筛选器。</p>
+</figcaption>
+</figure>
+
+<a id="Defining-streams-implicitly"></a>
+<h5 class="subsubheading">隐式地定义流</h5>
+
+<p>上面的<code>integers</code>和<code>fibs</code>流，是通过指定逐个显式计算流元素的“生成”过程来定义的。指定流的另一种方法，是利用延迟求值来隐式地定义流。例如，下面的表达式将流<code>ones</code>定义为由一组成的无穷流：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> ones </span><span class="opn">(</span><span class="pln">cons-stream </span><span class="lit">1</span><span class="pln"> ones</span><span class="clo">))</span></pre></div>
+
+<p>这很像递归过程的定义：<code>ones</code>是一个序对，其<code>car</code>是1，其<code>cdr</code>是求值<code>ones</code>的承诺。求值<code>cdr</code>又给我们一个1和求值<code>ones</code>的承诺，依此类推。</p>
+<p>通过用诸如<code>add-streams</code>之类的操作来操作流，我们可以做更有趣的事情，它产生两个给定流的逐元素和：<a class="footnote_link" id="DOCF190" href="#FOOT190"><sup>190</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-streams s1 s2</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">stream-map </span><span class="pun">+</span><span class="pln"> s1 s2</span><span class="clo">))</span></pre></div>
+
+<p>现在我们可以如下定义整数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> integers 
+  </span><span class="opn">(</span><span class="pln">cons-stream </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-streams ones integers</span><span class="clo">)))</span></pre></div>
+
+<p>这将<code>integers</code>定义为一个流，其第一个元素是1，其余部分是<code>ones</code>与<code>integers</code>之和。因此，<code>integers</code>的第二个元素是1加上<code>integers</code>的第一个元素，即2；<code>integers</code>的第三个元素是1加上<code>integers</code>的第二个元素，即3；依此类推。这个定义之所以有效，是因为在任何时刻，已经生成了足够多的<code>integers</code>流，以便我们可以把它反馈到定义中以产生下一个整数。</p>
+<p>我们可以用同样的风格定义斐波那契数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> fibs 
+  </span><span class="opn">(</span><span class="pln">cons-stream 
+   </span><span class="lit">0</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cons-stream
+      </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-streams 
+         </span><span class="opn">(</span><span class="pln">stream-cdr fibs</span><span class="clo">)</span><span class="pln"> fibs</span><span class="clo">))))</span></pre></div>
+
+<p>这个定义说，<code>fibs</code>是一个以0和1开始的流，使得流的其余部分可以通过将<code>fibs</code>与其自身平移一位后相加来生成：</p>
+<div class="example">
+<pre class="example">    1 1 2 3 5  8 13 21 <span class="roman">…</span> = <code>(stream-cdr fibs)</code>
+    0 1 1 2 3  5  8 13 <span class="roman">…</span> = <code>fibs</code>
+0 1 1 2 3 5 8 13 21 34 <span class="roman">…</span> = <code>fibs</code>
+</pre></div>
+
+<p><code>Scale-stream</code>是构造此类流定义时另一个有用的过程。它将流中的每一项乘以一个给定的常数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">scale-stream stream factor</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">stream-map
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x factor</span><span class="clo">))</span><span class="pln">
+   stream</span><span class="clo">))</span></pre></div>
+
+<p>例如，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> double 
+  </span><span class="opn">(</span><span class="pln">cons-stream </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">scale-stream double </span><span class="lit">2</span><span class="clo">)))</span></pre></div>
+
+<p>产生2的幂的流：1、2、4、8、16、32、……。</p>
+<p>素数流的另一种定义可以从整数开始，并通过素性测试来过滤它们。我们需要第一个素数 2 来开始：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> primes
+  </span><span class="opn">(</span><span class="pln">cons-stream
+   </span><span class="lit">2</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-filter 
+      prime? </span><span class="opn">(</span><span class="pln">integers-starting-from </span><span class="lit">3</span><span class="clo">))))</span></pre></div>
+
+<p>这个定义并不像看起来那么直接，因为我们将通过检查 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是否能被小于或等于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msqrt>
+    <mi>n</mi>
+  </msqrt>
+</math> 的素数（而不是任何整数）整除来测试一个数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是否为素数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">prime? n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">iter ps</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">&gt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pln">stream-car ps</span><span class="clo">))</span><span class="pln"> n</span><span class="clo">)</span><span class="pln"> true</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">((</span><span class="pln">divisible? n </span><span class="opn">(</span><span class="pln">stream-car ps</span><span class="clo">))</span><span class="pln"> false</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pln">iter </span><span class="opn">(</span><span class="pln">stream-cdr ps</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">iter primes</span><span class="clo">))</span></pre></div>
+
+<p>这是一个递归定义，因为 <code>primes</code> 是用 <code>prime?</code> 谓词定义的，而该谓词本身又使用了 <code>primes</code> 流。这个过程之所以有效，是因为在任何时刻，已经生成了足够多的 <code>primes</code> 流来测试我们接下来需要检查的数的素性。也就是说，对于我们要测试素性的每个 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，要么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 不是素数（在这种情况下，已经生成的一个素数能整除它），要么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是素数（在这种情况下，已经生成的一个素数——即一个小于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的素数——大于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msqrt>
+    <mi>n</mi>
+  </msqrt>
+</math>）。<a class="footnote_link" id="DOCF191" href="#FOOT191"><sup>191</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e53"></a>习题 3.53：</strong> 不运行程序，描述由以下定义的流的元素</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> s </span><span class="opn">(</span><span class="pln">cons-stream </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-streams s s</span><span class="clo">)))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e54"></a>习题 3.54：</strong> 定义一个过程 <code>mul-streams</code>，类似于 <code>add-streams</code>，它产生两个输入流的逐元素乘积。把它与 <code>integers</code> 流一起使用，以完成以下流的定义，该流的第 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math> 个元素（从 0 开始计数）是 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+  </mrow>
+</math> 的阶乘：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> factorials 
+  </span><span class="opn">(</span><span class="pln">cons-stream </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul-streams ⟨</span><span class="pun">??</span><span class="pln">⟩ ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">)))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e55"></a>习题 3.55：</strong> 定义一个过程 <code>partial-sums</code>，它以一个流 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math> 为参数，并返回一个流，其元素为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>S</mi>
+    <mn>0</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>S</mi>
+      <mn>0</mn>
+    </msub>
+    <mo>+</mo>
+    <msub>
+      <mi>S</mi>
+      <mn>1</mn>
+    </msub>
+  </mrow>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>S</mi>
+      <mn>0</mn>
+    </msub>
+    <mo>+</mo>
+    <msub>
+      <mi>S</mi>
+      <mn>1</mn>
+    </msub>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>S</mi>
+      <mn>2</mn>
+    </msub>
+    <mo>,</mo>
+    <mo>…<!-- … --></mo>
+  </mrow>
+</math>。例如，<code>(partial-sums integers)</code> 应该是流 1、3、6、10、15、……。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e56"></a>习题 3.56：</strong> 一个著名的问题，最初由 R. Hamming 提出，是按升序且无重复地枚举所有除 2、3 或 5 之外没有其他素因子的正整数。一个明显的方法是简单地依次测试每个整数，看它是否有除 2、3 和 5 之外的因子。但这非常低效，因为随着整数变大，符合要求的整数越来越少。作为替代，让我们把所需的数流称为 <code>S</code>，并注意关于它的以下事实。</p>
+<ul>
+<li><code>S</code> 以 1 开始。</li><li><code>(scale-stream S 2)</code> 的元素也是 <code>S</code> 的元素。</li><li>对于 <code>(scale-stream S 3)</code> 和 <code>(scale-stream S 5)</code> 也是如此。</li><li>这些就是 <code>S</code> 的全部元素。</li></ul>
+
+<p>现在我们要做的就是把这些来源中的元素组合起来。为此，我们定义一个过程 <code>merge</code>，它把两个有序流合并成一个有序的结果流，并消除重复：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">merge s1 s2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">stream-null? s1</span><span class="clo">)</span><span class="pln"> s2</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">stream-null? s2</span><span class="clo">)</span><span class="pln"> s1</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+         </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">s1car </span><span class="opn">(</span><span class="pln">stream-car s1</span><span class="clo">))</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">s2car </span><span class="opn">(</span><span class="pln">stream-car s2</span><span class="clo">)))</span><span class="pln">
+           </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pun">&lt;</span><span class="pln"> s1car s2car</span><span class="clo">)</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">cons-stream 
+                   s1car 
+                   </span><span class="opn">(</span><span class="pln">merge </span><span class="opn">(</span><span class="pln">stream-cdr s1</span><span class="clo">)</span><span class="pln"> 
+                          s2</span><span class="clo">)))</span><span class="pln">
+                 </span><span class="opn">((</span><span class="pun">&gt;</span><span class="pln"> s1car s2car</span><span class="clo">)</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">cons-stream 
+                   s2car 
+                   </span><span class="opn">(</span><span class="pln">merge s1 
+                          </span><span class="opn">(</span><span class="pln">stream-cdr s2</span><span class="clo">))))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">cons-stream 
+                   s1car
+                   </span><span class="opn">(</span><span class="pln">merge 
+                    </span><span class="opn">(</span><span class="pln">stream-cdr s1</span><span class="clo">)</span><span class="pln">
+                    </span><span class="opn">(</span><span class="pln">stream-cdr s2</span><span class="clo">)))))))))</span></pre></div>
+
+<p>然后，所需的流可以用 <code>merge</code> 构造出来，如下所示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> S </span><span class="opn">(</span><span class="pln">cons-stream </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">merge ⟨</span><span class="pun">??</span><span class="pln">⟩ ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">)))</span></pre></div>
+
+<p>填入上面标有 <code>⟨??⟩</code> 的位置处缺失的表达式。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e57"></a>习题 3.57：</strong> 当我们使用基于 <code>add-streams</code> 过程的 <code>fibs</code> 定义来计算第 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math> 个 斐波那契数时，会执行多少次加法？证明：如果我们把 <code>(delay ⟨<var>exp</var>⟩)</code> 简单地实现为 <code>(lambda () ⟨<var>exp</var>⟩)</code>，而不使用 <a href="#g_t3_002e5_002e1">3.5.1</a> 中描述的 <code>memo-proc</code> 过程所提供的优化，那么加法的次数将呈指数级增长。<a class="footnote_link" id="DOCF192" href="#FOOT192"><sup>192</sup></a></p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e58"></a>习题 3.58：</strong> 给出对下列过程所计算的流的解释：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">expand num den radix</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream
+   </span><span class="opn">(</span><span class="pln">quotient </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> num radix</span><span class="clo">)</span><span class="pln"> den</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">expand </span><span class="opn">(</span><span class="pln">remainder </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> num radix</span><span class="clo">)</span><span class="pln"> den</span><span class="clo">)</span><span class="pln"> 
+           den 
+           radix</span><span class="clo">)))</span></pre></div>
+
+<p>（<code>Quotient</code> 是一个基本过程，返回两个整数的整数商。）<code>(expand 1 7
+10)</code> 依次产生哪些元素？<code>(expand 3 8 10)</code> 产生什么？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e59"></a>习题 3.59：</strong> 在 <a href="2_002e5_zh.xhtml#g_t2_002e5_002e3">2.5.3</a> 中，我们看到了如何实现一个多项式算术系统，把多项式表示为项的表。以类似的方式，我们可以处理 <a id="index-power-series"></a><em>幂级数</em>，例如 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right center left" rowspacing="3pt" columnspacing="thickmathspace">
+    <mtr>
+      <mtd>
+        <msup>
+          <mi>e</mi>
+          <mi>x</mi>
+        </msup>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mn>1</mn>
+        <mo>+</mo>
+        <mi>x</mi>
+        <mo>+</mo>
+        <mfrac>
+          <mn>1</mn>
+          <mn>2</mn>
+        </mfrac>
+        <msup>
+          <mi>x</mi>
+          <mn>2</mn>
+        </msup>
+        <mo>+</mo>
+        <mfrac>
+          <mn>1</mn>
+          <mrow>
+            <mn>3</mn>
+            <mo>⋅<!-- ⋅ --></mo>
+            <mn>2</mn>
+          </mrow>
+        </mfrac>
+        <msup>
+          <mi>x</mi>
+          <mn>3</mn>
+        </msup>
+        <mo>+</mo>
+        <mfrac>
+          <mn>1</mn>
+          <mrow>
+            <mn>4</mn>
+            <mo>⋅<!-- ⋅ --></mo>
+            <mn>3</mn>
+            <mo>⋅<!-- ⋅ --></mo>
+            <mn>2</mn>
+          </mrow>
+        </mfrac>
+        <msup>
+          <mi>x</mi>
+          <mn>4</mn>
+        </msup>
+        <mo>+</mo>
+        <mo>…<!-- … --></mo>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>cos</mi>
+        <mo>⁡<!-- ⁡ --></mo>
+        <mi>x</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mn>1</mn>
+        <mo>−<!-- − --></mo>
+        <mfrac>
+          <mn>1</mn>
+          <mn>2</mn>
+        </mfrac>
+        <msup>
+          <mi>x</mi>
+          <mn>2</mn>
+        </msup>
+        <mo>+</mo>
+        <mfrac>
+          <mn>1</mn>
+          <mrow>
+            <mn>4</mn>
+            <mo>⋅<!-- ⋅ --></mo>
+            <mn>3</mn>
+            <mo>⋅<!-- ⋅ --></mo>
+            <mn>2</mn>
+          </mrow>
+        </mfrac>
+        <msup>
+          <mi>x</mi>
+          <mn>4</mn>
+        </msup>
+        <mo>−<!-- − --></mo>
+        <mo>…<!-- … --></mo>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>sin</mi>
+        <mo>⁡<!-- ⁡ --></mo>
+        <mi>x</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mi>x</mi>
+        <mo>−<!-- − --></mo>
+        <mfrac>
+          <mn>1</mn>
+          <mrow>
+            <mn>3</mn>
+            <mo>⋅<!-- ⋅ --></mo>
+            <mn>2</mn>
+          </mrow>
+        </mfrac>
+        <msup>
+          <mi>x</mi>
+          <mn>3</mn>
+        </msup>
+        <mo>+</mo>
+        <mfrac>
+          <mn>1</mn>
+          <mrow>
+            <mn>5</mn>
+            <mo>⋅<!-- ⋅ --></mo>
+            <mn>4</mn>
+            <mo>⋅<!-- ⋅ --></mo>
+            <mn>3</mn>
+            <mo>⋅<!-- ⋅ --></mo>
+            <mn>2</mn>
+          </mrow>
+        </mfrac>
+        <msup>
+          <mi>x</mi>
+          <mn>5</mn>
+        </msup>
+        <mo>−<!-- − --></mo>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>，把它们表示为无穷流。我们将把级数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mn>0</mn>
+    </msub>
+    <mo>+</mo>
+    <msub>
+      <mi>a</mi>
+      <mn>1</mn>
+    </msub>
+    <mi>x</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mn>2</mn>
+    </msub>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mn>3</mn>
+    </msub>
+    <msup>
+      <mi>x</mi>
+      <mn>3</mn>
+    </msup>
+    <mo>+</mo>
+    <mo>…<!-- … --></mo>
+  </mrow>
+</math> 表示为元素为系数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mn>0</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mn>1</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mn>2</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mn>3</mn>
+  </msub>
+</math>、… 的流。</p>
+<ol>
+<li>级数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mn>0</mn>
+    </msub>
+    <mo>+</mo>
+    <msub>
+      <mi>a</mi>
+      <mn>1</mn>
+    </msub>
+    <mi>x</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mn>2</mn>
+    </msub>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mn>3</mn>
+    </msub>
+    <msup>
+      <mi>x</mi>
+      <mn>3</mn>
+    </msup>
+    <mo>+</mo>
+    <mo>…<!-- … --></mo>
+  </mrow>
+</math> 的积分是级数 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>c</mi>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>a</mi>
+      <mn>0</mn>
+    </msub>
+    <mi>x</mi>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mn>1</mn>
+      <mn>2</mn>
+    </mfrac>
+    <msub>
+      <mi>a</mi>
+      <mn>1</mn>
+    </msub>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mn>1</mn>
+      <mn>3</mn>
+    </mfrac>
+    <msub>
+      <mi>a</mi>
+      <mn>2</mn>
+    </msub>
+    <msup>
+      <mi>x</mi>
+      <mn>3</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mn>1</mn>
+      <mn>4</mn>
+    </mfrac>
+    <msub>
+      <mi>a</mi>
+      <mn>3</mn>
+    </msub>
+    <msup>
+      <mi>x</mi>
+      <mn>4</mn>
+    </msup>
+    <mo>+</mo>
+    <mo>…<!-- … --></mo>
+    <mo>,</mo>
+  </mrow>
+</math>，其中 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>c</mi>
+</math> 是任意常数。定义一个过程 <code>integrate-series</code>，它接受一个表示幂级数的流 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mn>0</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mn>1</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mn>2</mn>
+  </msub>
+</math>、… 作为输入，并返回该级数积分中非常数项的系数流 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>a</mi>
+    <mn>0</mn>
+  </msub>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mn>1</mn>
+        <mn>2</mn>
+      </mfrac>
+    </mrow>
+    <msub>
+      <mi>a</mi>
+      <mn>1</mn>
+    </msub>
+  </mrow>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mn>1</mn>
+        <mn>3</mn>
+      </mfrac>
+    </mrow>
+    <msub>
+      <mi>a</mi>
+      <mn>2</mn>
+    </msub>
+  </mrow>
+</math>、…。（由于结果没有常数项，它并不表示一个幂级数；当我们使用 <code>integrate-series</code> 时，我们将使用 <code>cons</code> 把适当的常数添加到流的前端。）</li><li>函数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <msup>
+      <mi>e</mi>
+      <mi>x</mi>
+    </msup>
+  </mrow>
+</math> 是它自己的导数。这意味着 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>e</mi>
+    <mi>x</mi>
+  </msup>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>e</mi>
+    <mi>x</mi>
+  </msup>
+</math> 的积分是同一个级数，只是常数项不同，该常数项为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>e</mi>
+      <mn>0</mn>
+    </msup>
+    <mo>=</mo>
+    <mn>1</mn>
+  </mrow>
+</math>。相应地，我们可以如下生成 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>e</mi>
+    <mi>x</mi>
+  </msup>
+</math> 的级数：<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> exp-series
+  </span><span class="opn">(</span><span class="pln">cons-stream 
+   </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pln">integrate-series exp-series</span><span class="clo">)))</span></pre></div>
+
+<p>从正弦的导数是余弦、余弦的导数是正弦的相反数这两个事实出发，说明如何生成正弦和余弦的级数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> cosine-series 
+  </span><span class="opn">(</span><span class="pln">cons-stream </span><span class="lit">1</span><span class="pln"> ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> sine-series
+  </span><span class="opn">(</span><span class="pln">cons-stream </span><span class="lit">0</span><span class="pln"> ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+</li></ol>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e60"></a>习题 3.60：</strong> 在幂级数表示为系数流的情况下，如 <a href="#Exercise-3_002e59">习题 3.59</a> 中那样，级数的加法由 <code>add-streams</code> 实现。补全下列用于级数乘法的过程的定义：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul-series s1 s2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream ⟨</span><span class="pun">??</span><span class="pln">⟩ </span><span class="opn">(</span><span class="pln">add-streams ⟨</span><span class="pun">??</span><span class="pln">⟩ ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">)))</span></pre></div>
+
+<p>你可以通过验证 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>sin</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>x</mi>
+    <mo>+</mo>
+    <msup>
+      <mi>cos</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>x</mi>
+    <mo>=</mo>
+    <mn>1</mn>
+    <mo>,</mo>
+  </mrow>
+</math> 来测试你的过程，其中使用来自 <a href="#Exercise-3_002e59">习题 3.59</a> 的级数。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e61"></a>习题 3.61：</strong>设 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math> 是一个幂级数（<a href="#Exercise-3_002e59">习题 3.59</a>），其常数项为 1。假设我们想求幂级数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1</mn>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>S</mi>
+  </mrow>
+</math>，即满足 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mi>X</mi>
+    <mo>=</mo>
+    <mn>1</mn>
+  </mrow>
+</math> 的级数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>X</mi>
+</math>。写出 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mo>=</mo>
+    <mn>1</mn>
+    <mo>+</mo>
+    <msub>
+      <mi>S</mi>
+      <mi>R</mi>
+    </msub>
+  </mrow>
+</math>，其中 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>S</mi>
+    <mi>R</mi>
+  </msub>
+</math> 是 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math> 中常数项之后的部分。于是我们可以如下解出 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>X</mi>
+</math>：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right center left" rowspacing="3pt" columnspacing="thickmathspace">
+    <mtr>
+      <mtd>
+        <mi>S</mi>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mi>X</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mn>1</mn>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <mn>1</mn>
+        <mo>+</mo>
+        <msub>
+          <mi>S</mi>
+          <mi>R</mi>
+        </msub>
+        <mo stretchy="false">)</mo>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mi>X</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mn>1</mn>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>X</mi>
+        <mo>+</mo>
+        <msub>
+          <mi>S</mi>
+          <mi>R</mi>
+        </msub>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mi>X</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mn>1</mn>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mi>X</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mn>1</mn>
+        <mo>−<!-- − --></mo>
+        <msub>
+          <mi>S</mi>
+          <mi>R</mi>
+        </msub>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mi>X</mi>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math> 换句话说，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>X</mi>
+</math> 是一个幂级数，其常数项为 1，而高阶项由 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>S</mi>
+    <mi>R</mi>
+  </msub>
+</math> 的负值乘以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>X</mi>
+</math> 给出。利用这一想法编写一个过程 <code>invert-unit-series</code>，对于常数项为 1 的幂级数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math> 计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1</mn>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>S</mi>
+  </mrow>
+</math>。你将需要使用来自 <a href="#Exercise-3_002e60">习题 3.60</a> 的 <code>mul-series</code>。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e62"></a>习题 3.62：</strong> 利用 <a href="#Exercise-3_002e60">习题 3.60</a> 和 <a href="#Exercise-3_002e61">习题 3.61</a> 的结果，定义一个过程 <code>div-series</code>，它用于两个幂级数相除。只要分母级数以非零常数项开头，<code>Div-series</code> 就应当适用于任意两个级数。（如果分母的常数项为零，那么 <code>div-series</code> 应当发出错误信号。）说明如何把 <code>div-series</code> 与 <a href="#Exercise-3_002e59">习题 3.59</a> 的结果一起使用，以生成正切的幂级数。</p></blockquote>
+
+<a id="g_t3_002e5_002e3"></a>
+<a id="Exploiting-the-Stream-Paradigm"></a>
+<h4 class="subsection"><span class="secnum">3.5.3</span><span class="sectitle">利用流范式</span></h4>
+
+<p>带有延迟求值的流可以是一种强大的建模工具，它提供了局部状态和赋值的许多好处。此外，它们避免了把赋值引入编程语言时所伴随的一些理论上的纠缠。</p>
+<p>流方法之所以具有启发性，是因为它允许我们构建具有不同于围绕状态变量赋值来组织的系统的模块边界的系统。例如，我们可以把整个时间序列（或信号）视为关注焦点，而不是各个时刻状态变量的值。这使得组合和比较来自不同时刻的状态分量变得方便。</p>
+<a id="Formulating-iterations-as-stream-processes"></a>
+<h5 class="subsubheading">把迭代表述为流计算过程</h5>
+
+<p>在 <a href="1_002e2_zh.xhtml#g_t1_002e2_002e1">1.2.1</a> 节中，我们介绍了迭代计算过程，它们通过更新状态变量来进行。我们现在知道，我们可以把状态表示为一个“无时间性”的值流，而不是一组要更新的变量。让我们采用这种视角来重新审视 <a href="1_002e1_zh.xhtml#g_t1_002e1_002e7">1.1.7</a> 中的平方根过程。回想一下，其思想是通过反复应用改进猜测值的过程，为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 的平方根生成一个越来越好的猜测值序列：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt-improve guess x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">average guess </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x guess</span><span class="clo">)))</span></pre></div>
+
+<p>在我们最初的 <code>sqrt</code> 过程中，我们让这些猜测值成为一个状态变量的相继取值。相反，我们可以生成猜测值的无穷流，从初始猜测值 1 开始：<a class="footnote_link" id="DOCF193" href="#FOOT193"><sup>193</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt-stream x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> guesses
+    </span><span class="opn">(</span><span class="pln">cons-stream 
+     </span><span class="lit">1.0</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-map
+          </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">guess</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">sqrt-improve guess x</span><span class="clo">))</span><span class="pln">
+          guesses</span><span class="clo">)))</span><span class="pln">
+  guesses</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">display-stream </span><span class="opn">(</span><span class="pln">sqrt-stream </span><span class="lit">2</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">1.</span></i><span class="pln">
+</span><i><span class="lit">1.5</span></i><span class="pln">
+</span><i><span class="lit">1.4166666666666665</span></i><span class="pln">
+</span><i><span class="lit">1.4142156862745097</span></i><span class="pln">
+</span><i><span class="lit">1.4142135623746899</span></i><span class="pln">
+</span><span class="roman"><span class="pun">…</span></span>
+</pre></div>
+
+<p>我们可以生成流中越来越多的项，以得到越来越好的猜测值。如果我们愿意，我们可以编写一个过程，不断生成项，直到答案足够好为止。（见 <a href="#Exercise-3_002e64">习题 3.64</a>。）</p>
+<p>另一种可以用同样方式处理的迭代是生成 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math> 的近似值，它基于我们在 <a href="1_002e3_zh.xhtml#g_t1_002e3_002e1">1.3.1</a> 中看到的交错级数：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mi>π<!-- π --></mi>
+      <mn>4</mn>
+    </mfrac>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mn>1</mn>
+  <mo>−<!-- − --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mn>1</mn>
+      <mn>3</mn>
+    </mfrac>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mn>1</mn>
+      <mn>5</mn>
+    </mfrac>
+  </mrow>
+  <mo>−<!-- − --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mn>1</mn>
+      <mn>7</mn>
+    </mfrac>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo>…<!-- … --></mo>
+    <mo>.</mo>
+  </mrow>
+</math> 我们首先生成该级数的求和项流（奇整数的倒数，符号交替）。然后我们取越来越多项的和所构成的流（使用 <a href="#Exercise-3_002e55">习题 3.55</a> 中的 <code>partial-sums</code> 过程），并把结果乘以 4：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pi-summands n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream 
+   </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="lit">1.0</span><span class="pln"> n</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">stream-map </span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pi-summands </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> n </span><span class="lit">2</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> pi-stream
+  </span><span class="opn">(</span><span class="pln">scale-stream 
+   </span><span class="opn">(</span><span class="pln">partial-sums </span><span class="opn">(</span><span class="pln">pi-summands </span><span class="lit">1</span><span class="clo">))</span><span class="pln"> </span><span class="lit">4</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">display-stream pi-stream</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">4.</span></i><span class="pln">
+</span><i><span class="lit">2.666666666666667</span></i><span class="pln">
+</span><i><span class="lit">3.466666666666667</span></i><span class="pln">
+</span><i><span class="lit">2.8952380952380956</span></i><span class="pln">
+</span><i><span class="lit">3.3396825396825403</span></i><span class="pln">
+</span><i><span class="lit">2.9760461760461765</span></i><span class="pln">
+</span><i><span class="lit">3.2837384837384844</span></i><span class="pln">
+</span><i><span class="lit">3.017071817071818</span></i><span class="pln">
+</span><span class="roman"><span class="pun">…</span></span>
+</pre></div>
+
+<p>这给了我们一个越来越好的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>近似值流，尽管这些近似值收敛得相当慢。该序列的八项将<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>的值界定在3.284和3.017之间。</p>
+<p>到目前为止，我们对状态流方法的使用与更新状态变量没有太大区别。但流给了我们做一些有趣技巧的机会。例如，我们可以用一个<a id="index-sequence-accelerator"></a><em>序列加速器</em>来变换一个流，它将一个近似值序列转换为一个新序列，该新序列收敛到与原序列相同的值，只是更快。</p>
+<p>其中一个这样的加速器，由十八世纪瑞士数学家 Leonhard Euler 提出，适用于交错级数（符号交替的项组成的级数）的部分和序列。在 Euler 的技术中，如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>S</mi>
+    <mi>n</mi>
+  </msub>
+</math>是原始和序列的第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math>项，那么加速后的序列的项为<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>n</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>−<!-- − --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mrow>
+          <mo stretchy="false">(</mo>
+          <msub>
+            <mi>S</mi>
+            <mrow class="MJX-TeXAtom-ORD">
+              <mi>n</mi>
+              <mo>+</mo>
+              <mn>1</mn>
+            </mrow>
+          </msub>
+          <mo>−<!-- − --></mo>
+          <msub>
+            <mi>S</mi>
+            <mi>n</mi>
+          </msub>
+          <msup>
+            <mo stretchy="false">)</mo>
+            <mn>2</mn>
+          </msup>
+        </mrow>
+        <mrow>
+          <msub>
+            <mi>S</mi>
+            <mrow class="MJX-TeXAtom-ORD">
+              <mi>n</mi>
+              <mo>−<!-- − --></mo>
+              <mn>1</mn>
+            </mrow>
+          </msub>
+          <mo>−<!-- − --></mo>
+          <mn>2</mn>
+          <msub>
+            <mi>S</mi>
+            <mi>n</mi>
+          </msub>
+          <mo>+</mo>
+          <msub>
+            <mi>S</mi>
+            <mrow class="MJX-TeXAtom-ORD">
+              <mi>n</mi>
+              <mo>+</mo>
+              <mn>1</mn>
+            </mrow>
+          </msub>
+        </mrow>
+      </mfrac>
+    </mrow>
+    <mo>.</mo>
+  </mrow>
+</math>因此，如果原始序表示为值的流，则变换后的序列由下式给出</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">euler-transform s</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">s0 </span><span class="opn">(</span><span class="pln">stream-ref s </span><span class="lit">0</span><span class="clo">))</span><span class="pln">     </span><span class="com">; </span><var><span class="com">Sₙ</span></var><span class="com">₋₁</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">s1 </span><span class="opn">(</span><span class="pln">stream-ref s </span><span class="lit">1</span><span class="clo">))</span><span class="pln">     </span><span class="com">; </span><var><span class="com">Sₙ</span></var><span class="pln">
+        </span><span class="opn">(</span><span class="pln">s2 </span><span class="opn">(</span><span class="pln">stream-ref s </span><span class="lit">2</span><span class="clo">)))</span><span class="pln">    </span><span class="com">; </span><var><span class="com">Sₙ</span></var><span class="com">₊₁</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">cons-stream 
+     </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> s2 </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> s2 s1</span><span class="clo">))</span><span class="pln">
+              </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> s0 </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">-2</span><span class="pln"> s1</span><span class="clo">)</span><span class="pln"> s2</span><span class="clo">)))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">euler-transform </span><span class="opn">(</span><span class="pln">stream-cdr s</span><span class="clo">)))))</span></pre></div>
+
+<p>我们可以用我们的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>近似值序列来演示 Euler 加速：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">display-stream 
+ </span><span class="opn">(</span><span class="pln">euler-transform pi-stream</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">3.166666666666667</span></i><span class="pln">
+</span><i><span class="lit">3.1333333333333337</span></i><span class="pln">
+</span><i><span class="lit">3.1452380952380956</span></i><span class="pln">
+</span><i><span class="lit">3.13968253968254</span></i><span class="pln">
+</span><i><span class="lit">3.1427128427128435</span></i><span class="pln">
+</span><i><span class="lit">3.1408813408813416</span></i><span class="pln">
+</span><i><span class="lit">3.142071817071818</span></i><span class="pln">
+</span><i><span class="lit">3.1412548236077655</span></i><span class="pln">
+</span><span class="roman"><span class="pun">…</span></span>
+</pre></div>
+
+<p>更好的是，我们可以加速已加速的序列，并递归地加速那个序列，依此类推。也就是说，我们创建一个流的流（我们将这种结构称为<a id="index-tableau"></a><em>表</em>），其中每个流都是前一个流的变换：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-tableau transform s</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream 
+   s
+   </span><span class="opn">(</span><span class="pln">make-tableau
+    transform
+    </span><span class="opn">(</span><span class="pln">transform s</span><span class="clo">))))</span></pre></div>
+
+<p>该表具有形式<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="center center center center center center" rowspacing="4pt" columnspacing="1em">
+    <mtr>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>00</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>01</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>02</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>03</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>04</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>10</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>11</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>12</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>13</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd/>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>20</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>21</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>s</mi>
+          <mrow class="MJX-TeXAtom-ORD">
+            <mn>22</mn>
+          </mrow>
+        </msub>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd/>
+      <mtd/>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+      <mtd/>
+      <mtd/>
+    </mtr>
+  </mtable>
+</math>最后，我们通过取表中每一行的第一项来形成一个序列：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">accelerated-sequence transform s</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">stream-map stream-car
+              </span><span class="opn">(</span><span class="pln">make-tableau transform s</span><span class="clo">)))</span></pre></div>
+
+<p>我们可以演示<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>序列的这种“超级加速”：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">display-stream 
+ </span><span class="opn">(</span><span class="pln">accelerated-sequence euler-transform
+                       pi-stream</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">4.</span></i><span class="pln">
+</span><i><span class="lit">3.166666666666667</span></i><span class="pln">
+</span><i><span class="lit">3.142105263157895</span></i><span class="pln">
+</span><i><span class="lit">3.141599357319005</span></i><span class="pln">
+</span><i><span class="lit">3.1415927140337785</span></i><span class="pln">
+</span><i><span class="lit">3.1415926539752927</span></i><span class="pln">
+</span><i><span class="lit">3.1415926535911765</span></i><span class="pln">
+</span><i><span class="lit">3.141592653589778</span></i><span class="pln">
+</span><span class="roman"><span class="pun">…</span></span>
+</pre></div>
+
+<p>结果令人印象深刻。取该序列的八项就能得到<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>精确到14位小数的正确值。如果我们只使用原始的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>序列，我们需要计算大约<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mn>13</mn>
+    </mrow>
+  </msup>
+</math>项（即，将级数展开到足够远，使得各项小于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mn>10</mn>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>−<!-- − --></mo>
+      <mn>13</mn>
+    </mrow>
+  </msup>
+</math>）才能获得那么高的精度！</p>
+<p>我们本可以在不使用流的情况下实现这些加速技术。但流的表述特别优雅和方便，因为整个状态序列作为数据结构可供我们使用，可以用一组统一的操作来操纵。</p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e63"></a>习题 3.63：</strong> Louis Reasoner 问为什么<code>sqrt-stream</code>过程没有写成下面这种更直接的方式，不使用局部变量<code>guesses</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt-stream x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream 
+   </span><span class="lit">1.0</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">stream-map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">guess</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">sqrt-improve guess x</span><span class="clo">))</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">sqrt-stream x</span><span class="clo">))))</span></pre></div>
+
+<p>Alyssa P. Hacker 回答说这个版本的过程效率要低得多，因为它执行了冗余计算。解释 Alyssa 的回答。如果我们的<code>delay</code>实现只使用<code>(lambda () ⟨<var>exp</var>⟩)</code>而不使用<code>memo-proc</code>提供的优化（<a href="#g_t3_002e5_002e1">3.5.1</a>），这两个版本在效率上还会有差异吗？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e64"></a>习题 3.64：</strong> 编写一个过程<code>stream-limit</code>，它接受一个流和一个数字（容差）作为参数。它应该检查流，直到找到两个连续元素，其差的绝对值小于容差，并返回这两个元素中的第二个。使用这个，我们可以通过以下方式计算平方根到给定的容差</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x tolerance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">stream-limit </span><span class="opn">(</span><span class="pln">sqrt-stream x</span><span class="clo">)</span><span class="pln"> tolerance</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e65"></a>习题 3.65：</strong> 使用级数<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>ln</mi>
+  <mo>⁡<!-- ⁡ --></mo>
+  <mn>2</mn>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mn>1</mn>
+  <mo>−<!-- − --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mn>1</mn>
+      <mn>2</mn>
+    </mfrac>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mn>1</mn>
+      <mn>3</mn>
+    </mfrac>
+  </mrow>
+  <mo>−<!-- − --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mn>1</mn>
+      <mn>4</mn>
+    </mfrac>
+  </mrow>
+  <mo>+</mo>
+  <mo>…<!-- … --></mo>
+</math>来计算2的自然对数的三个近似值序列，方式与我们上面为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>所做的一样。这些序列收敛得有多快？</p></blockquote>
+
+<a id="Infinite-streams-of-pairs"></a>
+<h5 class="subsubheading">无穷序对流</h5>
+
+<p>在<a href="2_002e2_zh.xhtml#g_t2_002e2_002e3">2.2.3</a>中，我们看到了序列范式如何将传统的嵌套循环处理为定义在序对序列上的计算过程。如果我们将这种技术推广到无穷流，那么我们就可以编写那些不容易表示为循环的程序，因为“循环”必须在一个无限集上遍历。</p>
+<p>例如，假设我们想要推广<a href="2_002e2_zh.xhtml#g_t2_002e2_002e3">2.2.3</a>中的<code>prime-sum-pairs</code>过程，以产生<em>所有</em>整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的序对流，其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>j</mi>
+  </mrow>
+</math>，使得<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>+</mo>
+    <mi>j</mi>
+  </mrow>
+</math>是素数。如果<code>int-pairs</code>是所有整数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的序对序列，其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>j</mi>
+  </mrow>
+</math>，那么我们所需的流就简单地是<a class="footnote_link" id="DOCF194" href="#FOOT194"><sup>194</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">stream-filter 
+ </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pair</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">prime? </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> pair</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cadr</span><span class="pln"> pair</span><span class="clo">))))</span><span class="pln">
+ int-pairs</span><span class="clo">)</span></pre></div>
+
+<p>那么，我们的问题就是产生流<code>int-pairs</code>。更一般地，假设我们有两个流<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mo>=</mo>
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>S</mi>
+      <mi>i</mi>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>T</mi>
+    <mo>=</mo>
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>T</mi>
+      <mi>j</mi>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，并想象无限矩形阵列<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="center center center center" rowspacing="4pt" columnspacing="1em">
+    <mtr>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>0</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>0</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>0</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>0</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>0</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>2</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>0</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>2</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>2</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+      <mtd/>
+      <mtd/>
+      <mtd/>
+    </mtr>
+  </mtable>
+</math>我们希望生成一个流，包含阵列中位于对角线上或上方的所有序对，即序对<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="center center center center" rowspacing="4pt" columnspacing="1em">
+    <mtr>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>0</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>0</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>0</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>0</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd/>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>2</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd/>
+      <mtd/>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>（如果我们取<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>都为整数流，那么这将是我们想要的流<code>int-pairs</code>。）</p>
+<p>将一般的序对流称为<code>(pairs S T)</code>，并考虑它由三部分组成：序对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>S</mi>
+      <mn>0</mn>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>T</mi>
+      <mn>0</mn>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>、第一行中其余的序对，以及剩余的序对：<a class="footnote_link" id="DOCF195" href="#FOOT195"><sup>195</sup></a> <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="center center center center" rowspacing="4pt" columnspacing="1em" rowlines="solid none" columnlines="solid none none">
+    <mtr>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>0</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>0</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>0</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>0</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>1</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd/>
+      <mtd>
+        <mo stretchy="false">(</mo>
+        <msub>
+          <mi>S</mi>
+          <mn>2</mn>
+        </msub>
+        <mo>,</mo>
+        <msub>
+          <mi>T</mi>
+          <mn>2</mn>
+        </msub>
+        <mo stretchy="false">)</mo>
+      </mtd>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd/>
+      <mtd/>
+      <mtd/>
+      <mtd>
+        <mo>…<!-- … --></mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math> 观察到这个分解中的第三部分（不在第一行中的序对）是（递归地）由<code>(stream-cdr S)</code>和<code>(stream-cdr T)</code>形成的序对。还要注意第二部分（第一行的其余部分）是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">stream-map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> 
+              </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">stream-car s</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">stream-cdr t</span><span class="clo">))</span></pre></div>
+
+<p>因此我们可以如下形成我们的序对流：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pairs s t</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream
+   </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">stream-car s</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-car t</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">combine-in-some-way</span></var><span class="pln">⟩
+    </span><span class="opn">(</span><span class="pln">stream-map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> 
+                  </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">stream-car s</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+                </span><span class="opn">(</span><span class="pln">stream-cdr t</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">pairs </span><span class="opn">(</span><span class="pln">stream-cdr s</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">stream-cdr t</span><span class="clo">)))))</span></pre></div>
+
+<p>为了完成这个过程，我们必须选择某种方式来组合两个内部流。一个想法是使用<a href="2_002e2_zh.xhtml#g_t2_002e2_002e1">2.2.1</a>中<code>append</code>过程的流版本：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-append s1 s2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-null? s1</span><span class="clo">)</span><span class="pln">
+      s2
+      </span><span class="opn">(</span><span class="pln">cons-stream 
+       </span><span class="opn">(</span><span class="pln">stream-car s1</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">stream-append </span><span class="opn">(</span><span class="pln">stream-cdr s1</span><span class="clo">)</span><span class="pln"> s2</span><span class="clo">))))</span></pre></div>
+
+<p>然而，这对于无穷流是不合适的，因为它在合并第二个流之前取走了第一个流的所有元素。特别是，如果我们尝试使用以下方式生成所有正整数序对</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">pairs integers integers</span><span class="clo">)</span></pre></div>
+
+<p>我们的结果流将首先尝试遍历第一个整数等于1的所有序对，因此永远不会产生第一个整数为任何其他值的序对。</p>
+<p>为了处理无穷流，我们需要设计一种组合顺序，确保如果我们让程序运行足够长的时间，每个元素最终都会被到达。实现这一点的一种优雅方式是使用以下<code>interleave</code>过程：<a class="footnote_link" id="DOCF196" href="#FOOT196"><sup>196</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">interleave s1 s2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-null? s1</span><span class="clo">)</span><span class="pln">
+      s2
+      </span><span class="opn">(</span><span class="pln">cons-stream 
+       </span><span class="opn">(</span><span class="pln">stream-car s1</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">interleave s2 </span><span class="opn">(</span><span class="pln">stream-cdr s1</span><span class="clo">)))))</span></pre></div>
+
+<p>由于<code>interleave</code>交替地从两个流中取元素，第二个流的每个元素最终都会进入交错流中，即使第一个流是无限的。</p>
+<p>因此，我们可以生成所需的序对流为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pairs s t</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream
+   </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">stream-car s</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-car t</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">interleave
+    </span><span class="opn">(</span><span class="pln">stream-map </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> 
+                  </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">stream-car s</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+                </span><span class="opn">(</span><span class="pln">stream-cdr t</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">pairs </span><span class="opn">(</span><span class="pln">stream-cdr s</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-cdr t</span><span class="clo">)))))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e66"></a>习题3.66：</strong>检查流<code>(pairs
+integers integers)</code>。你能对序对被放入流中的顺序做出任何一般性评论吗？例如，大约有多少个序对排在序对(1, 100)之前？序对(99, 100)之前？序对(100, 100)之前？（如果你能在这里做出精确的数学陈述，那就更好了。但如果你发现自己陷入困境，也可以随意给出更定性的答案。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e67"></a>习题3.67：</strong>修改<code>pairs</code>过程，使得<code>(pairs integers integers)</code>将产生<em>所有</em>整数序对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的流（没有条件<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>j</mi>
+  </mrow>
+</math>）。提示：你需要混入一个额外的流。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e68"></a>习题3.68：</strong>Louis Reasoner认为从三个部分构建序对流是不必要的复杂。他没有将序对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>S</mi>
+      <mn>0</mn>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>T</mi>
+      <mn>0</mn>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>与第一行中的其余序对分开，而是提议处理整个第一行，如下所示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pairs s t</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">interleave
+   </span><span class="opn">(</span><span class="pln">stream-map
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> 
+      </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">stream-car s</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+    t</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">pairs </span><span class="opn">(</span><span class="pln">stream-cdr s</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">stream-cdr t</span><span class="clo">))))</span></pre></div>
+
+<p>这样能行吗？考虑如果我们使用Louis的<code>pairs</code>定义来求值<code>(pairs integers
+integers)</code>会发生什么。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e69"></a>习题3.69：</strong>编写一个过程<code>triples</code>，它接受三个无穷流<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>S</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>U</mi>
+</math>，并产生三元组<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>S</mi>
+      <mi>i</mi>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>T</mi>
+      <mi>j</mi>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>U</mi>
+      <mi>k</mi>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的流，使得<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>j</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>k</mi>
+  </mrow>
+</math>。使用<code>triples</code>生成所有正整数的毕达哥拉斯三元组流，即满足<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>j</mi>
+  </mrow>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>i</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <msup>
+      <mi>j</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>=</mo>
+    <msup>
+      <mi>k</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+</math>的三元组<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo>,</mo>
+    <mi>k</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e70"></a>习题3.70：</strong>如果能够生成序对以某种有用的顺序出现的流，而不是按照<em>临时</em>交错过程产生的顺序，那将很好。我们可以使用类似于<a href="#Exercise-3_002e56">习题3.56</a>中<code>merge</code>过程的技术，如果我们定义一种方式来说明一个整数序对“小于”另一个。一种方法是定义一个“权重函数”<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>W</mi>
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，并规定如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>W</mi>
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>i</mi>
+      <mn>1</mn>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>j</mi>
+      <mn>1</mn>
+    </msub>
+    <mo stretchy="false">)</mo>
+    <mo>&lt;</mo>
+  </mrow>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>W</mi>
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>i</mi>
+      <mn>2</mn>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>j</mi>
+      <mn>2</mn>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，则<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>i</mi>
+      <mn>1</mn>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>j</mi>
+      <mn>1</mn>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>小于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>i</mi>
+      <mn>2</mn>
+    </msub>
+    <mo>,</mo>
+    <msub>
+      <mi>j</mi>
+      <mn>2</mn>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。编写一个过程<code>merge-weighted</code>，它类似于<code>merge</code>，不同之处在于<code>merge-weighted</code>接受一个额外的参数<code>weight</code>，这是一个计算序对权重的过程，用于确定元素在结果合并流中应出现的顺序。<a class="footnote_link" id="DOCF197" href="#FOOT197"><sup>197</sup></a>使用这个，将<code>pairs</code>推广为一个过程<code>weighted-pairs</code>，它接受两个流以及一个计算权重函数的过程，并生成按权重排序的序对流。使用你的过程生成</p>
+<ol>
+<li>所有正整数序对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>且<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>j</mi>
+  </mrow>
+</math>的流，按和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>+</mo>
+    <mi>j</mi>
+  </mrow>
+</math>排序，</li><li>所有正整数序对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>且<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>j</mi>
+  </mrow>
+</math>的流，其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>j</mi>
+</math>都不能被2、3或5整除，并且序对按和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>2</mn>
+    <mi>i</mi>
+    <mo>+</mo>
+    <mn>3</mn>
+    <mi>j</mi>
+    <mo>+</mo>
+    <mn>5</mn>
+    <mi>i</mi>
+    <mi>j</mi>
+  </mrow>
+</math>排序。</li></ol>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e71"></a>习题3.71：</strong>可以用不止一种方式表示为两个立方数之和的数有时被称为<a id="index-Ramanujan-numbers"></a><em>拉马努金数</em>，以纪念数学家斯里尼瓦瑟·拉马努金。<a class="footnote_link" id="DOCF198" href="#FOOT198"><sup>198</sup></a>有序的序对流为计算这些数的问题提供了一个优雅的解法。要找到一个可以用两种不同方式写成两个立方数之和的数，我们只需生成整数对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的流，按照和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>i</mi>
+      <mn>3</mn>
+    </msup>
+    <mo>+</mo>
+    <msup>
+      <mi>j</mi>
+      <mn>3</mn>
+    </msup>
+  </mrow>
+</math>加权（见<a href="#Exercise-3_002e70">习题3.70</a>），然后在流中搜索两个具有相同权重的连续序对。编写一个过程来生成拉马努金数。第一个这样的数是1,729。接下来的五个是什么？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e72"></a>习题3.72：</strong>以类似于<a href="#Exercise-3_002e71">习题3.71</a>的方式，生成一个流，包含所有可以用三种不同方式写成两个平方数之和的数（展示它们如何能这样写出）。</p></blockquote>
+
+<a id="Streams-as-signals"></a>
+<h5 class="subsubheading">流作为信号</h5>
+
+<p>我们开始讨论流时，将它们描述为信号处理系统中“信号”的计算类比。事实上，我们可以用流以非常直接的方式对信号处理系统建模，将信号在连续时间间隔上的值表示为流的连续元素。例如，我们可以实现一个<a id="index-integrator"></a><em>积分器</em>或<a id="index-summer"></a><em>求和器</em>，对于输入流<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo>=</mo>
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>x</mi>
+      <mi>i</mi>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>、初始值<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math>和小增量<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>t</mi>
+  </mrow>
+</math>，累加和<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <msub>
+    <mi>S</mi>
+    <mi>i</mi>
+  </msub>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mi>C</mi>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <munderover>
+      <mo>∑<!-- ∑ --></mo>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>j</mi>
+        <mo>=</mo>
+        <mn>1</mn>
+      </mrow>
+      <mi>i</mi>
+    </munderover>
+    <msub>
+      <mi>x</mi>
+      <mi>j</mi>
+    </msub>
+    <mspace width="thinmathspace"/>
+    <mi>d</mi>
+    <mi>t</mi>
+  </mrow>
+</math>并返回值的流<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>S</mi>
+    <mo>=</mo>
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>S</mi>
+      <mi>i</mi>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。下面的<code>integral</code>过程让人想起整数流的“隐式风格”定义（<a href="#g_t3_002e5_002e2">3.5.2</a>）：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">integral integrand initial-value dt</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> int
+    </span><span class="opn">(</span><span class="pln">cons-stream 
+     initial-value
+     </span><span class="opn">(</span><span class="pln">add-streams </span><span class="opn">(</span><span class="pln">scale-stream integrand dt</span><span class="clo">)</span><span class="pln">
+                  int</span><span class="clo">)))</span><span class="pln">
+  int</span><span class="clo">)</span></pre></div>
+
+<p><a href="#Figure-3_002e32">图3.32</a>是一个对应于<code>integral</code>过程的信号处理系统的图示。输入流被<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>t</mi>
+  </mrow>
+</math>缩放，并通过一个加法器，其输出被反馈回同一个加法器。<code>int</code>定义中的自引用在图中通过连接加法器输出到其输入之一的反馈回路反映出来。</p>
+<figure class="float">
+<a id="Figure-3_002e32"></a>
+<object style="width: 59.32ex; height: 20.20ex;" data="fig/chap3/Fig3.32a.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.32：</strong>将<code>integral</code>过程视为信号处理系统。</p>
+</figcaption>
+</figure>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e73"></a>习题3.73：</strong>我们可以用流来对电路建模，表示电流或电压在一系列时间点上的值。例如，假设我们有一个<a id="index-RC-circuit"></a><em>RC电路</em>，由电阻为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math>的电阻器和电容为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math>的电容器串联组成。电路对注入电流<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>的电压响应<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>由<a href="#Figure-3_002e33">图3.33</a>中的公式确定，其结构由附带的信号流图所示。</p>
+<figure class="float">
+<a id="Figure-3_002e33"></a>
+<object style="width: 50.08ex; height: 37.47ex;" data="fig/chap3/Fig3.33a.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.33：</strong>一个RC电路及相关的信号流图。</p>
+</figcaption>
+</figure>
+
+<p>编写一个过程<code>RC</code>来对该电路建模。<code>RC</code>应接受<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>t</mi>
+  </mrow>
+</math>的值作为输入，并应返回一个过程，该过程接受表示电流<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>的流和电容器电压的初始值<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>v</mi>
+    <mn>0</mn>
+  </msub>
+</math>作为输入，并产生电压流<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>v</mi>
+</math>作为输出。例如，你应该能够通过求值<code>(define RC1 (RC 5 1 0.5))</code>来使用<code>RC</code>对具有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math> = 5欧姆、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math> = 1法拉和0.5秒时间步长的RC电路建模。这将<code>RC1</code>定义为一个过程，它接受表示电流时间序列的流和初始电容器电压，并产生输出电压流。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e74"></a>习题3.74：</strong>Alyssa P. Hacker正在设计一个系统来处理来自物理传感器的信号。她希望产生的一个重要特征是描述输入信号<a id="index-zero-crossings"></a><em>过零点</em>的信号。也就是说，当输入信号从负变为正时，结果信号应为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo>+</mo>
+    <mn>1</mn>
+  </mrow>
+</math>；当输入信号从正变为负时，应为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math>；否则为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0</mn>
+</math>。（假设<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0</mn>
+</math>输入的正负号为正。）例如，一个典型的输入信号及其相关的过零信号将是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="roman"><span class="pun">…</span></span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">1.5</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">0.5</span><span class="pln"> </span><span class="lit">-0.1</span><span class="pln"> </span><span class="lit">-2</span><span class="pln"> </span><span class="lit">-3</span><span class="pln"> </span><span class="lit">-2</span><span class="pln"> </span><span class="lit">-0.5</span><span class="pln"> </span><span class="lit">0.2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="roman"><span class="pun">…</span></span><span class="pln">
+</span><span class="roman"><span class="pun">…</span></span><span class="pln"> </span><span class="lit">0</span><span class="pln"> </span><span class="lit">0</span><span class="pln">  </span><span class="lit">0</span><span class="pln">  </span><span class="lit">0</span><span class="pln">  </span><span class="lit">0</span><span class="pln">   </span><span class="lit">-1</span><span class="pln">   </span><span class="lit">0</span><span class="pln">  </span><span class="lit">0</span><span class="pln">  </span><span class="lit">0</span><span class="pln">   </span><span class="lit">0</span><span class="pln">   </span><span class="lit">1</span><span class="pln">  </span><span class="lit">0</span><span class="pln"> </span><span class="lit">0</span><span class="pln"> </span><span class="roman"><span class="pun">…</span></span>
+</pre></div>
+
+<p>在Alyssa的系统中，来自传感器的信号表示为流<code>sense-data</code>，流<code>zero-crossings</code>是对应的过零流。Alyssa首先编写一个过程<code>sign-change-detector</code>，它接受两个值作为参数，并比较这些值的正负号以产生适当的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>0</mn>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mn>1</mn>
+</math>或<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo>−<!-- − --></mo>
+    <mn>1</mn>
+  </mrow>
+</math>。然后她如下构造她的过零流：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-zero-crossings
+         input-stream last-value</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream
+   </span><span class="opn">(</span><span class="pln">sign-change-detector 
+    </span><span class="opn">(</span><span class="pln">stream-car input-stream</span><span class="clo">)</span><span class="pln"> 
+    last-value</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">make-zero-crossings 
+    </span><span class="opn">(</span><span class="pln">stream-cdr input-stream</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">stream-car input-stream</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> zero-crossings 
+  </span><span class="opn">(</span><span class="pln">make-zero-crossings sense-data </span><span class="lit">0</span><span class="clo">))</span></pre></div>
+
+<p>Alyssa的老板Eva Lu Ator走过来说，这个程序大致等价于下面的程序，它使用了来自<a href="#Exercise-3_002e50">习题3.50</a>的<code>stream-map</code>的广义版本：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> zero-crossings
+  </span><span class="opn">(</span><span class="pln">stream-map sign-change-detector 
+              sense-data 
+              ⟨</span><var><span class="pln">expression</span></var><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+
+<p>通过提供所指示的<code>⟨</code><var>expression</var><code>⟩</code>来完成程序。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e75"></a>习题3.75：</strong>不幸的是，<a href="#Exercise-3_002e74">习题3.74</a>中Alyssa的过零检测器被证明是不够的，因为来自传感器的含噪信号导致虚假的过零点。硬件专家Lem E. Tweakit建议Alyssa在提取过零点之前平滑信号以滤除噪声。Alyssa接受了他的建议，决定从通过将每个感测数据值与前一个值平均而构造的信号中提取过零点。她向助手Louis Reasoner解释了这个问题，后者试图实现这个想法，将Alyssa的程序修改如下：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-zero-crossings 
+         input-stream last-value</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">avpt 
+         </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-car input-stream</span><span class="clo">)</span><span class="pln"> 
+               last-value</span><span class="clo">)</span><span class="pln"> 
+            </span><span class="lit">2</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">cons-stream 
+     </span><span class="opn">(</span><span class="pln">sign-change-detector avpt last-value</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">make-zero-crossings 
+      </span><span class="opn">(</span><span class="pln">stream-cdr input-stream</span><span class="clo">)</span><span class="pln"> avpt</span><span class="clo">))))</span></pre></div>
+
+<p>这没有正确地实现Alyssa的计划。找出Louis引入的错误，并在不改变程序结构的情况下修复它。（提示：你需要增加<code>make-zero-crossings</code>的参数数量。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e76"></a>习题3.76：</strong>Eva Lu Ator 对 Louis 在<a href="#Exercise-3_002e75">习题3.75</a>中的方法提出了批评。他写的程序不是模块化的，因为它将平滑操作与过零提取混在了一起。例如，如果 Alyssa 找到了更好的方法来调理她的输入信号，提取器不应该需要改变。通过编写一个过程<code>smooth</code>来帮助 Louis，该过程接受一个流作为输入，并产生一个流，其中每个元素是输入流中两个连续元素的平均值。然后使用<code>smooth</code>作为组件，以更模块化的风格实现过零检测器。</p></blockquote>
+
+<a id="g_t3_002e5_002e4"></a>
+<a id="Streams-and-Delayed-Evaluation"></a>
+<h4 class="subsection"><span class="secnum">3.5.4</span><span class="sectitle">流与延迟求值</span></h4>
+
+<p>上一节末尾的<code>integral</code>过程展示了我们如何使用流来对包含反馈回路的信号处理系统进行建模。<a href="#Figure-3_002e32">图3.32</a>中所示的加法器的反馈回路是通过以下事实来建模的：<code>integral</code>的内部流<code>int</code>是用自身定义的：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> int
+  </span><span class="opn">(</span><span class="pln">cons-stream 
+   initial-value
+   </span><span class="opn">(</span><span class="pln">add-streams 
+    </span><span class="opn">(</span><span class="pln">scale-stream integrand dt</span><span class="clo">)</span><span class="pln"> int</span><span class="clo">)))</span></pre></div>
+
+<p>解释器处理这种隐式定义的能力取决于<code>delay</code>被结合到<code>cons-stream</code>中。如果没有这个<code>delay</code>，解释器就无法在求值<code>cons-stream</code>的两个参数之前构造<code>int</code>，而这将要求<code>int</code>已经被定义。一般来说，<code>delay</code>对于使用流来对包含回路的信号处理系统进行建模是至关重要的。如果没有<code>delay</code>，我们的模型就必须这样表述：任何信号处理组件的输入都必须在输出产生之前被完全求值。这将排除回路。</p>
+<p>不幸的是，带回路系统的流模型可能需要使用<code>delay</code>，而不仅仅是<code>cons-stream</code>所提供的“隐藏”<code>delay</code>。例如，<a href="#Figure-3_002e34">图3.34</a>展示了一个用于求解微分方程<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>y</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>d</mi>
+    <mi>t</mi>
+    <mo>=</mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的信号处理系统，其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>是给定的函数。该图显示了一个映射组件，它将<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>应用于其输入信号，并以与实际上用于求解此类方程的模拟计算机电路非常相似的方式，在反馈回路中连接到一个积分器。</p>
+<figure class="float">
+<a id="Figure-3_002e34"></a>
+<object style="width: 44.98ex; height: 18.91ex;" data="fig/chap3/Fig3.34.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.34：</strong>一个求解方程<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>y</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>d</mi>
+    <mi>t</mi>
+    <mo>=</mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的“模拟计算机电路”。</p>
+</figcaption>
+</figure>
+
+<p>假设我们给定<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>的初始值<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>y</mi>
+    <mn>0</mn>
+  </msub>
+</math>，我们可以尝试使用以下过程来对该系统进行建模</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">solve f y0 dt</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> y </span><span class="opn">(</span><span class="pln">integral dy y0 dt</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> dy </span><span class="opn">(</span><span class="pln">stream-map f y</span><span class="clo">))</span><span class="pln">
+  y</span><span class="clo">)</span></pre></div>
+
+<p>这个过程不起作用，因为在<code>solve</code>的第一行中，对<code>integral</code>的调用要求输入<code>dy</code>已经被定义，而这直到<code>solve</code>的第二行才会发生。</p>
+<p>另一方面，我们定义的意图确实是有意义的，因为原则上我们可以在不知道<code>dy</code>的情况下开始生成<code>y</code>流。事实上，<code>integral</code>和许多其他流操作具有与<code>cons-stream</code>相似的性质，即我们可以在只获得关于参数的部分信息的情况下生成部分答案。对于<code>integral</code>，输出流的第一个元素是指定的<code>initial-value</code>。因此，我们可以在不求值被积函数<code>dy</code>的情况下生成输出流的第一个元素。一旦我们知道了<code>y</code>的第一个元素，<code>solve</code>第二行中的<code>stream-map</code>就可以开始工作，生成<code>dy</code>的第一个元素，这将产生<code>y</code>的下一个元素，依此类推。</p>
+<p>为了利用这一想法，我们将重新定义<code>integral</code>，使其期望被积函数流是一个<a id="index-delayed-argument"></a><em>延迟参数</em>。<code>Integral</code>将<code>force</code>被积函数，使其仅在需要生成输出流的第一个元素之后的部分时才被求值：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">integral
+         delayed-integrand initial-value dt</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> int
+    </span><span class="opn">(</span><span class="pln">cons-stream 
+     initial-value
+     </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">integrand 
+            </span><span class="opn">(</span><span class="pln">force delayed-integrand</span><span class="clo">)))</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">add-streams 
+        </span><span class="opn">(</span><span class="pln">scale-stream integrand dt</span><span class="clo">)</span><span class="pln">
+        int</span><span class="clo">))))</span><span class="pln">
+  int</span><span class="clo">)</span></pre></div>
+
+<p>现在我们可以通过在<code>y</code>的定义中延迟<code>dy</code>的求值来实现我们的<code>solve</code>过程：<a class="footnote_link" id="DOCF199" href="#FOOT199"><sup>199</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">solve f y0 dt</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> y </span><span class="opn">(</span><span class="pln">integral </span><span class="opn">(</span><span class="kwd">delay</span><span class="pln"> dy</span><span class="clo">)</span><span class="pln"> y0 dt</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> dy </span><span class="opn">(</span><span class="pln">stream-map f y</span><span class="clo">))</span><span class="pln">
+  y</span><span class="clo">)</span></pre></div>
+
+<p>一般来说，<code>integral</code>的每个调用者现在都必须<code>delay</code>被积函数参数。我们可以通过计算微分方程<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>y</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>d</mi>
+    <mi>t</mi>
+    <mo>=</mo>
+    <mi>y</mi>
+  </mrow>
+</math>在初始条件<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">(</mo>
+    <mn>0</mn>
+    <mo stretchy="false">)</mo>
+    <mo>=</mo>
+    <mn>1</mn>
+  </mrow>
+</math>下的解在<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo>=</mo>
+    <mn>1</mn>
+  </mrow>
+</math>处的值来近似<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>e</mi>
+    <mo>≈<!-- ≈ --></mo>
+    <mn>2.718</mn>
+  </mrow>
+</math>，从而证明<code>solve</code>过程是有效的：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">stream-ref 
+ </span><span class="opn">(</span><span class="pln">solve </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">y</span><span class="clo">)</span><span class="pln"> y</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1000</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">2.716924</span></i>
+</pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e77"></a>习题3.77：</strong>上面使用的<code>integral</code>过程类似于<a href="#g_t3_002e5_002e2">3.5.2</a>中无限整数流的“隐式”定义。或者，我们可以给出一个更像<code>integers-starting-from</code>的<code>integral</code>定义（同样在<a href="#g_t3_002e5_002e2">3.5.2</a>中）：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">integral
+         integrand initial-value dt</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream 
+   initial-value
+   </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-null? integrand</span><span class="clo">)</span><span class="pln">
+       the-empty-stream
+       </span><span class="opn">(</span><span class="pln">integral 
+        </span><span class="opn">(</span><span class="pln">stream-cdr integrand</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> dt </span><span class="opn">(</span><span class="pln">stream-car integrand</span><span class="clo">))</span><span class="pln">
+           initial-value</span><span class="clo">)</span><span class="pln">
+        dt</span><span class="clo">))))</span></pre></div>
+
+<p>当用于带回路的系统时，这个过程与我们原始版本的<code>integral</code>有同样的问题。修改该过程，使其期望<code>integrand</code>作为延迟参数，从而可以用于上面展示的<code>solve</code>过程。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e78"></a>习题3.78：</strong>考虑设计一个信号处理系统来研究齐次二阶线性微分方程<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mrow>
+      <msup>
+        <mi>d</mi>
+        <mn>2</mn>
+      </msup>
+      <mi>y</mi>
+    </mrow>
+    <mrow>
+      <mi>d</mi>
+      <msup>
+        <mi>t</mi>
+        <mn>2</mn>
+      </msup>
+    </mrow>
+  </mfrac>
+  <mo>−<!-- − --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mfrac>
+      <mrow>
+        <mi>d</mi>
+        <mi>y</mi>
+      </mrow>
+      <mrow>
+        <mi>d</mi>
+        <mi>t</mi>
+      </mrow>
+    </mfrac>
+  </mrow>
+  <mo>−<!-- − --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>b</mi>
+    <mi>y</mi>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>0.</mn>
+  </mrow>
+</math>的问题。输出流对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>进行建模，由一个包含回路的网络生成。这是因为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>d</mi>
+      <mn>2</mn>
+    </msup>
+    <mi>y</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>d</mi>
+    <msup>
+      <mi>t</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+</math>的值取决于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>y</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>d</mi>
+    <mi>t</mi>
+  </mrow>
+</math>的值，而这两者都是通过对<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>d</mi>
+      <mn>2</mn>
+    </msup>
+    <mi>y</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>d</mi>
+    <msup>
+      <mi>t</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+</math>积分确定的。我们想要编码的图如<a href="#Figure-3_002e35">图3.35</a>所示。编写一个过程<code>solve-2nd</code>，它接受常数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>t</mi>
+  </mrow>
+</math>以及<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>y</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>d</mi>
+    <mi>t</mi>
+  </mrow>
+</math>的初始值<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>y</mi>
+    <mn>0</mn>
+  </msub>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <msub>
+      <mi>y</mi>
+      <mn>0</mn>
+    </msub>
+  </mrow>
+</math>作为参数，并生成<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>的连续值流。</p></blockquote>
+
+<figure class="float">
+<a id="Figure-3_002e35"></a>
+<object style="width: 44.72ex; height: 38.94ex;" data="fig/chap3/Fig3.35b.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.35：</strong>二阶线性微分方程解的信号流图。</p>
+</figcaption>
+</figure>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e79"></a>习题3.79：</strong>推广<a href="#Exercise-3_002e78">习题3.78</a>的<code>solve-2nd</code>过程，使其可用于求解一般的二阶微分方程<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>d</mi>
+      <mn>2</mn>
+    </msup>
+    <mi>y</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>d</mi>
+    <msup>
+      <mi>t</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>d</mi>
+    <mi>y</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>d</mi>
+    <mi>t</mi>
+    <mo>,</mo>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。</p></blockquote>
+
+<figure class="float">
+<a id="Figure-3_002e36"></a>
+<object style="width: 40.49ex; height: 21.76ex;" data="fig/chap3/Fig3.36.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.36：</strong>一个串联 RLC 电路。</p>
+</figcaption>
+</figure>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e80"></a>习题3.80：</strong>一个<a id="index-series-RLC-circuit"></a><em>串联RLC电路</em>由一个电阻、一个电容和一个电感串联组成，如<a href="#Figure-3_002e36">图3.36</a>所示。如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math>分别是电阻、电感和电容，那么三个元件的电压<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>v</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>和电流<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>之间的关系由方程<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right center left" rowspacing="3pt" columnspacing="thickmathspace">
+    <mtr>
+      <mtd>
+        <msub>
+          <mi>v</mi>
+          <mi>R</mi>
+        </msub>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>i</mi>
+          <mi>R</mi>
+        </msub>
+        <mi>R</mi>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msub>
+          <mi>v</mi>
+          <mi>L</mi>
+        </msub>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mi>L</mi>
+        <mspace width="thinmathspace"/>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <mrow>
+              <mi>d</mi>
+              <msub>
+                <mi>i</mi>
+                <mi>L</mi>
+              </msub>
+            </mrow>
+            <mrow>
+              <mi>d</mi>
+              <mi>t</mi>
+            </mrow>
+          </mfrac>
+        </mrow>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msub>
+          <mi>i</mi>
+          <mi>C</mi>
+        </msub>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mi>C</mi>
+        <mspace width="thinmathspace"/>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <mrow>
+              <mi>d</mi>
+              <msub>
+                <mi>v</mi>
+                <mi>C</mi>
+              </msub>
+            </mrow>
+            <mrow>
+              <mi>d</mi>
+              <mi>t</mi>
+            </mrow>
+          </mfrac>
+        </mrow>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>描述，电路连接决定了关系<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right center left" rowspacing="3pt" columnspacing="thickmathspace">
+    <mtr>
+      <mtd>
+        <msub>
+          <mi>i</mi>
+          <mi>R</mi>
+        </msub>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>i</mi>
+          <mi>L</mi>
+        </msub>
+        <mo>=</mo>
+        <mo>−<!-- − --></mo>
+        <msub>
+          <mi>i</mi>
+          <mi>C</mi>
+        </msub>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <msub>
+          <mi>v</mi>
+          <mi>C</mi>
+        </msub>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <msub>
+          <mi>v</mi>
+          <mi>L</mi>
+        </msub>
+        <mo>+</mo>
+        <msub>
+          <mi>v</mi>
+          <mi>R</mi>
+        </msub>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>。结合这些方程表明，电路的状态（由<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>v</mi>
+    <mi>C</mi>
+  </msub>
+</math>，即电容两端的电压，和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>i</mi>
+    <mi>L</mi>
+  </msub>
+</math>，即电感中的电流，来概括）由一对微分方程<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right center left" rowspacing="3pt" columnspacing="thickmathspace">
+    <mtr>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <mrow>
+              <mi>d</mi>
+              <msub>
+                <mi>v</mi>
+                <mi>C</mi>
+              </msub>
+            </mrow>
+            <mrow>
+              <mi>d</mi>
+              <mi>t</mi>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mo>−<!-- − --></mo>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <msub>
+              <mi>i</mi>
+              <mi>L</mi>
+            </msub>
+            <mi>C</mi>
+          </mfrac>
+        </mrow>
+        <mspace width="thinmathspace"/>
+        <mo>,</mo>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <mrow>
+              <mi>d</mi>
+              <msub>
+                <mi>i</mi>
+                <mi>L</mi>
+              </msub>
+            </mrow>
+            <mrow>
+              <mi>d</mi>
+              <mi>t</mi>
+            </mrow>
+          </mfrac>
+        </mrow>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <mn>1</mn>
+            <mi>L</mi>
+          </mfrac>
+        </mrow>
+        <mspace width="thinmathspace"/>
+        <msub>
+          <mi>v</mi>
+          <mi>C</mi>
+        </msub>
+        <mo>−<!-- − --></mo>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mfrac>
+            <mi>R</mi>
+            <mi>L</mi>
+          </mfrac>
+        </mrow>
+        <mspace width="thinmathspace"/>
+        <msub>
+          <mi>i</mi>
+          <mi>L</mi>
+        </msub>
+        <mo>.</mo>
+      </mtd>
+    </mtr>
+  </mtable>
+</math>描述。表示该微分方程组的信号流图如<a href="#Figure-3_002e37">图3.37</a>所示。</p></blockquote>
+
+<figure class="float">
+<a id="Figure-3_002e37"></a>
+<object style="width: 42.48ex; height: 49.30ex;" data="fig/chap3/Fig3.37.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.37：</strong>串联RLC电路解的信号流图。</p>
+</figcaption>
+</figure>
+
+<blockquote>
+<p>编写一个过程<code>RLC</code>，它接受电路的参数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math>以及时间增量<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>t</mi>
+  </mrow>
+</math>作为参数。以类似于<a href="#Exercise-3_002e73">习题3.73</a>中<code>RC</code>过程的方式，<code>RLC</code>应产生一个过程，该过程接受状态变量的初始值<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>v</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <msub>
+        <mi>C</mi>
+        <mn>0</mn>
+      </msub>
+    </mrow>
+  </msub>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>i</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <msub>
+        <mi>L</mi>
+        <mn>0</mn>
+      </msub>
+    </mrow>
+  </msub>
+</math>，并产生（使用<code>cons</code>）状态<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>v</mi>
+    <mi>C</mi>
+  </msub>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>i</mi>
+    <mi>L</mi>
+  </msub>
+</math>的流的序对。使用<code>RLC</code>，生成模拟串联RLC电路行为的流对，其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>R</mi>
+</math> = 1欧姆，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>C</mi>
+</math> = 0.2法拉，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+</math> = 1亨利，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>t</mi>
+  </mrow>
+</math> = 0.1秒，初始值<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>i</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <msub>
+        <mi>L</mi>
+        <mn>0</mn>
+      </msub>
+    </mrow>
+  </msub>
+</math> = 0安培和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>v</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <msub>
+        <mi>C</mi>
+        <mn>0</mn>
+      </msub>
+    </mrow>
+  </msub>
+</math> = 10伏特。</p></blockquote>
+
+<a id="Normal_002dorder-evaluation"></a>
+<h5 class="subsubheading">正则序求值</h5>
+
+<p>本节中的例子说明了显式使用<code>delay</code>和<code>force</code>如何提供了极大的编程灵活性，但同样的例子也表明这如何使我们的程序更加复杂。例如，我们新的<code>integral</code>过程赋予我们建模带回路的系统的能力，但我们现在必须记住<code>integral</code>应该用延迟的被积函数来调用，并且每个使用<code>integral</code>的过程都必须意识到这一点。实际上，我们创建了两类过程：普通过程和接受延迟参数的过程。一般来说，创建单独的过程类别迫使我们也要创建单独的高阶过程类别。<a class="footnote_link" id="DOCF200" href="#FOOT200"><sup>200</sup></a></p>
+<p>避免需要两类不同过程的一种方法是让所有过程都接受延迟参数。我们可以采用一种求值模型，其中过程的所有参数都自动延迟，只有在实际需要时才强制参数（例如，当基本操作需要它们时）。这会将我们的语言转变为使用正则序求值，我们在<a href="1_002e1_zh.xhtml#g_t1_002e1_002e5">1.1.5</a>中引入求值的代换模型时首次描述了它。转换为正则序求值提供了一种统一而优雅的方式来简化延迟求值的使用，如果我们只关心流处理，这将是一种自然采用的策略。在<a href="4_002e2_zh.xhtml#g_t4_002e2">4.2</a>中，在我们研究了求值器之后，我们将看到如何以这种方式转换我们的语言。不幸的是，在过程调用中包含延迟会严重破坏我们设计依赖于事件顺序的程序的能力，例如使用赋值、修改数据或执行输入或输出的程序。甚至<code>cons-stream</code>中的单个<code>delay</code>也会引起极大的混乱，如<a href="#Exercise-3_002e51">习题3.51</a>和<a href="#Exercise-3_002e52">习题3.52</a>所示。据大家所知，可变性和延迟求值在编程语言中不能很好地混合，设计同时处理这两者的方法是一个活跃的研究领域。</p>
+<a id="g_t3_002e5_002e5"></a>
+<a id="Modularity-of-Functional-Programs-and-Modularity-of-Objects"></a>
+<h4 class="subsection"><span class="secnum">3.5.5</span><span class="sectitle">函数式程序的模块化和对象的模块化</span></h4>
+
+<p>正如我们在<a href="3_002e1_zh.xhtml#g_t3_002e1_002e2">3.1.2</a>中看到的，引入赋值的主要好处之一是我们可以通过将大型系统状态的部分封装或“隐藏”在局部变量中来增加系统的模块化。流模型可以在不使用赋值的情况下提供等效的模块化。作为说明，我们可以从流处理的角度重新实现<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>的蒙特卡洛估计，我们在<a href="3_002e1_zh.xhtml#g_t3_002e1_002e2">3.1.2</a>中考察过它。</p>
+<p>关键的模块化问题是我们希望向使用随机数的程序隐藏随机数生成器的内部状态。我们从过程<code>rand-update</code>开始，其连续值提供了我们的随机数供应，并用它来产生随机数生成器：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> rand
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">x random-init</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> x </span><span class="opn">(</span><span class="pln">rand-update x</span><span class="clo">))</span><span class="pln">
+      x</span><span class="clo">)))</span></pre></div>
+
+<p>在流的表述中，没有随机数生成器<em>本身</em>，只有通过连续调用<code>rand-update</code>产生的随机数流：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> random-numbers
+  </span><span class="opn">(</span><span class="pln">cons-stream random-init
+               </span><span class="opn">(</span><span class="pln">stream-map rand-update 
+                           random-numbers</span><span class="clo">)))</span></pre></div>
+
+<p>我们用它来构造在<code>random-numbers</code>流中连续对上进行Cesàro实验的结果流：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> cesaro-stream
+  </span><span class="opn">(</span><span class="pln">map-successive-pairs
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">r1 r2</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">gcd r1 r2</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="clo">))</span><span class="pln">
+   random-numbers</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">map-successive-pairs f s</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream
+   </span><span class="opn">(</span><span class="pln">f </span><span class="opn">(</span><span class="pln">stream-car s</span><span class="clo">)</span><span class="pln"> 
+      </span><span class="opn">(</span><span class="pln">stream-car </span><span class="opn">(</span><span class="pln">stream-cdr s</span><span class="clo">)))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">map-successive-pairs 
+    f </span><span class="opn">(</span><span class="pln">stream-cdr </span><span class="opn">(</span><span class="pln">stream-cdr s</span><span class="clo">)))))</span></pre></div>
+
+<p><code>cesaro-stream</code>现在被馈送到<code>monte-carlo</code>过程，它产生概率估计的流。结果然后被转换为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>估计的流。这个版本的程序不需要告诉要执行多少次试验的参数。通过更深入地查看<code>pi</code>流，可以获得更好的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>估计（通过执行更多实验）：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">monte-carlo experiment-stream 
+                     passed 
+                     failed</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">next passed failed</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">cons-stream
+     </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> passed </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> passed failed</span><span class="clo">))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">monte-carlo
+      </span><span class="opn">(</span><span class="pln">stream-cdr experiment-stream</span><span class="clo">)</span><span class="pln"> 
+      passed 
+      failed</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-car experiment-stream</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">next </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> passed </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> failed</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">next passed </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> failed </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> pi
+  </span><span class="opn">(</span><span class="pln">stream-map
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">p</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="lit">6</span><span class="pln"> p</span><span class="clo">)))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">monte-carlo cesaro-stream </span><span class="lit">0</span><span class="pln"> </span><span class="lit">0</span><span class="clo">)))</span></pre></div>
+
+<p>这种方法具有相当大的模块性，因为我们仍然可以制定一个通用的<code>monte-carlo</code>过程来处理任意实验。然而没有赋值或局部状态。</p>
+<blockquote>
+<p><strong><a id="Exercise-3_002e81"></a>习题3.81：</strong> <a href="3_002e1_zh.xhtml#Exercise-3_002e6">习题3.6</a>讨论了将随机数生成器推广，使得人们可以重置随机数序列，从而产生可重复的“随机”数序列。请给出同一个生成器的流表述，它作用于一个请求输入流，请求要么是<code>generate</code>一个新的随机数，要么是将序列<code>reset</code>到指定值，并产生所需的随机数流。在你的解答中不要使用赋值。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-3_002e82"></a>习题3.82：</strong>用流重新做<a href="3_002e1_zh.xhtml#Exercise-3_002e5">习题3.5</a>中关于蒙特卡洛积分的内容。<code>estimate-integral</code>的流版本将不会有一个参数告诉要进行多少次试验。相反，它将基于越来越多的试验产生一个估计值的流。</p></blockquote>
+
+<a id="A-functional_002dprogramming-view-of-time"></a>
+<h5 class="subsubheading">关于时间的函数式编程观点</h5>
+
+<p>现在让我们回到本章开头提出的对象和状态的问题，并以新的眼光来审视它们。我们引入赋值和可变对象，是为了提供一种机制，以便对带有状态的系统进行建模的程序能够模块化地构造。我们用局部状态变量构造了计算对象，并使用赋值来修改这些变量。我们通过相应的计算对象的时间行为，来对世界中对象的时间行为进行建模。</p>
+<p>现在我们已经看到，流提供了另一种对带有局部状态的对象进行建模的方式。我们可以用一个表示相继状态的时间历史的流，来对一个变化量（例如某个对象的局部状态）进行建模。本质上，我们使用流显式地表示时间，从而将我们模拟世界中的时间与求值过程中发生的事件序列解耦。确实，由于<code>delay</code>的存在，模型中的模拟时间与求值过程中事件的顺序之间可能几乎没有关系。</p>
+<p>为了对比这两种建模方式，让我们重新考虑一个监视银行账户余额的“取款处理器”的实现。在<a href="3_002e1_zh.xhtml#g_t3_002e1_002e3">3.1.3</a>中，我们实现了这样一个处理器的简化版本：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">make-simplified-withdraw balance</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">amount</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> balance </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance amount</span><span class="clo">))</span><span class="pln">
+    balance</span><span class="clo">))</span></pre></div>
+
+<p>对<code>make-simplified-withdraw</code>的调用产生计算对象，每个对象都有一个局部状态变量<code>balance</code>，它被对该对象的相继调用所递减。该对象接受一个<code>amount</code>作为参数并返回新的余额。我们可以想象一个银行账户的用户向这样一个对象输入一系列输入，并观察显示屏幕上显示的返回值的序列。</p>
+<p>或者，我们可以将一个取款处理器建模为一个过程，它接受一个余额和一个取款金额流作为输入，并产生账户中相继余额的流：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">stream-withdraw balance amount-stream</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">cons-stream
+   balance
+   </span><span class="opn">(</span><span class="pln">stream-withdraw 
+    </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> balance </span><span class="opn">(</span><span class="pln">stream-car amount-stream</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">stream-cdr amount-stream</span><span class="clo">))))</span></pre></div>
+
+<p><code>Stream-withdraw</code>实现了一个定义良好的数学函数，其输出完全由输入决定。然而，假设输入<code>amount-stream</code>是用户输入的相继值的流，并且所得的余额流被显示出来。那么，从正在输入值并观察结果的用户的角度来看，这个流过程的行为与<code>make-simplified-withdraw</code>创建的对象相同。然而，对于流版本，没有赋值，没有局部状态变量，因此也没有我们在<a href="3_002e1_zh.xhtml#g_t3_002e1_002e3">3.1.3</a>中遇到的任何理论困难。然而这个系统具有状态！</p>
+<p>这确实很了不起。尽管<code>stream-withdraw</code>实现了一个定义良好的数学函数，其行为不会改变，但用户在这里的感知却是与一个具有变化状态的系统进行交互。解决这个悖论的一种方法是认识到，正是用户的时间性存在将状态强加于系统。如果用户能够从交互中退后一步，从余额流而不是单个交易的角度来思考，系统就会显得无状态。<a class="footnote_link" id="DOCF201" href="#FOOT201"><sup>201</sup></a></p>
+<p>从复杂过程的一个部分的角度来看，其他部分似乎随时间而变化。它们具有隐藏的随时间变化的局部状态。如果我们希望编写程序，用我们计算机中的结构来对世界中这种自然分解（正如我们从作为世界一部分的视角所看到的那样）进行建模，我们就要制造非函数式的计算对象——它们必须随时间而变化。我们用局部状态变量来对状态建模，并用对这些变量的赋值来对状态的变化建模。通过这样做，我们使计算的执行时间对我们所属世界中的时间进行建模，从而在我们的计算机中得到“对象”。</p>
+<p>用对象进行建模是强大而直观的，很大程度上是因为这与我们作为其中一部分的世界的交互感知相匹配。然而，正如我们在本章中反复看到的那样，这些模型引发了约束事件顺序和同步多个进程的棘手问题。避免这些问题的可能性促进了<a id="index-functional-programming-languages"></a><em>函数式编程语言</em>的发展，这些语言不包含任何赋值或可变数据的机制。在这样的语言中，所有过程都实现其参数的、行为不会改变的、定义良好的数学函数。函数式方法对于处理并发系统极具吸引力。<a class="footnote_link" id="DOCF202" href="#FOOT202"><sup>202</sup></a></p>
+<p>另一方面，如果我们仔细观察，我们可以看到与时间相关的问题也悄悄进入函数式模型。一个特别麻烦的领域出现在我们希望设计交互式系统时，特别是那些模拟独立实体之间交互的系统。例如，再次考虑允许联名银行账户的银行系统的实现。在使用赋值和对象的传统系统中，我们将通过让Peter和Paul将他们的交易请求发送到同一个银行账户对象来模拟Peter和Paul共享账户的事实，正如我们在<a href="3_002e1_zh.xhtml#g_t3_002e1_002e3">3.1.3</a>中看到的。从流的观点来看，没有“对象”<em>本身</em>，我们已经指出银行账户可以建模为对交易请求流进行操作以产生响应流的过程。因此，我们可以通过将Peter的交易请求流与Paul的请求流合并，并将结果馈送到银行账户流过程来模拟Peter和Paul拥有联名银行账户的事实，如<a href="#Figure-3_002e38">图3.38</a>所示。</p>
+<figure class="float">
+<a id="Figure-3_002e38"></a>
+<object style="width: 54.65ex; height: 9.76ex;" data="fig/chap3/Fig3.38a.std.svg" type="image/svg+xml">SVG</object>
+
+<figcaption class="float-caption">
+<p><strong>图3.38：</strong>通过合并两个交易请求流来建模的联名银行账户。</p>
+</figcaption>
+</figure>
+
+<p>这种表述的问题在于<a id="index-merge"></a><em>合并</em>的概念。通过简单地交替从Peter取一个请求和从Paul取一个请求来合并两个流是不行的。假设Paul极少访问账户。我们几乎不能强迫Peter等待Paul访问账户之后才能发出第二笔交易。无论这种合并如何实现，它都必须以某种方式交错两个交易流，这种方式受到Peter和Paul所感知的“实际时间”的约束，即如果Peter和Paul见面，他们可以同意某些交易在见面之前处理，其他交易在见面之后处理。<a class="footnote_link" id="DOCF203" href="#FOOT203"><sup>203</sup></a>这正是我们在<a href="3_002e4_zh.xhtml#g_t3_002e4_002e1">3.4.1</a>中必须处理的相同约束，在那里我们发现需要引入显式同步来确保具有状态的对象并发处理中事件的“正确”顺序。因此，在试图支持函数式风格时，合并来自不同代理的输入的需要重新引入了函数式风格本来要消除的相同问题。</p>
+<p>我们以构建计算模型为目标开始了本章，这些模型的结构与我们试图建模的现实世界的感知相匹配。我们可以将世界建模为一组分离的、受时间约束的、具有状态的交互对象，或者我们可以将世界建模为一个单一的、无时间性的、无状态的统一体。每种观点都有强大的优势，但单独任何一种观点都不完全令人满意。一个宏大的统一尚未出现。<a class="footnote_link" id="DOCF204" href="#FOOT204"><sup>204</sup></a></p>
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT180"><p><a class="footnote_backlink" href="#DOCF180"><sup>180</sup></a>物理学家有时通过引入粒子的“世界线”作为推理运动的工具来采用这种观点。我们也已经提到过（<a href="2_002e2_zh.xhtml#g_t2_002e2_002e3">2.2.3</a>），这是思考信号处理系统的自然方式。我们将在<a href="#g_t3_002e5_002e3">3.5.3</a>中探讨流在信号处理中的应用。</p>
+</div>
+<div id="FOOT181"><p><a class="footnote_backlink" href="#DOCF181"><sup>181</sup></a>假设我们有一个谓词<code>prime?</code>（例如，如<a href="1_002e2_zh.xhtml#g_t1_002e2_002e6">1.2.6</a>中那样）用于测试素性。</p>
+</div>
+<div id="FOOT182"><p><a class="footnote_backlink" href="#DOCF182"><sup>182</sup></a>在<abbr>MIT</abbr>实现中，<code>the-empty-stream</code>与空表<code>'()</code>相同，而<code>stream-null?</code>与<code>null?</code>相同。</p>
+</div>
+<div id="FOOT183"><p><a class="footnote_backlink" href="#DOCF183"><sup>183</sup></a>这应该让你感到困扰。我们为流和表定义了如此相似的过程，这一事实表明我们缺少某种底层抽象。不幸的是，为了利用这种抽象，我们需要对求值过程施加比目前更精细的控制。我们将在<a href="#g_t3_002e5_002e4">3.5.4</a>末尾进一步讨论这一点。在<a href="4_002e2_zh.xhtml#g_t4_002e2">4.2</a>中，我们将开发一个统一表和流的框架。</p>
+</div>
+<div id="FOOT184"><p><a class="footnote_backlink" href="#DOCF184"><sup>184</sup></a>虽然<code>stream-car</code>和<code>stream-cdr</code>可以定义为过程，但<code>cons-stream</code>必须是一个特殊形式。如果<code>cons-stream</code>是一个过程，那么根据我们的求值模型，求值<code>(cons-stream ⟨<var>a</var>⟩ ⟨<var>b</var>⟩)</code>将自动导致<code>⟨</code><var>b</var><code>⟩</code>被求值，而这正是我们不希望发生的。出于同样的原因，<code>delay</code>必须是一个特殊形式，尽管<code>force</code>可以是一个普通过程。</p>
+</div>
+<div id="FOOT185"><p><a class="footnote_backlink" href="#DOCF185"><sup>185</sup></a>这里显示的数字实际上并不出现在延迟表达式中。实际出现的是原始表达式，在一个变量绑定到适当数字的环境中。例如，<code>(+ low 1)</code>在<code>low</code>绑定到10,000时，实际上出现在显示<code>10001</code>的地方。</p>
+</div>
+<div id="FOOT186"><p><a class="footnote_backlink" href="#DOCF186"><sup>186</sup></a>除了本节描述的实现之外，流还有许多可能的实现。延迟求值，这是使流实用的关键，内在于Algol 60的<a id="index-call_002dby_002dname"></a><em>按名调用</em>参数传递方法中。使用这种机制来实现流最早由<a href="References_zh.xhtml#Landin-_00281965_0029">Landin（1965）</a>描述。流的延迟求值由<a href="References_zh.xhtml#Friedman-and-Wise-_00281976_0029">Friedman和Wise（1976）</a>引入Lisp。在他们的实现中，<code>cons</code>总是延迟求值其参数，因此表自动表现为流。记忆化优化也被称为<a id="index-call_002dby_002dneed"></a><em>按需调用</em>。Algol社区将我们最初的延迟对象称为<a id="index-call_002dby_002dname-thunks"></a><em>按名调用thunk</em>，将优化版本称为<a id="index-call_002dby_002dneed-thunks"></a><em>按需调用thunk</em>。</p>
+</div>
+<div id="FOOT187"><p><a class="footnote_backlink" href="#DOCF187"><sup>187</sup></a>像<a href="#Exercise-3_002e51">习题3.51</a>和<a href="#Exercise-3_002e52">习题3.52</a>这样的练习对于测试我们对<code>delay</code>如何工作的理解很有价值。另一方面，将延迟求值与打印混合——更糟糕的是，与赋值混合——极其令人困惑，计算机语言课程的教师传统上用本节中的这类考试题来折磨学生。不用说，编写依赖这种微妙之处的程序是令人厌恶的编程风格。流处理的部分威力在于它让我们忽略程序中事件实际发生的顺序。不幸的是，这正是我们在赋值存在时无法做到的，赋值迫使我们关注时间和变化。</p>
+</div>
+<div id="FOOT188"><p><a class="footnote_backlink" href="#DOCF188"><sup>188</sup></a>埃拉托斯特尼，<abbr>公元前</abbr>三世纪亚历山大里亚的希腊哲学家，以首次准确估计地球周长而闻名，他通过观察夏至日正午投下的阴影来计算。埃拉托斯特尼的筛法，尽管古老，却构成了专用硬件“筛”的基础，直到最近，这些硬件是定位大素数的最强大工具。然而，自70年代以来，这些方法已被<a href="1_002e2_zh.xhtml#g_t1_002e2_002e6">1.2.6</a>中讨论的概率技术的衍生物所取代。</p>
+</div>
+<div id="FOOT189"><p><a class="footnote_backlink" href="#DOCF189"><sup>189</sup></a>我们以Peter Henderson的名字命名这些图，他是第一个向我们展示这种图作为思考流处理方式的人。每条实线代表一个正在传输的值流。从<code>car</code>到<code>cons</code>和<code>filter</code>的虚线表示这是一个单一值而不是流。</p>
+</div>
+<div id="FOOT190"><p><a class="footnote_backlink" href="#DOCF190"><sup>190</sup></a>这使用了<code>stream-map</code>的广义版本，来自<a href="#Exercise-3_002e50">习题3.50</a>。</p>
+</div>
+<div id="FOOT191"><p><a class="footnote_backlink" href="#DOCF191"><sup>191</sup></a>最后一点非常微妙，依赖于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>p</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>n</mi>
+        <mo>+</mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo>≤<!-- ≤ --></mo>
+    <msubsup>
+      <mi>p</mi>
+      <mi>n</mi>
+      <mn>2</mn>
+    </msubsup>
+  </mrow>
+  <mo>.</mo>
+</math>这一事实（这里，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mi>k</mi>
+  </msub>
+</math>表示第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>k</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math>个素数。）像这样的估计非常难以建立。欧几里得关于素数有无穷多个的古代证明表明<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>n</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>≤<!-- ≤ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>p</mi>
+      <mn>1</mn>
+    </msub>
+    <msub>
+      <mi>p</mi>
+      <mn>2</mn>
+    </msub>
+    <mo>⋯<!-- ⋯ --></mo>
+    <msub>
+      <mi>p</mi>
+      <mi>n</mi>
+    </msub>
+    <mo>+</mo>
+    <mn>1</mn>
+  </mrow>
+</math>，直到1851年，俄罗斯数学家P. L. Chebyshev确立了对于所有<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>p</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>n</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>≤<!-- ≤ --></mo>
+  <mn>2</mn>
+  <msub>
+    <mi>p</mi>
+    <mi>n</mi>
+  </msub>
+</math>，才证明了实质上更好的结果。这个结果，最初在1845年猜想，被称为<a id="index-Bertrand_0027s-hypothesis"></a><em>伯特兰假设</em>。证明可以在<a href="References_zh.xhtml#Hardy-and-Wright-1960">Hardy和Wright1960</a>的第22.3节中找到。</p>
+</div>
+<div id="FOOT192"><p><a class="footnote_backlink" href="#DOCF192"><sup>192</sup></a>这个练习展示了按需调用与<a href="3_002e3_zh.xhtml#Exercise-3_002e27">习题3.27</a>中描述的普通记忆化如何密切相关。在那个练习中，我们使用赋值显式构造了一个局部表。我们的按需调用流优化有效地自动构造了这样一个表，将值存储在流中先前已强制求值的部分。</p>
+</div>
+<div id="FOOT193"><p><a class="footnote_backlink" href="#DOCF193"><sup>193</sup></a>我们不能用<code>let</code>来绑定局部变量<code>guesses</code>，因为<code>guesses</code>的值依赖于<code>guesses</code>自身。<a href="#Exercise-3_002e63">习题3.63</a>讨论了为什么我们在这里需要一个局部变量。</p>
+</div>
+<div id="FOOT194"><p><a class="footnote_backlink" href="#DOCF194"><sup>194</sup></a>如同<a href="2_002e2_zh.xhtml#g_t2_002e2_002e3">2.2.3</a>中那样，我们将一对整数表示为一个表，而不是一个Lisp序对。</p>
+</div>
+<div id="FOOT195"><p><a class="footnote_backlink" href="#DOCF195"><sup>195</sup></a>参见<a href="#Exercise-3_002e68">习题3.68</a>，以了解我们为何选择这种分解方式。</p>
+</div>
+<div id="FOOT196"><p><a class="footnote_backlink" href="#DOCF196"><sup>196</sup></a>关于组合顺序所需性质的精确陈述如下：应该存在一个接受两个参数的函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>，使得第一个流的元素<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>和第二个流的元素<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>j</mi>
+</math>所对应的序对将作为输出流的第<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>个元素出现。使用<code>interleave</code>来实现这一点的技巧是由David Turner展示给我们的，他在语言KRC中使用了它（<a href="References_zh.xhtml#Turner-1981">Turner 1981</a>）。</p>
+</div>
+<div id="FOOT197"><p><a class="footnote_backlink" href="#DOCF197"><sup>197</sup></a>我们将要求加权函数满足：当我们沿着序对数组的一行向外移动或沿着一列向下移动时，序对的权重增加。</p>
+</div>
+<div id="FOOT198"><p><a class="footnote_backlink" href="#DOCF198"><sup>198</sup></a>引用G. H. Hardy为Ramanujan所写的讣告（<a href="References_zh.xhtml#Hardy-1921">Hardy 1921</a>）中的话：“是Littlewood先生（我相信）评论说‘每个正整数都是他的朋友之一。’我记得有一次去看他，当时他病倒在Putney。我乘坐了1729号出租车，并评论说这个数字对我来说似乎相当乏味，我希望这不是一个不祥之兆。‘不，’他回答说，‘这是一个非常有趣的数字；它是可以用两种不同方式表示为两个立方数之和的最小数。’”使用加权序对来生成拉马努金数的技巧是由Charles Leiserson展示给我们的。</p>
+</div>
+<div id="FOOT199"><p><a class="footnote_backlink" href="#DOCF199"><sup>199</sup></a>这个过程不保证在所有Scheme实现中都能工作，尽管对于任何实现都有一个简单的变体可以工作。问题与Scheme实现处理内部定义的方式上的微妙差异有关。（见<a href="4_002e1_zh.xhtml#g_t4_002e1_002e6">4.1.6</a>。）</p>
+</div>
+<div id="FOOT200"><p><a class="footnote_backlink" href="#DOCF200"><sup>200</sup></a>这是Lisp中对传统强类型语言（如Pascal）在处理高阶过程时所遇到的困难的一个小小反映。在这类语言中，程序员必须指定每个过程的参数和结果的数据类型：数字、逻辑值、序列等等。因此，我们无法通过像<code>stream-map</code>这样的单个高阶过程来表达诸如“将给定过程<code>proc</code>映射到序列中的所有元素上”这样的抽象。相反，对于可能为<code>proc</code>指定的每一种不同的参数和结果数据类型组合，我们都需要一个不同的映射过程。在高阶过程存在的情况下，维持一个实用的“数据类型”概念引发了许多困难问题。处理这个问题的一种方式由语言ML（<a href="References_zh.xhtml#Gordon-et-al_002e-1979">Gordon et al. 1979</a>）所展示，其“多态数据类型”包括数据类型之间高阶变换的模板。此外，ML中大多数过程的数据类型从不由程序员显式声明。相反，ML包含一个<a id="index-type_002dinferencing"></a> <em>类型推断</em>机制，该机制利用环境中的信息来推断新定义过程的数据类型。</p>
+</div>
+<div id="FOOT201"><p><a class="footnote_backlink" href="#DOCF201"><sup>201</sup></a>类似地，在物理学中，当我们观察一个运动的粒子时，我们说粒子的位置（状态）在变化。然而，从粒子在时空中的世界线的角度来看，并不涉及任何变化。</p>
+</div>
+<div id="FOOT202"><p><a class="footnote_backlink" href="#DOCF202"><sup>202</sup></a>Fortran的发明者John Backus在1978年被授予<abbr>ACM</abbr>图灵奖时，使函数式编程获得了高度关注。他的获奖演讲（<a href="References_zh.xhtml#Backus-1978">Backus 1978</a>）强烈倡导函数式方法。函数式编程的良好概述见<a href="References_zh.xhtml#Henderson-1980">Henderson 1980</a>以及<a href="References_zh.xhtml#Darlington-et-al_002e-1982">Darlington et al. 1982</a>。</p>
+</div>
+<div id="FOOT203"><p><a class="footnote_backlink" href="#DOCF203"><sup>203</sup></a>注意，对于任意两个流，通常存在不止一种可接受的交错顺序。因此，从技术上讲，“归并”是一个关系而不是一个函数——答案不是输入的确定性函数。我们已经提到过（<a href="3_002e4_zh.xhtml#Footnote-167">脚注167</a>），在处理并发时非确定性是必不可少的。归并关系从函数式角度说明了同样的本质非确定性。在<a href="4_002e3_zh.xhtml#g_t4_002e3">4.3</a>中，我们将从另一个角度看待非确定性。</p>
+</div>
+<div id="FOOT204"><p><a class="footnote_backlink" href="#DOCF204"><sup>204</sup></a>对象模型通过将世界划分为独立的部分来近似世界。函数式模型不沿对象边界进行模块化。当“对象”的非共享状态远大于它们共享的状态时，对象模型是有用的。对象观点失败的一个例子是量子力学，在那里将事物视为单个粒子会导致悖论和混乱。将对象观点与函数式观点统一起来可能与编程关系不大，而更多地与基本的认识论问题有关。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="Chapter-4_zh.xhtml#Chapter-4" accesskey="n" rel="next">第4章</a>, 上一节： <a href="3_002e4_zh.xhtml#g_t3_002e4" accesskey="p" rel="prev">3.4</a>, 上一级： <a href="#g_t3_002e5" accesskey="u" rel="prev">3.5</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

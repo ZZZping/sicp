@@ -1,0 +1,2455 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：1.3</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 1.3" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 1.3" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-1_zh.xhtml#Chapter-1" rel="prev" title="Chapter 1" />
+<link href="Chapter-2_zh.xhtml#Chapter-2" rel="next" title="Chapter 2" />
+<link href="1_002e2_zh.xhtml#g_t1_002e2_002e6" rel="prev" title="1.2.6" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t1_002e3"></a>
+<nav class="header">
+<p>下一节： <a href="Chapter-2_zh.xhtml#Chapter-2" accesskey="n" rel="next">第2章</a>, 上一节： <a href="1_002e2_zh.xhtml#g_t1_002e2" accesskey="p" rel="prev">1.2</a>, 上一级： <a href="Chapter-1_zh.xhtml#Chapter-1" accesskey="u" rel="prev">第1章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Formulating-Abstractions-with-Higher_002dOrder-Procedures"></a>
+<h3 class="section"><span class="secnum">1.3</span><span class="sectitle">用高阶过程构造抽象</span></h3>
+
+<p>我们已经看到，过程实际上是一种抽象，它描述了对数的复合操作，而不依赖于具体的数。例如，当我们</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cube x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x x</span><span class="clo">))</span></pre></div>
+
+<p>我们谈论的不是某个特定数的立方，而是获得任意数立方的一种方法。当然，我们完全可以不定义这个过程，而总是写出这样的表达式</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">3</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x x</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="pun">*</span><span class="pln"> y y y</span><span class="clo">)</span></pre></div>
+
+<p>并且从不明确提及<code>cube</code>。这会使我们处于严重的劣势，迫使我们始终在语言中恰好是基本操作（本例中是乘法）的层面上工作，而不是在更高层次的操作层面上工作。我们的程序能够计算立方，但我们的语言将缺乏表达立方概念的能力。我们应该要求一个强大的编程语言具备的能力之一是：通过为常见模式赋予名称来构建抽象，然后直接基于这些抽象进行工作。过程提供了这种能力。这就是为什么除了最原始的语言之外，所有编程语言都包含定义过程的机制。</p>
+<p>然而，即使在数值处理中，如果我们局限于参数必须是数的过程，我们创建抽象的能力也会受到严重限制。通常，同一个编程模式会被用于许多不同的过程。为了将这类模式表达为概念，我们需要构造能够接受过程作为参数或返回过程作为值的过程。操作过程的过程称为<a id="index-higher_002dorder-procedures"></a><em>高阶过程</em>。本节展示高阶过程如何作为强大的抽象机制，极大地增强我们语言的表达能力。</p>
+
+<a id="g_t1_002e3_002e1"></a>
+<a id="Procedures-as-Arguments"></a>
+<h4 class="subsection"><span class="secnum">1.3.1</span><span class="sectitle">作为参数的过程</span></h4>
+
+<p>考虑以下三个过程。第一个计算从<code>a</code>到<code>b</code>的整数之和：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum-integers a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln"> 
+      </span><span class="lit">0</span><span class="pln"> 
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="opn">(</span><span class="pln">sum-integers </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> b</span><span class="clo">))))</span></pre></div>
+
+<p>第二个计算给定范围内整数的立方之和：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum-cubes a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln"> 
+      </span><span class="lit">0</span><span class="pln"> 
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cube a</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">sum-cubes </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="lit">1</span><span class="clo">)</span><span class="pln"> b</span><span class="clo">))))</span></pre></div>
+
+<p>第三个计算级数<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mn>1</mn>
+      <mo>⋅<!-- ⋅ --></mo>
+      <mn>3</mn>
+    </mrow>
+  </mfrac>
+  <mo>+</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mn>5</mn>
+      <mo>⋅<!-- ⋅ --></mo>
+      <mn>7</mn>
+    </mrow>
+  </mfrac>
+  <mo>+</mo>
+  <mfrac>
+    <mn>1</mn>
+    <mrow>
+      <mn>9</mn>
+      <mo>⋅<!-- ⋅ --></mo>
+      <mn>11</mn>
+    </mrow>
+  </mfrac>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo>…<!-- … --></mo>
+    <mo>,</mo>
+  </mrow>
+</math>中一段连续项之和，该级数收敛到<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>π<!-- π --></mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mn>8</mn>
+  </mrow>
+</math>（非常缓慢）：<a class="footnote_link" id="DOCF49" href="#FOOT49"><sup>49</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pi-sum a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">0</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="lit">1.0</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="lit">2</span><span class="clo">)))</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">pi-sum </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="lit">4</span><span class="clo">)</span><span class="pln"> b</span><span class="clo">))))</span></pre></div>
+
+<p>这三个过程显然共享一个共同的基本模式。它们大部分是相同的，区别仅在于过程的名称、用于计算待加项的、以<code>a</code>为自变量的函数，以及提供<code>a</code>下一个值的函数。我们可以通过填充同一模板中的空位来生成每一个过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">name</span></var><span class="pln">⟩ a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">0</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">term</span></var><span class="pln">⟩ a</span><span class="clo">)</span><span class="pln"> 
+         </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">name</span></var><span class="pln">⟩ </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">next</span></var><span class="pln">⟩ a</span><span class="clo">)</span><span class="pln"> b</span><span class="clo">))))</span></pre></div>
+
+<p>这种共同模式的存在有力地表明，有一个有用的抽象等待被揭示出来。事实上，数学家们很久以前就识别出了<a id="index-summation-of-a-series"></a><em>级数求和</em>这一抽象，并发明了“sigma 记号”，例如<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <munderover>
+      <mo>∑<!-- ∑ --></mo>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>n</mi>
+        <mo>=</mo>
+        <mi>a</mi>
+      </mrow>
+      <mi>b</mi>
+    </munderover>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>a</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>+</mo>
+  <mo>⋯<!-- ⋯ --></mo>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>b</mi>
+    <mo stretchy="false">)</mo>
+    <mo>,</mo>
+  </mrow>
+</math>来表达这一概念。sigma 记号的力量在于，它允许数学家处理求和概念本身，而不仅仅是处理特定的和——例如，表述关于和的一般结果，这些结果独立于被求和的具体级数。</p>
+<p>类似地，作为程序设计者，我们希望我们的语言足够强大，以便能够编写一个表达求和概念本身的过程，而不仅仅是计算特定和的过程。我们可以在过程式语言中轻松做到这一点，方法是采用上面展示的通用模板，并将“空位”转换为形式参数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum term a next b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> a b</span><span class="clo">)</span><span class="pln">
+      </span><span class="lit">0</span><span class="pln">
+      </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">term a</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">sum term </span><span class="opn">(</span><span class="pln">next a</span><span class="clo">)</span><span class="pln"> next b</span><span class="clo">))))</span></pre></div>
+
+<p>注意<code>sum</code>接受下界和上界<code>a</code>和<code>b</code>以及过程<code>term</code>和<code>next</code>作为参数。我们可以像使用任何过程一样使用<code>sum</code>。例如，我们可以用它（连同将其参数增加1的过程<code>inc</code>）来定义<code>sum-cubes</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">inc n</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum-cubes a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sum cube a inc b</span><span class="clo">))</span></pre></div>
+
+<p>利用这一点，我们可以计算从1到10的整数的立方之和：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">sum-cubes </span><span class="lit">1</span><span class="pln"> </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">3025</span></i>
+</pre></div>
+
+<p>借助一个计算项的恒等过程，我们可以用<code>sum</code>来定义<code>sum-integers</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">identity x</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum-integers a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sum identity a inc b</span><span class="clo">))</span></pre></div>
+
+<p>然后我们可以将从1到10的整数相加：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">sum-integers </span><span class="lit">1</span><span class="pln"> </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">55</span></i>
+</pre></div>
+
+<p>我们也可以用同样的方式定义<code>pi-sum</code>：<a class="footnote_link" id="DOCF50" href="#FOOT50"><sup>50</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pi-sum a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pi-term x</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="lit">1.0</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">2</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pi-next x</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">4</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sum pi-term a pi-next b</span><span class="clo">))</span></pre></div>
+
+<p>利用这些过程，我们可以计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>的近似值：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">8</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pi-sum </span><span class="lit">1</span><span class="pln"> </span><span class="lit">1000</span><span class="clo">))</span><span class="pln">
+</span><i><span class="lit">3.139592655589783</span></i>
+</pre></div>
+
+<p>一旦我们有了<code>sum</code>，就可以将它作为构建进一步概念的构件。例如，函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>在积分限<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>之间的定积分可以用公式<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msubsup>
+      <mo>∫<!-- ∫ --></mo>
+      <mi>a</mi>
+      <mi>b</mi>
+    </msubsup>
+    <mspace width="-0.3em"/>
+    <mi>f</mi>
+  </mrow>
+  <mspace width="thickmathspace"/>
+  <mo>=</mo>
+  <mspace width="thickmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow>
+      <mo>[</mo>
+      <mspace width="thickmathspace"/>
+      <mi>f</mi>
+      <mrow>
+        <mo>(</mo>
+        <mi>a</mi>
+        <mo>+</mo>
+        <mfrac>
+          <mrow>
+            <mi>d</mi>
+            <mi>x</mi>
+          </mrow>
+          <mn>2</mn>
+        </mfrac>
+        <mo>)</mo>
+      </mrow>
+    </mrow>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>+</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mrow>
+      <mo>(</mo>
+      <mi>a</mi>
+      <mo>+</mo>
+      <mi>d</mi>
+      <mi>x</mi>
+      <mo>+</mo>
+      <mfrac>
+        <mrow>
+          <mi>d</mi>
+          <mi>x</mi>
+        </mrow>
+        <mn>2</mn>
+      </mfrac>
+      <mo>)</mo>
+    </mrow>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>+</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow>
+      <mi>f</mi>
+      <mrow>
+        <mo>(</mo>
+        <mi>a</mi>
+        <mo>+</mo>
+        <mn>2</mn>
+        <mi>d</mi>
+        <mi>x</mi>
+        <mo>+</mo>
+        <mfrac>
+          <mrow>
+            <mi>d</mi>
+            <mi>x</mi>
+          </mrow>
+          <mn>2</mn>
+        </mfrac>
+        <mo>)</mo>
+      </mrow>
+      <mspace width="thinmathspace"/>
+      <mo>+</mo>
+      <mspace width="thinmathspace"/>
+      <mo>…<!-- … --></mo>
+      <mspace width="thickmathspace"/>
+      <mo>]</mo>
+    </mrow>
+    <mi>d</mi>
+    <mi>x</mi>
+  </mrow>
+</math>在<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>x</mi>
+  </mrow>
+</math>取小值时进行数值近似。我们可以直接将其表达为一个过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">integral f a b dx</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">add-dx x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x dx</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum f </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> dx </span><span class="lit">2.0</span><span class="clo">))</span><span class="pln"> add-dx b</span><span class="clo">)</span><span class="pln"> 
+     dx</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">integral cube </span><span class="lit">0</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">0.01</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">.24998750000000042</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">integral cube </span><span class="lit">0</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">.249999875000001</span></i>
+</pre></div>
+
+<p>（<code>cube</code>在0和1之间的积分的精确值是1/4。）</p>
+<blockquote>
+<p><strong><a id="Exercise-1_002e29"></a>习题 1.29：</strong>辛普森法则是一种比上面所示方法更精确的数值积分方法。使用辛普森法则，函数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 在 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 与 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> 之间的积分近似为 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mi>h</mi>
+    <mn>3</mn>
+  </mfrac>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>y</mi>
+    <mn>0</mn>
+  </msub>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>4</mn>
+    <msub>
+      <mi>y</mi>
+      <mn>1</mn>
+    </msub>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>2</mn>
+    <msub>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msub>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>4</mn>
+    <msub>
+      <mi>y</mi>
+      <mn>3</mn>
+    </msub>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>2</mn>
+    <msub>
+      <mi>y</mi>
+      <mn>4</mn>
+    </msub>
+  </mrow>
+  <mo>+</mo>
+  <mo>⋯<!-- ⋯ --></mo>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>2</mn>
+    <msub>
+      <mi>y</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>n</mi>
+        <mo>−<!-- − --></mo>
+        <mn>2</mn>
+      </mrow>
+    </msub>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>4</mn>
+    <msub>
+      <mi>y</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mi>n</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msub>
+    <mo>+</mo>
+    <msub>
+      <mi>y</mi>
+      <mi>n</mi>
+    </msub>
+    <mo stretchy="false">)</mo>
+    <mo>,</mo>
+  </mrow>
+</math>，其中 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>h</mi>
+    <mo>=</mo>
+    <mo stretchy="false">(</mo>
+    <mi>b</mi>
+    <mo>−<!-- − --></mo>
+    <mi>a</mi>
+    <mo stretchy="false">)</mo>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>n</mi>
+  </mrow>
+</math>，对于某个偶数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>，且 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>y</mi>
+    <mi>k</mi>
+  </msub>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>a</mi>
+    <mo>+</mo>
+    <mi>k</mi>
+    <mi>h</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。（增大 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 会提高近似的精度。）定义一个过程，它以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 为参数，并返回使用辛普森法则计算出的积分值。用你的过程对 <code>cube</code> 在 0 与 1 之间进行积分（取 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>=</mo>
+    <mn>100</mn>
+  </mrow>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>n</mi>
+    <mo>=</mo>
+    <mn>1000</mn>
+  </mrow>
+</math>），并将结果与上面所示的 <code>integral</code> 过程的结果进行比较。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e30"></a>习题 1.30：</strong>上面的 <code>sum</code> 过程生成一个线性递归。该过程可以改写为迭代地执行求和。请通过填写下面定义中缺失的表达式来展示如何做到这一点：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum term a next b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">iter a result</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> ⟨</span><span class="pun">??</span><span class="pln">⟩
+        ⟨</span><span class="pun">??</span><span class="pln">⟩
+        </span><span class="opn">(</span><span class="pln">iter ⟨</span><span class="pun">??</span><span class="pln">⟩ ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">iter ⟨</span><span class="pun">??</span><span class="pln">⟩ ⟨</span><span class="pun">??</span><span class="pln">⟩</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e31"></a>习题 1.31：</strong></p>
+<ol>
+<li><code>sum</code> 过程只是大量可以捕获为高阶过程的类似抽象中最简单的一个。<a class="footnote_link" id="DOCF51" href="#FOOT51"><sup>51</sup></a> 编写一个类似的称为 <code>product</code> 的过程，它返回一个函数在给定范围内各点上的值的乘积。展示如何用 <code>product</code> 定义 <code>factorial</code>。同时使用 <code>product</code> 按照公式 <a class="footnote_link" id="DOCF52" href="#FOOT52"><sup>52</sup></a> <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mfrac>
+    <mi>π<!-- π --></mi>
+    <mn>4</mn>
+  </mfrac>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mrow>
+        <mn>2</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mn>4</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mn>4</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mn>6</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mn>6</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mn>8</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mo>⋯<!-- ⋯ --></mo>
+      </mrow>
+      <mrow>
+        <mn>3</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mn>3</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mn>5</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mn>5</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mn>7</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mn>7</mn>
+        <mo>⋅<!-- ⋅ --></mo>
+        <mo>⋯<!-- ⋯ --></mo>
+      </mrow>
+    </mfrac>
+    <mo>.</mo>
+  </mrow>
+</math> 计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math> 的近似值。</li><li>如果你的 <code>product</code> 过程生成一个递归计算过程，请编写一个生成迭代计算过程的过程。如果它生成一个迭代计算过程，请编写一个生成递归计算过程的过程。</li></ol>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e32"></a>习题 1.32：</strong></p>
+<ol>
+<li>证明 <code>sum</code> 和 <code>product</code>（<a href="#Exercise-1_002e31">习题 1.31</a>）都是一个更一般的概念的两种特殊情况，该概念称为 <code>accumulate</code>，它使用某个一般的累积函数来组合一组项：<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">accumulate 
+ combiner null-value term a next b</span><span class="clo">)</span></pre></div>
+
+<p><code>Accumulate</code> 接受与 <code>sum</code> 和 <code>product</code> 相同的项和范围说明作为参数，外加一个 <code>combiner</code> 过程（接受两个参数），它指定当前项如何与前面各项的累积结果组合，以及一个 <code>null-value</code>，它指定当项用完时使用什么基值。编写 <code>accumulate</code>，并展示如何将 <code>sum</code> 和 <code>product</code> 都定义为对 <code>accumulate</code> 的简单调用。</p>
+</li><li>如果你的 <code>accumulate</code> 过程生成一个递归计算过程，请编写一个生成迭代计算过程的过程。如果它生成一个迭代计算过程，请编写一个生成递归计算过程的过程。</li></ol>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e33"></a>习题 1.33：</strong>通过引入对待组合项上的 <a id="index-filter"></a><em>过滤器</em> 的概念，你可以得到 <code>accumulate</code>（<a href="#Exercise-1_002e32">习题 1.32</a>）的一个更一般的版本。也就是说，只组合那些由范围内满足指定条件的值所导出的项。所得的 <code>filtered-accumulate</code> 抽象接受与 accumulate 相同的参数，外加一个指定过滤器的单参数谓词。将 <code>filtered-accumulate</code> 编写为一个过程。展示如何使用 <code>filtered-accumulate</code> 表达以下内容：</p>
+<ol>
+<li>区间 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 到 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> 中素数的平方和（假设你已经编写了一个 <code>prime?</code> 谓词）</li><li>所有小于 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 且与 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 互素的正整数的乘积（即所有满足 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mtext>GCD</mtext>
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>n</mi>
+    <mo stretchy="false">)</mo>
+    <mo>=</mo>
+    <mn>1</mn>
+  </mrow>
+</math> 的正整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>&lt;</mo>
+    <mi>n</mi>
+  </mrow>
+</math>）。</li></ol>
+</blockquote>
+
+<a id="g_t1_002e3_002e2"></a>
+<a id="Constructing-Procedures-Using-Lambda"></a>
+<h4 class="subsection"><span class="secnum">1.3.2</span><span class="sectitle">使用 <code>Lambda</code> 构造过程</span></h4>
+
+<p>在如 <a href="#g_t1_002e3_002e1">1.3.1</a> 那样使用 <code>sum</code> 时，为了能把像 <code>pi-term</code> 和 <code>pi-next</code> 这样平凡的过程用作高阶过程的参数而不得不定义它们，似乎非常别扭。与其定义 <code>pi-next</code> 和 <code>pi-term</code>，更方便的是有一种方式直接指定“返回其输入加 4 的过程”和“返回其输入与（其输入加 2）的乘积的倒数的过程”。我们可以通过引入特殊形式 <code>lambda</code> 来做到这一点，它创建过程。使用 <code>lambda</code>，我们可以把我们想要的东西描述为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">4</span><span class="clo">))</span></pre></div>
+
+<p>和</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="lit">1.0</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">2</span><span class="clo">))))</span></pre></div>
+
+<p>然后我们的 <code>pi-sum</code> 过程就可以在不定义任何辅助过程的情况下表达为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pi-sum a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">sum </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="lit">1.0</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">2</span><span class="clo">))))</span><span class="pln">
+       a
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">4</span><span class="clo">))</span><span class="pln">
+       b</span><span class="clo">))</span></pre></div>
+
+<p>再次使用 <code>lambda</code>，我们可以编写 <code>integral</code> 过程，而不必定义辅助过程 <code>add-dx</code>：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">integral f a b dx</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sum f </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> dx </span><span class="lit">2.0</span><span class="clo">))</span><span class="pln">
+            </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x dx</span><span class="clo">))</span><span class="pln">
+            b</span><span class="clo">)</span><span class="pln">
+     dx</span><span class="clo">))</span></pre></div>
+
+<p>一般来说，<code>lambda</code> 用于创建过程的方式与 <code>define</code> 相同，只是没有为过程指定名称：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">formal-parameters</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln"> ⟨</span><var><span class="pln">body</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>所得的过程与使用 <code>define</code> 创建的过程一样是一个过程。唯一的区别是它没有与环境中的任何名称相关联。事实上，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">plus4 x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">4</span><span class="clo">))</span></pre></div>
+
+<p>等价于</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> plus4 </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">4</span><span class="clo">)))</span></pre></div>
+
+<p>我们可以如下解读一个 <code>lambda</code> 表达式：</p>
+<div class="example">
+<pre class="example">(lambda                     (x)     (+   x     4))
+    |                        |       |   |     |
+the procedure of an argument x that adds x and 4
+</pre></div>
+
+<p>像任何以过程为值的表达式一样，<code>lambda</code> 表达式可以用作组合式中的运算符，例如</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x y z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x y </span><span class="opn">(</span><span class="pln">square z</span><span class="clo">)))</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">12</span></i>
+</pre></div>
+
+<p>或者更一般地说，在我们通常使用过程名的任何上下文中。<a class="footnote_link" id="DOCF53" href="#FOOT53"><sup>53</sup></a></p>
+<a id="Using-let-to-create-local-variables"></a>
+<h5 class="subsubheading">使用 <code>let</code> 创建局部变量</h5>
+
+<p><code>lambda</code> 的另一个用途是创建局部变量。我们的过程中经常需要除作为形参绑定的变量之外的局部变量。例如，假设我们希望计算函数 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo>,</mo>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo>+</mo>
+    <mi>x</mi>
+    <mi>y</mi>
+    <msup>
+      <mo stretchy="false">)</mo>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo>−<!-- − --></mo>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>+</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo>+</mo>
+    <mi>x</mi>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo>−<!-- − --></mo>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+    <mo>,</mo>
+  </mrow>
+</math>，我们也可以将其表示为 <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mtable columnalign="right center left" rowspacing="3pt" columnspacing="thickmathspace">
+    <mtr>
+      <mtd>
+        <mi>a</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mn>1</mn>
+          <mo>+</mo>
+          <mi>x</mi>
+          <mi>y</mi>
+          <mo>,</mo>
+        </mrow>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mpadded height="0" depth="0">
+            <mphantom>
+              <mo stretchy="false">(</mo>
+              <mi>x</mi>
+              <mo>,</mo>
+              <mi>y</mi>
+              <mo stretchy="false">)</mo>
+            </mphantom>
+          </mpadded>
+        </mrow>
+        <mi>b</mi>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mn>1</mn>
+          <mo>−<!-- − --></mo>
+          <mi>y</mi>
+          <mo>,</mo>
+        </mrow>
+      </mtd>
+    </mtr>
+    <mtr>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mi>f</mi>
+          <mo stretchy="false">(</mo>
+          <mi>x</mi>
+          <mo>,</mo>
+          <mi>y</mi>
+          <mo stretchy="false">)</mo>
+        </mrow>
+      </mtd>
+      <mtd>
+        <mo>=</mo>
+      </mtd>
+      <mtd>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mi>x</mi>
+          <msup>
+            <mi>a</mi>
+            <mn>2</mn>
+          </msup>
+        </mrow>
+        <mo>+</mo>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mi>y</mi>
+          <mi>b</mi>
+        </mrow>
+        <mo>+</mo>
+        <mrow class="MJX-TeXAtom-ORD">
+          <mi>a</mi>
+          <mi>b</mi>
+          <mo>.</mo>
+        </mrow>
+      </mtd>
+    </mtr>
+  </mtable>
+</math> 在编写计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 的过程时，我们希望不仅把 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math> 作为局部变量，还把像 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> 这样的中间量的名称也作为局部变量。实现这一点的一种方法是使用辅助过程来绑定局部变量：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f-helper a b</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x </span><span class="opn">(</span><span class="pln">square a</span><span class="clo">))</span><span class="pln">
+       </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> y b</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a b</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">f-helper </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln"> 
+            </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> y</span><span class="clo">)))</span></pre></div>
+
+<p>当然，我们可以使用 <code>lambda</code> 表达式来指定一个匿名过程以绑定我们的局部变量。<code>f</code> 的主体于是变成对该过程的单次调用：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">a b</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x </span><span class="opn">(</span><span class="pln">square a</span><span class="clo">))</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> y b</span><span class="clo">)</span><span class="pln"> 
+        </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a b</span><span class="clo">)))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> y</span><span class="clo">)))</span></pre></div>
+
+<p>这种构造如此有用，以至于有一种称为 <code>let</code> 的特殊形式来使其使用更方便。使用 <code>let</code>，<code>f</code> 过程可以写成</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">a </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x y</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">b </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> y</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x </span><span class="opn">(</span><span class="pln">square a</span><span class="clo">))</span><span class="pln">
+       </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> y b</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a b</span><span class="clo">))))</span></pre></div>
+
+<p><code>let</code> 表达式的一般形式是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">⟨</span><var><span class="pln">var</span><span class="pun">₁</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">exp</span><span class="pun">₁</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">var</span><span class="pun">₂</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">exp</span><span class="pun">₂</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+      </span><span class="roman"><span class="pun">…</span></span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">var</span><span class="pun">ₙ</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">exp</span><span class="pun">ₙ</span></var><span class="pln">⟩</span><span class="clo">))</span><span class="pln">
+  ⟨</span><var><span class="pln">body</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>这可以看作是在说</p>
+<div class="example">
+<pre class="example">let ⟨<var>var₁</var>⟩ <span class="roman">have the value</span> ⟨<var>exp₁</var>⟩ <span class="roman">and</span>
+    ⟨<var>var₂</var>⟩ <span class="roman">have the value</span> ⟨<var>exp₂</var>⟩ <span class="roman">and</span>
+    <span class="roman">…</span>
+    ⟨<var>varₙ</var>⟩ <span class="roman">have the value</span> ⟨<var>expₙ</var>⟩
+  <span class="roman">in</span> ⟨<var>body</var>⟩
+</pre></div>
+
+<p><code>let</code> 表达式的第一部分是一个名字-表达式对的表。当求值 <code>let</code> 时，每个名字都与相应表达式的值相关联。<code>let</code> 的主体在这些名字作为局部变量绑定的情况下求值。其实现方式是，<code>let</code> 表达式被解释为以下形式的另一种语法：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">⟨</span><var><span class="pln">var</span><span class="pun">₁</span></var><span class="pln">⟩ </span><span class="roman"><span class="pun">…</span></span><span class="pln"> ⟨</span><var><span class="pln">var</span><span class="pun">ₙ</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+   ⟨</span><var><span class="pln">body</span></var><span class="pln">⟩</span><span class="clo">)</span><span class="pln">
+ ⟨</span><var><span class="pln">exp</span><span class="pun">₁</span></var><span class="pln">⟩
+ </span><span class="roman"><span class="pun">…</span></span><span class="pln">
+ ⟨</span><var><span class="pln">exp</span><span class="pun">ₙ</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>为了提供局部变量，解释器中不需要任何新机制。<code>let</code> 表达式只是底层 <code>lambda</code> 应用的一种语法糖。</p>
+<p>从这个等价关系可以看出，由 <code>let</code> 表达式指定的变量的作用域是 <code>let</code> 的主体。这意味着：</p>
+<ul>
+<li><code>Let</code> 允许人们尽可能地将变量绑定在靠近其使用位置的地方。例如，如果 <code>x</code> 的值是 5，则表达式的值<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">x </span><span class="lit">3</span><span class="clo">))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x </span><span class="lit">10</span><span class="clo">)))</span><span class="pln">
+   x</span><span class="clo">)</span></pre></div>
+
+<p>是 38。这里，<code>let</code> 主体中的 <code>x</code> 是 3，所以 <code>let</code> 表达式的值是 33。另一方面，作为最外层 <code>+</code> 的第二个参数的 <code>x</code> 仍然是 5。</p>
+</li><li>变量的值是在 <code>let</code> 之外计算的。当为局部变量提供值的表达式依赖于与局部变量本身同名的变量时，这一点很重要。例如，如果 <code>x</code> 的值是 2，则表达式<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">x </span><span class="lit">3</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">y </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x </span><span class="lit">2</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x y</span><span class="clo">))</span></pre></div>
+
+<p>的值将是 12，因为在 <code>let</code> 的主体内部，<code>x</code> 将是 3，而 <code>y</code> 将是 4（即外层 <code>x</code> 加上 2）。</p>
+</li></ul>
+
+<p>有时我们可以使用内部定义来获得与 <code>let</code> 相同的效果。例如，我们可以将上面的过程 <code>f</code> 定义为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> a 
+    </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x y</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> b </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="lit">1</span><span class="pln"> y</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x </span><span class="opn">(</span><span class="pln">square a</span><span class="clo">))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> y b</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a b</span><span class="clo">)))</span></pre></div>
+
+<p>然而，在这种情况下我们更倾向于使用 <code>let</code>，而仅对内部过程使用内部 <code>define</code>。<a class="footnote_link" id="DOCF54" href="#FOOT54"><sup>54</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-1_002e34"></a>习题 1.34：</strong> 假设我们定义过程</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">f g</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">g </span><span class="lit">2</span><span class="clo">))</span></pre></div>
+
+<p>那么我们有</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">f square</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">4</span></i><span class="pln">
+
+</span><span class="opn">(</span><span class="pln">f </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">z</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> z </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> z </span><span class="lit">1</span><span class="clo">))))</span><span class="pln">
+</span><i><span class="lit">6</span></i>
+</pre></div>
+
+<p>如果我们（反常地）要求解释器求值组合式 <code>(f f)</code>，会发生什么？请解释。</p></blockquote>
+
+<a id="g_t1_002e3_002e3"></a>
+<a id="Procedures-as-General-Methods"></a>
+<h4 class="subsection"><span class="secnum">1.3.3</span><span class="sectitle">过程作为通用方法</span></h4>
+
+<p>我们在 <a href="1_002e1_zh.xhtml#g_t1_002e1_002e4">1.1.4</a> 中引入了复合过程，作为一种抽象数值运算模式以使它们独立于所涉及的具体数的机制。借助高阶过程，例如 <a href="#g_t1_002e3_002e1">1.3.1</a> 的 <code>integral</code> 过程，我们开始看到一种更强大的抽象：用于表达通用计算方法的过程，独立于所涉及的具体函数。在本节中，我们讨论两个更精细的例子——求函数零点和不动点的通用方法——并展示这些方法如何能直接表达为过程。</p>
+<a id="Finding-roots-of-equations-by-the-half_002dinterval-method"></a>
+<h5 class="subsubheading">用半区间法求方程的根</h5>
+
+<p><a id="index-half_002dinterval-method"></a><em>半区间法</em>是一种简单但强大的技术，用于求方程 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+    <mo>=</mo>
+    <mn>0</mn>
+  </mrow>
+</math> 的根，其中 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 是连续函数。其思想是，如果给定点 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> 使得 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>a</mi>
+    <mo stretchy="false">)</mo>
+    <mo>&lt;</mo>
+    <mn>0</mn>
+    <mo>&lt;</mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>b</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，那么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 在 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> 之间必定至少有一个零点。为了定位一个零点，令 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> 的平均值，并计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+    <mo>&gt;</mo>
+    <mn>0</mn>
+  </mrow>
+</math>，那么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 在 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 之间必定有一个零点。如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+    <mo>&lt;</mo>
+    <mn>0</mn>
+  </mrow>
+</math>，那么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 在 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math> 之间必定有一个零点。以这种方式继续，我们可以确定越来越小的区间，在这些区间上 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 必定有一个零点。当我们达到区间足够小的点时，过程停止。由于在过程的每一步中不确定区间都减半，所需的步数按 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="normal">Θ<!-- Θ --></mi>
+    <mo stretchy="false">(</mo>
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mo stretchy="false">(</mo>
+    <mi>L</mi>
+    <mspace width="thinmathspace"/>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mspace width="thinmathspace"/>
+    <mi>T</mi>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 增长，其中 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>L</mi>
+</math> 是原始区间的长度，而 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>T</mi>
+</math> 是误差容限（即我们将视为“足够小”的区间大小）。下面是一个实现此策略的过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">search f neg-point pos-point</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">midpoint 
+         </span><span class="opn">(</span><span class="pln">average neg-point pos-point</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">close-enough? neg-point pos-point</span><span class="clo">)</span><span class="pln">
+        midpoint
+        </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">test-value </span><span class="opn">(</span><span class="pln">f midpoint</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> 
+           </span><span class="opn">((</span><span class="pln">positive? test-value</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">search f neg-point midpoint</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">((</span><span class="pln">negative? test-value</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">search f midpoint pos-point</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> midpoint</span><span class="clo">))))))</span></pre></div>
+
+<p>我们假设最初给定函数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 以及其值为负和为正的点。我们首先计算两个给不动点的中点。接着我们检查给定区间是否足够小，如果是，我们就简单地返回中点作为答案。否则，我们计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 在中点处的值作为测试值。如果测试值为正，则我们用从原来函数值为负的点到中点的新区间继续该过程。如果测试值为负，我们用从中点到函数值为正的点的区间继续。最后，还有一种可能是测试值为 0，在这种情况下中点本身就是我们要寻找的根。</p>
+<p>为了测试端点是否“足够接近”，我们可以使用一个类似于 <a href="1_002e1_zh.xhtml#g_t1_002e1_002e7">1.1.7</a> 中用于计算平方根的过程：<a class="footnote_link" id="DOCF55" href="#FOOT55"><sup>55</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">close-enough? x y</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln"> </span><span class="lit">0.001</span><span class="clo">))</span></pre></div>
+
+<p><code>Search</code> 直接使用起来很别扭，因为我们可能不小心给它提供 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 的值不具有所需符号的点，在这种情况下我们会得到错误的答案。相反，我们将通过以下过程使用 <code>search</code>，该过程检查哪个端点的函数值为负、哪个为正，并相应地调用 <code>search</code> 过程。如果函数在两个给不动点上具有相同的符号，则无法使用半区间法，在这种情况下该过程发出错误信号。<a class="footnote_link" id="DOCF56" href="#FOOT56"><sup>56</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">half-interval-method f a b</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">a-value </span><span class="opn">(</span><span class="pln">f a</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">b-value </span><span class="opn">(</span><span class="pln">f b</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pln">negative? a-value</span><span class="clo">)</span><span class="pln"> 
+                </span><span class="opn">(</span><span class="pln">positive? b-value</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">search f a b</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">((</span><span class="kwd">and</span><span class="pln"> </span><span class="opn">(</span><span class="pln">negative? b-value</span><span class="clo">)</span><span class="pln"> 
+                </span><span class="opn">(</span><span class="pln">positive? a-value</span><span class="clo">))</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">search f b a</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">else</span><span class="pln">
+           </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Values are not of 
+                   opposite sign"</span><span class="pln"> a b</span><span class="clo">)))))</span></pre></div>
+
+<p>下面的例子使用半区间法来近似 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>π<!-- π --></mi>
+</math>，作为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>sin</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>x</mi>
+    <mo>=</mo>
+    <mn>0</mn>
+  </mrow>
+</math> 在 2 和 4 之间的根：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">half-interval-method sin </span><span class="lit">2.0</span><span class="pln"> </span><span class="lit">4.0</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">3.14111328125</span></i>
+</pre></div>
+
+<p>这是另一个例子，使用半区间法在 1 和 2 之间搜索方程 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>x</mi>
+      <mn>3</mn>
+    </msup>
+    <mo>−<!-- − --></mo>
+    <mn>2</mn>
+    <mi>x</mi>
+    <mo>−<!-- − --></mo>
+    <mn>3</mn>
+    <mo>=</mo>
+    <mn>0</mn>
+  </mrow>
+</math> 的根：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">half-interval-method 
+ </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> x</span><span class="clo">)</span><span class="pln"> </span><span class="lit">3</span><span class="clo">))</span><span class="pln">
+ </span><span class="lit">1.0</span><span class="pln">
+ </span><span class="lit">2.0</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">1.89306640625</span></i>
+</pre></div>
+
+<a id="Finding-fixed-points-of-functions"></a>
+<h5 class="subsubheading">求函数的不动点</h5>
+
+<p>如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>满足方程<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+    <mo>=</mo>
+    <mi>x</mi>
+  </mrow>
+</math>，数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>就称为函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>的一个<a id="index-fixed-point"></a><em>不动点</em>。对于某些函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>，我们可以从一个初始猜测开始，反复应用<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>，<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+    <mo>,</mo>
+  </mrow>
+  <mspace width="1em"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+    <mo>,</mo>
+  </mrow>
+  <mspace width="1em"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+    <mo>,</mo>
+  </mrow>
+  <mspace width="1em"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo>…<!-- … --></mo>
+    <mo>,</mo>
+  </mrow>
+</math>直到数值的变化很小，以此找到一个不动点。利用这个想法，我们可以设计一个过程<code>fixed-point</code>，以一个函数和一个初始猜测作为输入，产生该函数的一个不动点的近似值。我们反复应用这个函数，直到找到两个相邻的值，它们的差小于某个规定的容差：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> tolerance </span><span class="lit">0.00001</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fixed-point f first-guess</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">close-enough? v1 v2</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">&lt;</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> v1 v2</span><span class="clo">))</span><span class="pln"> 
+       tolerance</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">try guess</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">next </span><span class="opn">(</span><span class="pln">f guess</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">close-enough? guess next</span><span class="clo">)</span><span class="pln">
+          next
+          </span><span class="opn">(</span><span class="pln">try next</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">try first-guess</span><span class="clo">))</span></pre></div>
+
+<p>例如，我们可以用这个方法近似余弦函数的不动点，从 1 作为初始近似值开始：<a class="footnote_link" id="DOCF57" href="#FOOT57"><sup>57</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">fixed-point cos </span><span class="lit">1.0</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">.7390822985224023</span></i>
+</pre></div>
+
+<p>类似地，我们可以找到方程 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo>=</mo>
+    <mi>sin</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>y</mi>
+    <mo>+</mo>
+    <mi>cos</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>y</mi>
+  </mrow>
+</math> 的一个解：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">fixed-point </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sin y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cos y</span><span class="clo">)))</span><span class="pln">
+             </span><span class="lit">1.0</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">1.2587315962971173</span></i>
+</pre></div>
+
+<p>不动点过程让人想起我们在 <a href="1_002e1_zh.xhtml#g_t1_002e1_002e7">1.1.7</a> 中用于求平方根的过程。两者都基于反复改进猜测直到结果满足某个准则的想法。事实上，我们可以很容易地把平方根计算表述为不动点搜索。计算某个数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 的平方根需要找到一个 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math> 使得 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>=</mo>
+    <mi>x</mi>
+  </mrow>
+</math>。把这个方程写成等价形式 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo>=</mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math>，我们认识到我们是在寻找函数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math> 的不动点<a class="footnote_link" id="DOCF58" href="#FOOT58"><sup>58</sup></a>，因此我们可以尝试这样计算平方根：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fixed-point </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln">
+               </span><span class="lit">1.0</span><span class="clo">))</span></pre></div>
+
+<p>不幸的是，这个不动点搜索不收敛。考虑一个初始猜测 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>y</mi>
+    <mn>1</mn>
+  </msub>
+</math>。下一个猜测是 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msub>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msub>
+    <mo>=</mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msub>
+      <mi>y</mi>
+      <mn>1</mn>
+    </msub>
+  </mrow>
+</math>，再下一个猜测是 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>y</mi>
+    <mn>3</mn>
+  </msub>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msub>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msub>
+  </mrow>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msub>
+      <mi>y</mi>
+      <mn>1</mn>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mo>=</mo>
+  <msub>
+    <mi>y</mi>
+    <mn>1</mn>
+  </msub>
+</math>。这导致一个无限循环，其中两个猜测 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>y</mi>
+    <mn>1</mn>
+  </msub>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>y</mi>
+    <mn>2</mn>
+  </msub>
+</math> 反复重复，在答案附近振荡。</p>
+<p>控制这种振荡的一种方法是防止猜测变化太大。由于答案总是介于我们的猜测 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math> 之间，我们可以通过将 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math> 与 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math> 取平均，来做出一个离 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math> 不像 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math> 那么远的新猜测，使得 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math> 之后的下一个猜测是 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mn>1</mn>
+        <mn>2</mn>
+      </mfrac>
+    </mrow>
+    <mo stretchy="false">(</mo>
+    <mi>y</mi>
+    <mo>+</mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 而不是 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math>。做出这样一系列猜测的过程就是寻找 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+  <mo stretchy="false">↦<!-- ↦ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mn>1</mn>
+        <mn>2</mn>
+      </mfrac>
+    </mrow>
+    <mo stretchy="false">(</mo>
+    <mi>y</mi>
+    <mo>+</mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 的不动点的过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fixed-point 
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">average y </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x y</span><span class="clo">)))</span><span class="pln">
+   </span><span class="lit">1.0</span><span class="clo">))</span></pre></div>
+
+<p>（注意，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mn>1</mn>
+        <mn>2</mn>
+      </mfrac>
+    </mrow>
+    <mo stretchy="false">(</mo>
+    <mi>y</mi>
+    <mo>+</mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 是方程 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo>=</mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+    <mo>;</mo>
+  </mrow>
+</math> 的一个简单变换，要推导它，在方程两边加上 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math> 并除以 2。）</p>
+<p>经过这一修改，平方根过程就可以工作了。事实上，如果展开这些定义，就可以看出，这里产生的平方根近似值序列，与我们在<a href="1_002e1_zh.xhtml#g_t1_002e1_002e7">1.1.7</a>中最初的平方根过程所产生的序列完全相同。这种对解的逐次近似值取平均的方法，我们称为<a id="index-average-damping"></a><em>平均阻尼</em>，它常常有助于不动点搜索的收敛。</p>
+<blockquote>
+<p><strong><a id="Exercise-1_002e35"></a>习题 1.35：</strong> 证明黄金分割比 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>φ<!-- φ --></mi>
+</math>（<a href="1_002e2_zh.xhtml#g_t1_002e2_002e2">1.2.2</a>）是变换 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mn>1</mn>
+    <mo>+</mo>
+    <mn>1</mn>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>x</mi>
+  </mrow>
+</math> 的一个不动点，并利用这一事实通过 <code>fixed-point</code> 过程来计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>φ<!-- φ --></mi>
+</math>。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e36"></a>习题 1.36：</strong> 修改 <code>fixed-point</code>，使其使用 <a href="1_002e2_zh.xhtml#Exercise-1_002e22">习题 1.22</a> 中展示的 <code>newline</code> 和 <code>display</code> 基本过程打印出它生成的近似值序列。然后通过寻找 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+  <mo stretchy="false">↦<!-- ↦ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mo stretchy="false">(</mo>
+    <mn>1000</mn>
+    <mo stretchy="false">)</mo>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 的不动点来找到 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>x</mi>
+      <mi>x</mi>
+    </msup>
+    <mo>=</mo>
+    <mn>1000</mn>
+  </mrow>
+</math> 的一个解。（使用 Scheme 的基本过程 <code>log</code>，它计算自然对数。）比较使用和不使用平均阻尼时所需的步数。（注意，你不能用 1 作为猜测来启动 <code>fixed-point</code>，因为这会导致除以 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>log</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mo stretchy="false">(</mo>
+    <mn>1</mn>
+    <mo stretchy="false">)</mo>
+    <mo>=</mo>
+    <mn>0</mn>
+  </mrow>
+</math>。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e37"></a>习题 1.37：</strong></p>
+<ol>
+<li>无穷<a id="index-continued-fraction"></a><em>连分式</em>是一种具有如下形式的表达式：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <msub>
+        <mi>N</mi>
+        <mn>1</mn>
+      </msub>
+      <mrow>
+        <msub>
+          <mi>D</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>+</mo>
+        <mfrac>
+          <msub>
+            <mi>N</mi>
+            <mn>2</mn>
+          </msub>
+          <mrow>
+            <msub>
+              <mi>D</mi>
+              <mn>2</mn>
+            </msub>
+            <mo>+</mo>
+            <mfrac>
+              <msub>
+                <mi>N</mi>
+                <mn>3</mn>
+              </msub>
+              <mrow>
+                <msub>
+                  <mi>D</mi>
+                  <mn>3</mn>
+                </msub>
+                <mo>+</mo>
+                <mo>…<!-- … --></mo>
+              </mrow>
+            </mfrac>
+          </mrow>
+        </mfrac>
+      </mrow>
+    </mfrac>
+    <mo>.</mo>
+  </mrow>
+</math>例如，可以证明，当<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>N</mi>
+    <mi>i</mi>
+  </msub>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>D</mi>
+    <mi>i</mi>
+  </msub>
+</math>都等于1时，无穷连分式展开式的值为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1</mn>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>φ<!-- φ --></mi>
+  </mrow>
+</math>，其中<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>φ<!-- φ --></mi>
+</math>是黄金分割比（在<a href="1_002e2_zh.xhtml#g_t1_002e2_002e2">1.2.2</a>中介绍过）。近似计算无穷连分式的一种方法，是在给定项数之后截断展开式。这样的截断——即所谓的<a id="index-k_002dterm"></a>有限连分式，<em><i>k</i>项有限连分式</em>——具有如下形式：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <msub>
+        <mi>N</mi>
+        <mn>1</mn>
+      </msub>
+      <mrow>
+        <msub>
+          <mi>D</mi>
+          <mn>1</mn>
+        </msub>
+        <mo>+</mo>
+        <mfrac>
+          <msub>
+            <mi>N</mi>
+            <mn>2</mn>
+          </msub>
+          <mrow>
+            <mo>⋱<!-- ⋱ --></mo>
+            <mo>+</mo>
+            <mfrac>
+              <msub>
+                <mi>N</mi>
+                <mi>k</mi>
+              </msub>
+              <msub>
+                <mi>D</mi>
+                <mi>k</mi>
+              </msub>
+            </mfrac>
+          </mrow>
+        </mfrac>
+      </mrow>
+    </mfrac>
+    <mo>.</mo>
+  </mrow>
+</math>假设<code>n</code>和<code>d</code>是接受一个参数（项的下标<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>i</mi>
+</math>）的过程，分别返回连分式各项的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>N</mi>
+    <mi>i</mi>
+  </msub>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>D</mi>
+    <mi>i</mi>
+  </msub>
+</math>。定义一个过程<code>cont-frac</code>，使得对<code>(cont-frac n d k)</code>求值能够计算出<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>k</mi>
+</math>项有限连分式的值。通过近似计算<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1</mn>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>φ<!-- φ --></mi>
+  </mrow>
+</math>来检验你的过程，使用<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">cont-frac </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">i</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1.0</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">i</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1.0</span><span class="clo">)</span><span class="pln">
+           k</span><span class="clo">)</span></pre></div>
+
+<p>对于相继的 <code>k</code> 值。为了使近似值精确到 4 位小数，你必须把 <code>k</code> 取多大？</p>
+</li><li>如果你的 <code>cont-frac</code> 过程生成递归计算过程，就写一个生成迭代计算过程的过程。如果它生成迭代计算过程，就写一个生成递归计算过程的过程。</li></ol>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e38"></a>习题 1.38：</strong> 在 1737 年，瑞士数学家 Leonhard Euler 发表了一篇论文 <cite>De Fractionibus Continuis</cite>，其中包含 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>e</mi>
+    <mo>−<!-- − --></mo>
+    <mn>2</mn>
+  </mrow>
+</math> 的连分式展开，其中 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>e</mi>
+</math> 是自然对数的底。在这个分数中，<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>N</mi>
+    <mi>i</mi>
+  </msub>
+</math> 全都等于 1，而 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>D</mi>
+    <mi>i</mi>
+  </msub>
+</math> 依次为 1、2、1、1、4、1、1、6、1、1、8、…。编写一个程序，使用你在 <a href="#Exercise-1_002e37">习题 1.37</a> 中的 <code>cont-frac</code> 过程，基于 Euler 的展开来近似 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>e</mi>
+</math>。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e39"></a>习题 1.39：</strong> 德国数学家 J.H. Lambert 在 1770 年发表了正切函数的连分式表示：<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>tan</mi>
+    <mo>⁡<!-- ⁡ --></mo>
+    <mi>x</mi>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mi>x</mi>
+      <mrow>
+        <mn>1</mn>
+        <mo>−<!-- − --></mo>
+        <mfrac>
+          <msup>
+            <mi>x</mi>
+            <mn>2</mn>
+          </msup>
+          <mrow>
+            <mn>3</mn>
+            <mo>−<!-- − --></mo>
+            <mfrac>
+              <msup>
+                <mi>x</mi>
+                <mn>2</mn>
+              </msup>
+              <mrow>
+                <mn>5</mn>
+                <mo>−<!-- − --></mo>
+                <mo>…<!-- … --></mo>
+              </mrow>
+            </mfrac>
+          </mrow>
+        </mfrac>
+      </mrow>
+    </mfrac>
+    <mspace width="thinmathspace"/>
+    <mo>,</mo>
+  </mrow>
+</math> 其中 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 以弧度为单位。定义一个过程 <code>(tan-cf x k)</code>，基于 Lambert 的公式计算正切函数的近似值。<code>k</code> 指定要计算的项数，如同在 <a href="#Exercise-1_002e37">习题 1.37</a> 中那样。</p></blockquote>
+
+<a id="g_t1_002e3_002e4"></a>
+<a id="Procedures-as-Returned-Values"></a>
+<h4 class="subsection"><span class="secnum">1.3.4</span><span class="sectitle">作为返回值的过程</span></h4>
+
+<p>上面的例子展示了将过程作为参数传递的能力如何显著增强我们编程语言的表达能力。通过创建其返回值本身也是过程的过程，我们可以获得更强的表达能力。</p>
+<p>我们可以通过再次考察在<a href="#g_t1_002e3_002e3">1.3.3</a>末尾描述的不动点示例来说明这一思想。我们将平方根过程的新版本表述为不动点搜索，从观察到<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msqrt>
+    <mi>x</mi>
+  </msqrt>
+</math>是函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math>的一个不动点开始。然后我们使用平均阻尼来使近似值收敛。平均阻尼本身是一种有用的通用技术。即，给定一个函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>，我们考虑这样一个函数，它在<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>处的值等于<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的平均值。</p>
+<p>我们可以通过以下过程来表达平均阻尼的思想：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">average-damp f</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln"> 
+    </span><span class="opn">(</span><span class="pln">average x </span><span class="opn">(</span><span class="pln">f x</span><span class="clo">))))</span></pre></div>
+
+<p><code>Average-damp</code>是一个过程，它接受一个过程<code>f</code>作为参数，并返回一个过程（由<code>lambda</code>产生）作为其值，该过程在应用于一个数<code>x</code>时，产生<code>x</code>和<code>(f x)</code>的平均值。例如，将<code>average-damp</code>应用于<code>square</code>过程会产生一个过程，其在某个数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>处的值是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+</math>的平均值。将这个结果过程应用于10返回10和100的平均值，即55：<a class="footnote_link" id="DOCF59" href="#FOOT59"><sup>59</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="pln">average-damp square</span><span class="clo">)</span><span class="pln"> </span><span class="lit">10</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">55</span></i>
+</pre></div>
+
+<p>使用<code>average-damp</code>，我们可以将平方根过程重新表述如下：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fixed-point 
+   </span><span class="opn">(</span><span class="pln">average-damp 
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x y</span><span class="clo">)))</span><span class="pln">
+   </span><span class="lit">1.0</span><span class="clo">))</span></pre></div>
+
+<p>注意这种表述如何明确地体现了该方法中的三个思想：不动点搜索、平均阻尼和函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math>。将这种平方根方法的表述与<a href="1_002e1_zh.xhtml#g_t1_002e1_002e7">1.1.7</a>中给出的原始版本进行比较是有启发性的。请记住，这些过程表达的是同一个计算过程，并注意当我们用这些抽象来表达该过程时，思想变得清晰了多少。一般来说，将计算过程表述为过程有许多方式。有经验的程序员知道如何选择特别清晰的过程表述，并且将计算过程中有用的元素作为可以复用于其他应用的独立实体暴露出来。作为一个简单的复用示例，注意<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>的立方根是函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+</math>的一个不动点，因此我们可以立即将我们的平方根过程推广为一个提取立方根的过程：<a class="footnote_link" id="DOCF60" href="#FOOT60"><sup>60</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cube-root x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fixed-point 
+   </span><span class="opn">(</span><span class="pln">average-damp 
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">y</span><span class="clo">)</span><span class="pln"> 
+      </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">))))</span><span class="pln">
+   </span><span class="lit">1.0</span><span class="clo">))</span></pre></div>
+
+<a id="Newton_0027s-method"></a>
+<h5 class="subsubheading">牛顿法</h5>
+
+<p>当我们在<a href="1_002e1_zh.xhtml#g_t1_002e1_002e7">1.1.7</a>中首次引入平方根过程时，我们提到这是<a id="index-Newton_0027s-method"></a><em>牛顿法</em>的一个特例。如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>g</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>是一个可微函数，那么方程<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>g</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+    <mo>=</mo>
+    <mn>0</mn>
+  </mrow>
+</math>的一个解是函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>的一个不动点，其中<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mi>x</mi>
+  <mo>−<!-- − --></mo>
+  <mfrac>
+    <mrow>
+      <mi>g</mi>
+      <mo stretchy="false">(</mo>
+      <mi>x</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+    <mrow>
+      <mi>D</mi>
+      <mi>g</mi>
+      <mo stretchy="false">(</mo>
+      <mi>x</mi>
+      <mo stretchy="false">)</mo>
+    </mrow>
+  </mfrac>
+</math>，而<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>D</mi>
+    <mi>g</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>是<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math>在<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>处的导数。牛顿法是使用我们上面看到的不动点方法来通过寻找函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+  </mrow>
+</math>的不动点来近似方程的解。<a class="footnote_link" id="DOCF61" href="#FOOT61"><sup>61</sup></a></p>
+<p>对于许多函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math>以及对于足够好的<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>初始猜测，牛顿法会非常迅速地收敛到<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>g</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+    <mo>=</mo>
+    <mn>0</mn>
+  </mrow>
+</math>的一个解。<a class="footnote_link" id="DOCF62" href="#FOOT62"><sup>62</sup></a></p>
+<p>为了将牛顿法实现为一个过程，我们必须首先表达导数的概念。注意，“导数”和平均阻尼一样，是将一个函数变换为另一个函数的东西。例如，函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <msup>
+      <mi>x</mi>
+      <mn>3</mn>
+    </msup>
+  </mrow>
+</math>的导数是函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mn>3</mn>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+</math>。一般来说，如果<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math>是一个函数，而<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>x</mi>
+  </mrow>
+</math>是一个小的数，那么<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math>的导数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>D</mi>
+    <mi>g</mi>
+  </mrow>
+</math>是这样一个函数，它在任意数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>处的值（在<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>x</mi>
+  </mrow>
+</math>趋于零的极限下）由<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>D</mi>
+  <mi>g</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mspace width="thinmathspace"/>
+  <mo>=</mo>
+  <mspace width="thinmathspace"/>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mrow>
+        <mi>g</mi>
+        <mo stretchy="false">(</mo>
+        <mi>x</mi>
+        <mo>+</mo>
+        <mi>d</mi>
+        <mi>x</mi>
+        <mo stretchy="false">)</mo>
+        <mo>−<!-- − --></mo>
+        <mi>g</mi>
+        <mo stretchy="false">(</mo>
+        <mi>x</mi>
+        <mo stretchy="false">)</mo>
+      </mrow>
+      <mrow>
+        <mi>d</mi>
+        <mi>x</mi>
+      </mrow>
+    </mfrac>
+    <mo>.</mo>
+  </mrow>
+</math>给出。因此，我们可以将导数的概念（取<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>x</mi>
+  </mrow>
+</math>为，比如说，0.00001）表达为过程</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">deriv g</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">g </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> x dx</span><span class="clo">))</span><span class="pln"> </span><span class="opn">(</span><span class="pln">g x</span><span class="clo">))</span><span class="pln">
+       dx</span><span class="clo">)))</span></pre></div>
+
+<p>连同定义</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> dx </span><span class="lit">0.00001</span><span class="clo">)</span></pre></div>
+
+<p>与<code>average-damp</code>一样，<code>deriv</code>是一个过程，它接受一个过程作为参数并返回一个过程作为值。例如，为了近似<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <msup>
+      <mi>x</mi>
+      <mn>3</mn>
+    </msup>
+  </mrow>
+</math>在5处的导数（其精确值为75），我们可以求值</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cube x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> x x x</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">((</span><span class="pln">deriv cube</span><span class="clo">)</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">75.00014999664018</span></i>
+</pre></div>
+
+<p>借助<code>deriv</code>，我们可以将牛顿法表达为一个不动点过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">newton-transform g</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">x</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> x </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> </span><span class="opn">(</span><span class="pln">g x</span><span class="clo">)</span><span class="pln"> 
+            </span><span class="opn">((</span><span class="pln">deriv g</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">)))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">newtons-method g guess</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fixed-point </span><span class="opn">(</span><span class="pln">newton-transform g</span><span class="clo">)</span><span class="pln"> 
+               guess</span><span class="clo">))</span></pre></div>
+
+<p><code>newton-transform</code>过程表达了本节开头的公式，而<code>newtons-method</code>可以很容易地基于它来定义。它接受一个计算我们想要求零点的函数的过程，以及一个初始猜测作为参数。例如，为了求<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>的平方根，我们可以使用牛顿法来求函数<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>−<!-- − --></mo>
+    <mi>x</mi>
+  </mrow>
+</math>的零点，从初始猜测1开始。<a class="footnote_link" id="DOCF63" href="#FOOT63"><sup>63</sup></a></p>
+<p>这提供了平方根过程的又一种形式：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">newtons-method 
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">y</span><span class="clo">)</span><span class="pln"> 
+     </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln"> 
+   </span><span class="lit">1.0</span><span class="clo">))</span></pre></div>
+
+<a id="Abstractions-and-first_002dclass-procedures"></a>
+<h5 class="subsubheading">抽象与一等过程</h5>
+
+<p>我们已经看到了两种将平方根计算表达为更一般方法实例的方式，一次作为不动点搜索，一次使用牛顿法。由于牛顿法本身被表达为不动点过程，我们实际上看到了两种将平方根计算为不动点的方式。每种方法都从一个函数开始，并找到该函数的某种变换的不动点。我们可以将这个一般思想本身表达为一个过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fixed-point-of-transform 
+         g transform guess</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fixed-point </span><span class="opn">(</span><span class="pln">transform g</span><span class="clo">)</span><span class="pln"> guess</span><span class="clo">))</span></pre></div>
+
+<p>这个非常一般的过程接受一个计算某个函数的过程<code>g</code>、一个变换<code>g</code>的过程以及一个初始猜测作为参数。返回的结果是变换后函数的不动点。</p>
+<p>使用这个抽象，我们可以将本节中的第一个平方根计算（其中我们寻找<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math>的平均阻尼版本的不动点）重新表述为这个一般方法的一个实例：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fixed-point-of-transform 
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">/</span><span class="pln"> x y</span><span class="clo">))</span><span class="pln">
+   average-damp
+   </span><span class="lit">1.0</span><span class="clo">))</span></pre></div>
+
+<p>类似地，我们可以将本节中的第二个平方根计算（牛顿法的一个实例，它寻找<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>−<!-- − --></mo>
+    <mi>x</mi>
+  </mrow>
+</math>的牛顿变换的不动点）表达为</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sqrt x</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">fixed-point-of-transform 
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">y</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> </span><span class="opn">(</span><span class="pln">square y</span><span class="clo">)</span><span class="pln"> x</span><span class="clo">))</span><span class="pln">
+   newton-transform
+   </span><span class="lit">1.0</span><span class="clo">))</span></pre></div>
+
+<p>我们在<a href="#g_t1_002e3">1.3</a>节开头观察到，复合过程是一种关键的抽象机制，因为它们允许我们将一般的计算方法表达为编程语言中的显式元素。现在我们已经看到了高阶过程如何允许我们操纵这些一般方法来创建进一步的抽象。</p>
+<p>作为程序员，我们应当对发现程序中底层抽象的机会保持警觉，并在此基础上构建和泛化它们，以创建更强大的抽象。这并不是说人们应该总是以尽可能抽象的方式编写程序；专家级程序员知道如何选择适合其任务的抽象层次。但重要的是能够以这些抽象来思考，这样我们才能准备好将它们应用于新的情境。高阶过程的意义在于，它们使我们能够将这些抽象显式地表示为编程语言中的元素，从而可以像处理其他计算元素一样处理它们。</p>
+<p>一般来说，编程语言对计算元素可以被操作的方式施加了限制。限制最少的元素被认为具有<a id="index-first_002dclass"></a><em>一等</em>地位。一等元素的一些“权利和特权”包括：<a class="footnote_link" id="DOCF64" href="#FOOT64"><sup>64</sup></a></p>
+<ul>
+<li>它们可以由变量命名。</li><li>它们可以作为参数传递给过程。</li><li>它们可以作为过程的结果返回。</li><li>它们可以包含在数据结构中。<a class="footnote_link" id="DOCF65" href="#FOOT65"><sup>65</sup></a></li></ul>
+
+<p>与其他常见编程语言不同，Lisp 赋予过程完全的一等地位。这对高效实现提出了挑战，但由此带来的表达能力的提升是巨大的。<a class="footnote_link" id="DOCF66" href="#FOOT66"><sup>66</sup></a></p>
+<blockquote>
+<p><strong><a id="Exercise-1_002e40"></a>习题 1.40：</strong> 定义一个过程 <code>cubic</code>，它可以与 <code>newtons-method</code> 过程一起用于如下形式的表达式</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">newtons-method </span><span class="opn">(</span><span class="pln">cubic a b c</span><span class="clo">)</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)</span></pre></div>
+
+<p>以近似三次多项式 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>x</mi>
+      <mn>3</mn>
+    </msup>
+    <mo>+</mo>
+    <mi>a</mi>
+    <msup>
+      <mi>x</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <mi>b</mi>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mi>c</mi>
+  </mrow>
+</math> 的零点。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e41"></a>习题 1.41：</strong> 定义一个过程 <code>double</code>，它接受一个单参数过程作为参数，并返回一个将原过程应用两次的过程。例如，如果 <code>inc</code> 是一个将其参数加 1 的过程，那么 <code>(double inc)</code> 应该是一个将其参数加 2 的过程。下面表达式的返回值是什么</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(((</span><span class="pln">double </span><span class="opn">(</span><span class="pln">double double</span><span class="clo">))</span><span class="pln"> inc</span><span class="clo">)</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e42"></a>习题 1.42：</strong> 设 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math> 是两个单参数函数。先应用 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>g</mi>
+</math> 再应用 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 的<a id="index-composition"></a><em>复合</em>定义为函数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>g</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>。定义一个实现复合的过程 <code>compose</code>。例如，如果 <code>inc</code> 是一个将其参数加 1 的过程，</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="pln">compose square inc</span><span class="clo">)</span><span class="pln"> </span><span class="lit">6</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">49</span></i>
+</pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e43"></a>习题 1.43：</strong> 如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 是一个数值函数，且 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 是一个正整数，那么我们可以构造 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math> 次重复应用 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math>，它被定义为在 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 处的值为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mo>…<!-- … --></mo>
+    <mo stretchy="false">(</mo>
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+    <mo>…<!-- … --></mo>
+    <mo stretchy="false">)</mo>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 的函数。例如，如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 是函数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mn>1</mn>
+  </mrow>
+</math>，那么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math> 次重复应用 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 是函数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mi>n</mi>
+  </mrow>
+</math>。如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 是平方一个数的操作，那么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math> 次重复应用 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 是将其参数提升到 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mn>2</mn>
+      <mi>n</mi>
+    </msup>
+    <mtext>-th</mtext>
+  </mrow>
+</math> 次幂的函数。编写一个过程，它接受一个计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 的过程和一个正整数 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 作为输入，并返回计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math> 次重复应用 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 的过程。你的过程应能如下使用：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="pln">repeated square </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)</span><span class="pln">
+</span><i><span class="lit">625</span></i>
+</pre></div>
+
+<p>提示：你可能会发现使用 <a href="#Exercise-1_002e42">习题 1.42</a> 中的 <code>compose</code> 很方便。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e44"></a>习题 1.44：</strong> 对函数进行 <a id="index-smoothing"></a><em>平滑</em> 的思想是信号处理中的一个重要概念。如果 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 是一个函数，且 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>d</mi>
+    <mi>x</mi>
+  </mrow>
+</math> 是某个很小的数，那么 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 的平滑版本是在点 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math> 处的值为 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo>−<!-- − --></mo>
+    <mi>d</mi>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 和 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>f</mi>
+    <mo stretchy="false">(</mo>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mi>d</mi>
+    <mi>x</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math> 的平均值的函数。编写一个过程 <code>smooth</code>，它接受一个计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 的过程作为输入，并返回一个计算平滑后的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+</math> 的过程。有时反复平滑一个函数（即，平滑平滑后的函数，依此类推）以获得 <a id="index-n_002dfold-smoothed-function"></a><em><i>n</i>重平滑函数</em> 是很有价值的。展示如何使用 <code>smooth</code> 和 <a href="#Exercise-1_002e43">习题 1.43</a> 中的 <code>repeated</code> 生成任何给定函数的 <i>n</i>重平滑函数。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e45"></a>习题 1.45：</strong> 我们在 <a href="#g_t1_002e3_002e3">1.3.3</a> 中看到，试图通过朴素地寻找 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math> 的不动点来计算平方根不会收敛，而这可以通过平均阻尼来修正。同样的方法也适用于寻找立方根，即平均阻尼后的 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msup>
+      <mi>y</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+</math> 的不动点。不幸的是，这个过程对四次方根不适用——单个平均阻尼不足以使对 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msup>
+      <mi>y</mi>
+      <mn>3</mn>
+    </msup>
+  </mrow>
+</math> 的不动点搜索收敛。另一方面，如果我们平均阻尼两次（即，使用 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msup>
+      <mi>y</mi>
+      <mn>3</mn>
+    </msup>
+  </mrow>
+</math> 的平均阻尼的平均阻尼），不动点搜索确实会收敛。做一些实验来确定，基于对 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <msup>
+      <mi>y</mi>
+      <mrow class="MJX-TeXAtom-ORD">
+        <mspace width="0.1em"/>
+        <mi>n</mi>
+        <mo>−<!-- − --></mo>
+        <mn>1</mn>
+      </mrow>
+    </msup>
+  </mrow>
+</math> 的重复平均阻尼，计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math> 次方根作为不动点搜索需要多少次平均阻尼。使用这个结果，利用 <code>fixed-point</code>、<code>average-damp</code> 以及 <a href="#Exercise-1_002e43">习题 1.43</a> 中的 <code>repeated</code> 过程，实现一个计算 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msup>
+    <mi>n</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mtext>th</mtext>
+    </mrow>
+  </msup>
+</math> 次方根的简单过程。假设你需要的任何算术运算都可以作为基本操作使用。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-1_002e46"></a>习题 1.46：</strong> 本章描述的若干数值方法是一种极其通用的计算策略的实例，这种策略称为 <a id="index-iterative-improvement"></a><em>迭代改进</em>。迭代改进说的是，为了计算某物，我们从答案的一个初始猜测开始，测试猜测是否足够好，否则改进猜测，并使用改进后的猜测作为新的猜测继续这个过程。编写一个过程 <code>iterative-improve</code>，它接受两个过程作为参数：一个用于判断猜测是否足够好的方法，和一个用于改进猜测的方法。<code>Iterative-improve</code> 应返回一个过程作为其值，该过程接受一个猜测作为参数，并不断改进猜测直到它足够好。用 <code>iterative-improve</code> 重写 <a href="1_002e1_zh.xhtml#g_t1_002e1_002e7">1.1.7</a> 中的 <code>sqrt</code> 过程和 <a href="#g_t1_002e3_002e3">1.3.3</a> 中的 <code>fixed-point</code> 过程。</p></blockquote>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT49"><p><a class="footnote_backlink" href="#DOCF49"><sup>49</sup></a> 这个级数，通常写成等价形式 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mfrac>
+      <mi>π<!-- π --></mi>
+      <mn>4</mn>
+    </mfrac>
+  </mrow>
+  <mo>=</mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mn>1</mn>
+    <mo>−<!-- − --></mo>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mn>1</mn>
+        <mn>3</mn>
+      </mfrac>
+    </mrow>
+    <mo>+</mo>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mn>1</mn>
+        <mn>5</mn>
+      </mfrac>
+    </mrow>
+  </mrow>
+  <mo>−<!-- − --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mrow class="MJX-TeXAtom-ORD">
+      <mfrac>
+        <mn>1</mn>
+        <mn>7</mn>
+      </mfrac>
+    </mrow>
+    <mo>+</mo>
+    <mo>…<!-- … --></mo>
+  </mrow>
+</math>，归功于莱布尼茨。我们将在 <a href="3_002e5_zh.xhtml#g_t3_002e5_002e3">3.5.3</a> 中看到如何将其用作一些巧妙数值技巧的基础。</p>
+</div>
+<div id="FOOT50"><p><a class="footnote_backlink" href="#DOCF50"><sup>50</sup></a>注意，我们使用了块结构（<a href="1_002e1_zh.xhtml#g_t1_002e1_002e8">1.1.8</a>）将<code>pi-next</code>和<code>pi-term</code>的定义嵌入到<code>pi-sum</code>中，因为这些过程不太可能用于任何其他目的。我们将在<a href="#g_t1_002e3_002e2">1.3.2</a>中看到如何完全摆脱它们。</p>
+</div>
+<div id="FOOT51"><p><a class="footnote_backlink" href="#DOCF51"><sup>51</sup></a><a href="#Exercise-1_002e31">习题1.31</a>到<a href="#Exercise-1_002e33">习题1.33</a>的目的是展示通过使用适当的抽象来整合许多看似不同的操作所获得的表达能力。然而，尽管累积和过滤是优雅的想法，但在这一点上我们使用它们时还有些束手束脚，因为我们还没有数据结构来为这些抽象提供合适的组合手段。我们将在<a href="2_002e2_zh.xhtml#g_t2_002e2_002e3">2.2.3</a>中回到这些想法，届时我们将展示如何使用<a id="index-sequences"></a><em>序列</em>作为接口来组合过滤器和累加器，以构建甚至更强大的抽象。我们将在那里看到这些方法如何真正发挥其作为强大而优雅的程序设计方法的潜力。</p>
+</div>
+<div id="FOOT52"><p><a class="footnote_backlink" href="#DOCF52"><sup>52</sup></a>这个公式是由十七世纪英国数学家John Wallis发现的。</p>
+</div>
+<div id="FOOT53"><p><a class="footnote_backlink" href="#DOCF53"><sup>53</sup></a>如果使用一个比<code>lambda</code>更明显的名称，例如<code>make-procedure</code>，对于学习Lisp的人来说会更清晰、更不令人生畏。但这一惯例已经根深蒂固。该记法取自λ演算，这是数学逻辑学家Alonzo <a href="References_zh.xhtml#Church-_00281941_0029">Church（1941）</a>引入的一种数学形式化体系。Church发展λ演算，是为了为研究函数和函数应用的概念提供严格的基础。λ演算已成为编程语言语义学数学研究的基本工具。</p>
+</div>
+<div id="FOOT54"><p><a class="footnote_backlink" href="#DOCF54"><sup>54</sup></a>要充分理解内部定义，以确保程序的含义符合我们的意图，需要比本章所介绍的更为精细的求值过程模型。然而，过程的内部定义并不会产生这些微妙之处。我们将在<a href="4_002e1_zh.xhtml#g_t4_002e1_002e6">4.1.6</a>中，在学习了更多关于求值的知识之后，回到这个问题。</p>
+</div>
+<div id="FOOT55"><p><a class="footnote_backlink" href="#DOCF55"><sup>55</sup></a>我们使用0.001作为一个代表性的“小”数，来表示计算中可接受误差的容差。实际计算中适当的容差取决于要解决的问题以及计算机和算法的局限性。这通常是一个非常微妙的考量，需要数值分析专家或其他某种魔术师的帮助。</p>
+</div>
+<div id="FOOT56"><p><a class="footnote_backlink" href="#DOCF56"><sup>56</sup></a>这可以使用<code>error</code>来完成，它接受若干项作为参数，这些项将作为错误消息打印出来。</p>
+</div>
+<div id="FOOT57"><p><a class="footnote_backlink" href="#DOCF57"><sup>57</sup></a>在一场无聊的讲座中试试这个：将你的计算器设置为弧度模式，然后反复按<code>cos</code>按钮，直到你得到不动点。</p>
+</div>
+<div id="FOOT58"><p><a class="footnote_backlink" href="#DOCF58"><sup>58</sup></a><math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">↦<!-- ↦ --></mo>
+</math>（读作“映射到”）是数学家书写<code>lambda</code>的方式。<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>y</mi>
+    <mo stretchy="false">↦<!-- ↦ --></mo>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math>表示<code>(lambda (y) (/ x y))</code>，也就是说，在<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>处的值为<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>y</mi>
+  </mrow>
+</math>的那个函数。</p>
+</div>
+<div id="FOOT59"><p><a class="footnote_backlink" href="#DOCF59"><sup>59</sup></a>注意，这是一个组合式，其运算符本身也是一个组合式。<a href="1_002e1_zh.xhtml#Exercise-1_002e4">习题1.4</a>已经展示了形成这种组合式的能力，但那只是一个玩具示例。这里我们开始看到这种组合式的真正需求——当应用一个由高阶过程返回的值所得到的过程时。</p>
+</div>
+<div id="FOOT60"><p><a class="footnote_backlink" href="#DOCF60"><sup>60</sup></a>参见<a href="#Exercise-1_002e45">习题1.45</a>以了解进一步的推广。</p>
+</div>
+<div id="FOOT61"><p><a class="footnote_backlink" href="#DOCF61"><sup>61</sup></a>初等微积分教材通常用近似值序列<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <msub>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>n</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>=</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>n</mi>
+  </msub>
+  <mo>−<!-- − --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>g</mi>
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>x</mi>
+      <mi>n</mi>
+    </msub>
+    <mo stretchy="false">)</mo>
+    <mspace width="thinmathspace"/>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mo>/</mo>
+    </mrow>
+    <mi>D</mi>
+    <mi>g</mi>
+    <mo stretchy="false">(</mo>
+    <msub>
+      <mi>x</mi>
+      <mi>n</mi>
+    </msub>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>来描述牛顿法。有了谈论计算过程的语言并使用不动点的概念，该方法的描述就简化了。</p>
+</div>
+<div id="FOOT62"><p><a class="footnote_backlink" href="#DOCF62"><sup>62</sup></a>牛顿法并不总是收敛到一个答案，但可以证明，在有利的情况下，每次迭代都会使近似解的精度的位数翻倍。在这种情况下，牛顿法将比半区间法收敛得快得多。</p>
+</div>
+<div id="FOOT63"><p><a class="footnote_backlink" href="#DOCF63"><sup>63</sup></a>对于求平方根，牛顿法从任何起点都能迅速收敛到正确的解。</p>
+</div>
+<div id="FOOT64"><p><a class="footnote_backlink" href="#DOCF64"><sup>64</sup></a>编程语言元素具有一等地位这一概念归功于英国计算机科学家Christopher Strachey（1916-1975）。</p>
+</div>
+<div id="FOOT65"><p><a class="footnote_backlink" href="#DOCF65"><sup>65</sup></a>我们将在<a href="Chapter-2_zh.xhtml#Chapter-2">第2<!-- /@w --></a>章介绍数据结构之后看到这方面的例子。</p>
+</div>
+<div id="FOOT66"><p><a class="footnote_backlink" href="#DOCF66"><sup>66</sup></a>一等过程的主要实现代价是，允许过程作为值返回需要在过程不执行时也为过程的自由变量保留存储空间。在我们将在<a href="4_002e1_zh.xhtml#g_t4_002e1">4.1</a>中研究的Scheme实现中，这些变量存储在过程的环境中。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="Chapter-2_zh.xhtml#Chapter-2" accesskey="n" rel="next">第2章</a>, 上一节： <a href="1_002e2_zh.xhtml#g_t1_002e2" accesskey="p" rel="prev">1.2</a>, 上一级： <a href="#g_t1_002e3" accesskey="u" rel="prev">1.3</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

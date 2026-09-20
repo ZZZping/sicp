@@ -1,0 +1,935 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：4.3</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: 4.3" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: 4.3" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="Chapter-4_zh.xhtml#Chapter-4" rel="prev" title="Chapter 4" />
+<link href="4_002e4_zh.xhtml#g_t4_002e4" rel="next" title="4.4" />
+<link href="4_002e2_zh.xhtml#g_t4_002e2_002e3" rel="prev" title="4.2.3" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="g_t4_002e3"></a>
+<nav class="header">
+<p>下一节： <a href="4_002e4_zh.xhtml#g_t4_002e4" accesskey="n" rel="next">4.4</a>, 上一节： <a href="4_002e2_zh.xhtml#g_t4_002e2" accesskey="p" rel="prev">4.2</a>, 上一级： <a href="Chapter-4_zh.xhtml#Chapter-4" accesskey="u" rel="prev">第4章</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Variations-on-a-Scheme-_002d_002d_002d-Nondeterministic-Computing"></a>
+<h3 class="section"><span class="secnum">4.3</span><span class="sectitle">Scheme的变体——非确定性计算</span></h3>
+
+<p>在本节中，我们扩展Scheme求值器以支持一种称为<a id="index-nondeterministic-computing-1"></a><em>非确定性计算</em>的编程范式，方法是在求值器中内置一个支持自动搜索的设施。这对语言的改变比在<a href="4_002e2_zh.xhtml#g_t4_002e2">4.2</a>中引入惰性求值要深刻得多。</p>
+<p>非确定性计算，像流处理一样，对于“生成并测试”应用很有用。考虑这样一个任务：从两个正整数表开始，找到一对整数——一个来自第一个表，一个来自第二个表——其和为素数。我们在<a href="2_002e2_zh.xhtml#g_t2_002e2_002e3">2.2.3</a>中看到了如何用有限序列操作处理这个问题，在<a href="3_002e5_zh.xhtml#g_t3_002e5_002e3">3.5.3</a>中用无穷流处理。我们的方法是生成所有可能序对的序列，并过滤这些序对以选出和为素数的那些。无论我们像<a href="Chapter-2_zh.xhtml#Chapter-2">第2章</a>中那样实际首先生成整个序对序列，还是像<a href="Chapter-3_zh.xhtml#Chapter-3">第3章</a>中那样交错生成和过滤，对于计算如何组织的本质图景来说都无关紧要。</p>
+<p>非确定性方法唤起了不同的图景。想象一下，我们（以某种方式）从第一个表中选择一个数，从第二个表中选择一个数，并要求（使用某种机制）它们的和为素数。这由以下过程表达：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">prime-sum-pair list1 list2</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">a </span><span class="opn">(</span><span class="pln">an-element-of list1</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">b </span><span class="opn">(</span><span class="pln">an-element-of list2</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">prime? </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> a b</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">list a b</span><span class="clo">)))</span></pre></div>
+
+<p>看起来这个过程似乎只是重述了问题，而不是指定解决它的方法。然而，这是一个合法的非确定性程序。<a class="footnote_link" id="DOCF246" href="#FOOT246"><sup>246</sup></a></p>
+<p>这里的关键思想是，非确定性语言中的表达式可以有多个可能的值。例如，<code>an-element-of</code>可能返回给定表中的任意元素。我们的非确定性程序求值器将通过自动选择一个可能的值并跟踪该选择来工作。如果后续要求未满足，求值器将尝试不同的选择，并不断尝试新的选择，直到求值成功，或者直到我们用尽所有选择。正如惰性求值器将程序员从值如何被延迟和强制求值的细节中解放出来一样，非确定性程序求值器将程序员从选择如何做出的细节中解放出来。</p>
+<p>对比非确定性求值和流处理所唤起的不同的时间图景是有启发性的。流处理使用惰性求值来将可能答案的流被组装的时间与实际流元素被产生的时间解耦。求值器支持这样一种幻觉：所有可能的答案都以一种无时间的序列展现在我们面前。在非确定性求值中，一个表达式表示对一组可能世界的探索，每个世界由一组选择决定。一些可能世界导致死胡同，而另一些则有有用的值。非确定性程序求值器支持这样一种幻觉：时间分叉，我们的程序有不同的可能执行历史。当我们到达死胡同时，我们可以重新访问先前的选择点并沿着不同的分支前进。</p>
+<p>下面实现的非确定性程序求值器称为<code>amb</code>求值器，因为它基于一个称为<code>amb</code>的新特殊形式。我们可以在<code>amb</code>求值器驱动循环中键入上述<code>prime-sum-pair</code>的定义（以及<code>prime?</code>、<code>an-element-of</code>和<code>require</code>的定义），并按如下方式运行该过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><i><span class="com">;;; Amb-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">prime-sum-pair </span><span class="lit">'</span><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">8</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="lit">20</span><span class="pln"> </span><span class="lit">35</span><span class="pln"> </span><span class="lit">110</span><span class="clo">))</span><span class="pln">
+
+</span><i><span class="com">;;; Starting a new problem</span></i><span class="pln">
+</span><i><span class="com">;;; Amb-Eval value:</span></i><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">3</span><span class="pln"> </span><span class="lit">20</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>返回的值是在求值器反复从每个表中选择元素，直到做出成功选择之后获得的。</p>
+<p><a href="#g_t4_002e3_002e1">4.3.1</a>节介绍了<code>amb</code>并解释了它如何通过求值器的自动搜索机制支持非确定性。<a href="#g_t4_002e3_002e2">4.3.2</a>给出了非确定性程序的例子，<a href="#g_t4_002e3_002e3">4.3.3</a>给出了如何通过修改普通Scheme求值器来实现<code>amb</code>求值器的细节。</p>
+
+<a id="g_t4_002e3_002e1"></a>
+<a id="Amb-and-Search"></a>
+<h4 class="subsection"><span class="secnum">4.3.1</span><span class="sectitle">Amb与搜索</span></h4>
+
+<p>为了扩展Scheme以支持非确定性，我们引入一个称为<code>amb</code>的新特殊形式。<a class="footnote_link" id="DOCF247" href="#FOOT247"><sup>247</sup></a>表达式</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">amb ⟨</span><var><span class="pln">e</span><span class="pun">₁</span></var><span class="pln">⟩ ⟨</span><var><span class="pln">e</span><span class="pun">₂</span></var><span class="pln">⟩ </span><span class="roman"><span class="pun">…</span></span><span class="pln"> ⟨</span><var><span class="pln">e</span><span class="pun">ₙ</span></var><span class="pln">⟩</span><span class="clo">)</span></pre></div>
+
+<p>“模棱两可地”返回<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math>个表达式<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">⟨</mo>
+    <mspace width="0.03em"/>
+    <msub>
+      <mi>e</mi>
+      <mi>i</mi>
+    </msub>
+    <mo stretchy="false">⟩</mo>
+  </mrow>
+</math>之一的值。例如，表达式</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">amb </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">amb </span><span class="lit">'a</span><span class="pln"> </span><span class="lit">'b</span><span class="clo">))</span></pre></div>
+
+<p>可以有六个可能的值：</p>
+<div class="example">
+<pre class="example"><code>(1 a)</code> <code>(1 b)</code> <code>(2 a)</code> <code>(2 b)</code> <code>(3 a)</code> <code>(3 b)</code>
+</pre></div>
+
+<p><code>Amb</code>带有一个选择产生一个普通的（单个）值。</p>
+<p><code>Amb</code>没有选择——表达式<code>(amb)</code>——是一个没有可接受值的表达式。在操作上，我们可以将<code>(amb)</code>视为一个表达式，当求值时导致计算“失败”：计算中止，不产生任何值。利用这个想法，我们可以如下表达特定谓词表达式<code>p</code>必须为真的要求：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">require p</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">not p</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">amb</span><span class="clo">)))</span></pre></div>
+
+<p>有了<code>amb</code>和<code>require</code>，我们可以实现上面使用的<code>an-element-of</code>过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">an-element-of items</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pln">null? items</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">amb </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> items</span><span class="clo">)</span><span class="pln"> 
+       </span><span class="opn">(</span><span class="pln">an-element-of </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">))))</span></pre></div>
+
+<p>如果表为空，<code>An-element-of</code> 会失败。否则，它不明确地返回表的第一个元素或从表的其余部分中选出的一个元素。</p>
+<p>我们也可以表达无限的选项范围。以下过程可能返回任何大于或等于某个给定 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 的整数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">an-integer-starting-from n</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">amb n </span><span class="opn">(</span><span class="pln">an-integer-starting-from </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> n </span><span class="lit">1</span><span class="clo">))))</span></pre></div>
+
+<p>这类似于在 <a href="3_002e5_zh.xhtml#g_t3_002e5_002e2">3.5.2</a> 中描述的流过程 <code>integers-starting-from</code>，但有一个重要的区别：流过程返回一个对象，表示从 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>n</mi>
+</math> 开始的所有整数的序列，而 <code>amb</code> 过程返回单个整数。<a class="footnote_link" id="DOCF248" href="#FOOT248"><sup>248</sup></a></p>
+<p>抽象地说，我们可以想象，求值一个 <code>amb</code> 表达式会导致时间分裂成多个分支，其中计算在每个分支上以表达式的某个可能值继续。我们说 <code>amb</code> 表示一个 <a id="index-nondeterministic-choice-point"></a><em>非确定性选择点</em>。如果我们有一台具有足够数量处理器的机器，这些处理器可以动态分配，我们就可以直接实现搜索。执行将像在顺序机器中一样进行，直到遇到一个 <code>amb</code> 表达式。此时，将分配并初始化更多处理器，以继续该选择所隐含的所有并行执行。每个处理器将顺序进行，就好像它是唯一的选择一样，直到它要么因遇到失败而终止，要么进一步细分，要么完成。<a class="footnote_link" id="DOCF249" href="#FOOT249"><sup>249</sup></a></p>
+<p>另一方面，如果我们有一台只能执行一个进程（或少数几个并发进程）的机器，我们必须顺序地考虑各个选项。人们可以想象修改求值器，使其在遇到选择点时随机选择一个分支。然而，随机选择很容易导致失败的值。我们可能会尝试反复运行求值器，进行随机选择并希望找到一个不失败的值，但更好的做法是 <a id="index-systematically-search"></a><em>系统地搜索</em>所有可能的执行路径。我们将在本节中开发并使用的 <code>amb</code> 求值器按如下方式实现系统搜索：当求值器遇到 <code>amb</code> 的应用时，它最初选择第一个选项。这个选择本身可能导致进一步的选择。求值器在每个选择点总是最初选择第一个选项。如果某个选择导致失败，那么求值器会自动<a class="footnote_link" id="DOCF250" href="#FOOT250"><sup>250</sup></a><a id="index-backtracks"></a><em>回溯</em>到最近的选择点并尝试下一个选项。如果在任何选择点用完了所有选项，求值器将退回到前一个选择点并从那里继续。这个过程导致一种称为 <a id="index-depth_002dfirst-search"></a><em>深度优先搜索</em>或 <a id="index-chronological-backtracking"></a><em>时序回溯</em>的搜索策略。<a class="footnote_link" id="DOCF251" href="#FOOT251"><sup>251</sup></a></p>
+<a id="Driver-loop"></a>
+<h5 class="subsubheading">驱动循环</h5>
+
+<p><code>amb</code> 求值器的驱动循环有一些不寻常的性质。它读取一个表达式并打印第一个不失败执行的值，如上面显示的 <code>prime-sum-pair</code> 示例。如果我们想看到下一个成功执行的值，我们可以要求解释器回溯并尝试生成第二个不失败执行。这通过输入符号 <code>try-again</code> 来表示。如果给出除 <code>try-again</code> 以外的任何表达式，解释器将开始一个新问题，丢弃前一个问题中未探索的选项。以下是一个示例交互：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><i><span class="com">;;; Amb-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">prime-sum-pair </span><span class="lit">'</span><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">8</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="lit">20</span><span class="pln"> </span><span class="lit">35</span><span class="pln"> </span><span class="lit">110</span><span class="clo">))</span><span class="pln">
+
+</span><i><span class="com">;;; Starting a new problem</span></i><span class="pln">
+</span><i><span class="com">;;; Amb-Eval value:</span></i><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">3</span><span class="pln"> </span><span class="lit">20</span><span class="clo">)</span></i><span class="pln">
+
+</span><i><span class="com">;;; Amb-Eval input:</span></i><span class="pln">
+try-again
+
+</span><i><span class="com">;;; Amb-Eval value:</span></i><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">3</span><span class="pln"> </span><span class="lit">110</span><span class="clo">)</span></i><span class="pln">
+
+</span><i><span class="com">;;; Amb-Eval input:</span></i><span class="pln">
+try-again
+
+</span><i><span class="com">;;; Amb-Eval value:</span></i><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">8</span><span class="pln"> </span><span class="lit">35</span><span class="clo">)</span></i><span class="pln">
+
+</span><i><span class="com">;;; Amb-Eval input:</span></i><span class="pln">
+try-again
+
+</span><i><span class="com">;;; There are no more values of</span></i><span class="pln">
+</span><i><span class="opn">(</span><span class="pln">prime-sum-pair 
+ </span><span class="opn">(</span><span class="kwd">quote</span><span class="pln"> </span><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">8</span><span class="clo">))</span><span class="pln"> 
+ </span><span class="opn">(</span><span class="kwd">quote</span><span class="pln"> </span><span class="opn">(</span><span class="lit">20</span><span class="pln"> </span><span class="lit">35</span><span class="pln"> </span><span class="lit">110</span><span class="clo">)))</span></i><span class="pln">
+
+</span><i><span class="com">;;; Amb-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">prime-sum-pair </span><span class="lit">'</span><span class="opn">(</span><span class="lit">19</span><span class="pln"> </span><span class="lit">27</span><span class="pln"> </span><span class="lit">30</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="lit">11</span><span class="pln"> </span><span class="lit">36</span><span class="pln"> </span><span class="lit">58</span><span class="clo">))</span><span class="pln">
+
+</span><i><span class="com">;;; Starting a new problem</span></i><span class="pln">
+</span><i><span class="com">;;; Amb-Eval value:</span></i><span class="pln">
+</span><i><span class="opn">(</span><span class="lit">30</span><span class="pln"> </span><span class="lit">11</span><span class="clo">)</span></i>
+</pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e35"></a>习题 4.35：</strong> 编写一个过程 <code>an-integer-between</code>，返回两个给定边界之间的一个整数。这可以用来实现一个过程，找出毕达哥拉斯三元组，即给定边界之间的整数三元组 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mo stretchy="false">(</mo>
+    <mi>i</mi>
+    <mo>,</mo>
+    <mi>j</mi>
+    <mo>,</mo>
+    <mi>k</mi>
+    <mo stretchy="false">)</mo>
+  </mrow>
+</math>，使得 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>i</mi>
+    <mo>≤<!-- ≤ --></mo>
+    <mi>j</mi>
+  </mrow>
+</math> 且 <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <msup>
+      <mi>i</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>+</mo>
+    <msup>
+      <mi>j</mi>
+      <mn>2</mn>
+    </msup>
+    <mo>=</mo>
+    <msup>
+      <mi>k</mi>
+      <mn>2</mn>
+    </msup>
+  </mrow>
+</math>，如下所示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">a-pythagorean-triple-between low high</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">i </span><span class="opn">(</span><span class="pln">an-integer-between low high</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">j </span><span class="opn">(</span><span class="pln">an-integer-between i high</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">k </span><span class="opn">(</span><span class="pln">an-integer-between j high</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> i i</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> j j</span><span class="clo">))</span><span class="pln"> 
+                    </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> k k</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">list i j k</span><span class="clo">)))))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e36"></a>习题 4.36：</strong> <a href="3_002e5_zh.xhtml#Exercise-3_002e69">习题 3.69</a> 讨论了如何生成 <em>所有</em>毕达哥拉斯三元组的流，且待搜索的整数大小没有上限。解释为什么简单地将 <a href="#Exercise-4_002e35">习题 4.35</a> 中的过程里的 <code>an-integer-between</code> 替换为 <code>an-integer-starting-from</code> 不足以生成任意毕达哥拉斯三元组。编写一个实际上能实现这一点的过程。（也就是说，编写一个过程，反复输入 <code>try-again</code> 原则上最终会生成所有毕达哥拉斯三元组。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e37"></a>习题 4.37：</strong> Ben Bitdiddle 声称以下生成毕达哥拉斯三元组的方法比 <a href="#Exercise-4_002e35">习题 4.35</a> 中的方法更高效。他正确吗？（提示：考虑必须探索的可能性数量。）</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">a-pythagorean-triple-between low high</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">i </span><span class="opn">(</span><span class="pln">an-integer-between low high</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">hsq </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> high high</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">j </span><span class="opn">(</span><span class="pln">an-integer-between i high</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">ksq </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> i i</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> j j</span><span class="clo">))))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pun">&gt;=</span><span class="pln"> hsq ksq</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">k </span><span class="opn">(</span><span class="pln">sqrt ksq</span><span class="clo">)))</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">integer? k</span><span class="clo">))</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">list i j k</span><span class="clo">))))))</span></pre></div>
+</blockquote>
+
+<a id="g_t4_002e3_002e2"></a>
+<a id="Examples-of-Nondeterministic-Programs"></a>
+<h4 class="subsection"><span class="secnum">4.3.2</span><span class="sectitle">非确定性程序的示例</span></h4>
+
+<p><a href="#g_t4_002e3_002e3">4.3.3</a> 节描述了 <code>amb</code> 求值器的实现。不过，首先我们给出一些如何使用它的示例。非确定性编程的优点是我们可以隐藏搜索如何进行的细节，从而在更高的抽象层次上表达我们的程序。</p>
+<a id="Logic-Puzzles"></a>
+<h5 class="subsubheading">逻辑谜题</h5>
+
+<p>以下谜题（取自 <a href="References_zh.xhtml#Dinesman-1968">Dinesman 1968</a>）是一大类简单逻辑谜题的典型代表：</p>
+<blockquote>
+<p>Baker、Cooper、Fletcher、Miller 和 Smith 住在一栋只有五层的公寓楼的不同楼层。Baker 不住在顶层。Cooper 不住在底层。Fletcher 既不住在顶层也不住在底层。Miller 住在比 Cooper 更高的楼层。Smith 不住在与 Fletcher 相邻的楼层。Fletcher 不住在与 Cooper 相邻的楼层。每个人住在哪里？</p></blockquote>
+
+<p>我们可以通过枚举所有可能性并施加给定的限制，以直接的方式确定谁住在每一层：<a class="footnote_link" id="DOCF252" href="#FOOT252"><sup>252</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">multiple-dwelling</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">baker </span><span class="opn">(</span><span class="pln">amb </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">cooper </span><span class="opn">(</span><span class="pln">amb </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">fletcher </span><span class="opn">(</span><span class="pln">amb </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">miller </span><span class="opn">(</span><span class="pln">amb </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">smith </span><span class="opn">(</span><span class="pln">amb </span><span class="lit">1</span><span class="pln"> </span><span class="lit">2</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">4</span><span class="pln"> </span><span class="lit">5</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">require
+     </span><span class="opn">(</span><span class="pln">distinct? </span><span class="opn">(</span><span class="pln">list baker cooper fletcher 
+                      miller smith</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> baker </span><span class="lit">5</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> cooper </span><span class="lit">1</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> fletcher </span><span class="lit">5</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> fletcher </span><span class="lit">1</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pun">&gt;</span><span class="pln"> miller cooper</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">require
+     </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> smith fletcher</span><span class="clo">))</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">require 
+     </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pun">=</span><span class="pln"> </span><span class="opn">(</span><span class="pln">abs </span><span class="opn">(</span><span class="pun">-</span><span class="pln"> fletcher cooper</span><span class="clo">))</span><span class="pln"> </span><span class="lit">1</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'baker</span><span class="pln"> baker</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'cooper</span><span class="pln"> cooper</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'fletcher</span><span class="pln"> fletcher</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'miller</span><span class="pln"> miller</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'smith</span><span class="pln"> smith</span><span class="clo">))))</span></pre></div>
+
+<p>求值表达式 <code>(multiple-dwelling)</code> 产生结果</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="pln">baker </span><span class="lit">3</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">cooper </span><span class="lit">2</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">fletcher </span><span class="lit">4</span><span class="clo">)</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">miller </span><span class="lit">5</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">smith </span><span class="lit">1</span><span class="clo">))</span></pre></div>
+
+<p>尽管这个简单过程有效，但它非常慢。<a href="#Exercise-4_002e39">习题 4.39</a> 和 <a href="#Exercise-4_002e40">习题 4.40</a> 讨论了一些可能的改进。</p>
+<blockquote>
+<p><strong><a id="Exercise-4_002e38"></a>习题 4.38：</strong>修改 multiple-dwelling 过程，去掉 Smith 和 Fletcher 不住在相邻楼层这一要求。修改后的谜题有多少个解？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e39"></a>习题 4.39：</strong>multiple-dwelling 过程中限制条件的顺序会影响答案吗？会影响找到答案所需的时间吗？如果你认为有影响，请通过重新排列限制条件，从给定的程序得到一个更快的程序并演示。如果你认为没有影响，请论证你的观点。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e40"></a>习题 4.40：</strong>在多人居住问题中，在要求楼层分配互不相同之前和之后，将各人分配到楼层的方案各有多少个？生成人分配到楼层的所有可能分配方案，然后依靠回溯来排除它们，效率非常低。例如，大多数限制条件只依赖于一两个“人-楼层”变量，因此可以在为所有人选定楼层之前就施加这些限制。编写并演示一个效率高得多的非确定性过程，它基于只生成那些尚未被先前限制条件排除的可能性来求解此问题。（提示：这需要嵌套的 <code>let</code> 表达式。）</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e41"></a>习题 4.41：</strong>编写一个普通的 Scheme 程序来求解多人居住谜题。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e42"></a>习题 4.42：</strong>求解下面的“说谎者”谜题（出自 <a href="References_zh.xhtml#Phillips-1934">Phillips 1934</a>）：</p>
+<p>五个女学生参加了一场考试。她们的父母——她们是这么认为的——对结果表现出了过分的兴趣。因此她们约定，在写信回家谈及考试时，每个女孩都应说一句真话和一句假话。以下是她们信中相关的段落：</p>
+<ul>
+<li>Betty：“Kitty 在考试中得了第二名。我只得了第三名。”</li><li>Ethel：“你会高兴地听说我得了第一名。Joan 得了第二名。”</li><li>Joan：“我得了第三名，可怜的 Ethel 得了最后一名。”</li><li>Kitty：“我得了第二名。Mary 只得了第四名。”</li><li>Mary：“我得了第四名。第一名是 Betty。”</li></ul>
+
+<p>事实上这五个女孩的名次顺序是什么？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e43"></a>习题 4.43：</strong>使用 <code>amb</code> 求值器求解下面的谜题：<a class="footnote_link" id="DOCF253" href="#FOOT253"><sup>253</sup></a></p>
+<blockquote>
+<p>Mary Ann Moore 的父亲有一艘游艇，他的四位朋友也各有一艘：Downing 上校、Hall 先生、Barnacle Hood 爵士和 Parker 博士。这五个人每人还有一个女儿，并且每人都以自己的某位朋友的女儿的名字来命名自己的游艇。Barnacle 爵士的游艇叫 Gabrielle，Moore 先生拥有 Lorna；Hall 先生拥有 Rosalind。Downing 上校拥有的 Melissa 是以 Barnacle 爵士的女儿命名的。Gabrielle 的父亲拥有那艘以 Parker 博士的女儿命名的游艇。Lorna 的父亲是谁？</p></blockquote>
+
+<p>尽量让程序高效运行（见 <a href="#Exercise-4_002e40">习题 4.40</a>）。另外，确定如果我们不知道 Mary Ann 的姓是 Moore，会有多少个解。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e44"></a>习题 4.44：</strong><a href="2_002e2_zh.xhtml#Exercise-2_002e42">习题 2.42</a>描述了在棋盘上放置皇后使任意两个皇后互不攻击的“八皇后谜题”。编写一个非确定性程序来求解此谜题。</p></blockquote>
+
+<a id="Parsing-natural-language"></a>
+<h5 class="subsubheading">解析自然语言</h5>
+
+<p>设计用来接受自然语言输入的程序通常首先尝试对输入进行<a id="index-parse"></a><em>解析</em>，也就是将输入与某种语法结构进行匹配。例如，我们可能尝试识别由冠词后接名词后接动词组成的简单句子，如“The cat eats.”。要完成这样的分析，我们必须能够识别各个单词的词性。我们可以从一些对各种单词进行分类的表开始：<a class="footnote_link" id="DOCF254" href="#FOOT254"><sup>254</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> nouns 
+  </span><span class="lit">'</span><span class="opn">(</span><span class="pln">noun student professor cat class</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> verbs 
+  </span><span class="lit">'</span><span class="opn">(</span><span class="pln">verb studies lectures eats sleeps</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> articles </span><span class="lit">'</span><span class="opn">(</span><span class="pln">article the a</span><span class="clo">))</span></pre></div>
+
+<p>我们还需要一个<a id="index-grammar"></a><em>文法</em>，即一组描述语法元素如何由更简单的元素组合而成的规则。一个非常简单的文法可能规定句子总是由两部分组成——一个名词短语后接一个动词——而名词短语由一个冠词后接一个名词组成。用这个文法，句子“The cat eats”的解析如下：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">sentence
+ </span><span class="opn">(</span><span class="pln">noun-phrase </span><span class="opn">(</span><span class="pln">article the</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">noun cat</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">verb eats</span><span class="clo">))</span></pre></div>
+
+<p>我们可以用一个简单的程序生成这样的解析，该程序为每条语法规则设置单独的过程。要解析一个句子，我们识别它的两个组成部分，并返回这两个元素的表，并带有符号 <code>sentence</code> 作为标记：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">parse-sentence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'sentence</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">parse-noun-phrase</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">parse-word verbs</span><span class="clo">)))</span></pre></div>
+
+<p>类似地，名词短语的解析方式是找到一个冠词后接一个名词：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">parse-noun-phrase</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'noun-phrase</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">parse-word articles</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">parse-word nouns</span><span class="clo">)))</span></pre></div>
+
+<p>在最底层，解析归结为反复检查下一个未解析的单词是否属于所需词性对应的单词表。为实现这一点，我们维护一个全局变量 <code>*unparsed*</code>，它是尚未被解析的输入。每次检查一个单词时，我们要求 <code>*unparsed*</code> 必须非空，并且它应以指定表中的一个单词开头。如果是这样，我们就从 <code>*unparsed*</code> 中移除该单词，并返回该单词及其词性（词性位于表的头部）：<a class="footnote_link" id="DOCF255" href="#FOOT255"><sup>255</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">parse-word word-list</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="pln">null? </span><span class="pun">*</span><span class="pln">unparsed</span><span class="pun">*</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">memq </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> </span><span class="pun">*</span><span class="pln">unparsed</span><span class="pun">*</span><span class="clo">)</span><span class="pln"> 
+                 </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> word-list</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">found-word </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> </span><span class="pun">*</span><span class="pln">unparsed</span><span class="pun">*</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> </span><span class="pun">*</span><span class="pln">unparsed</span><span class="pun">*</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> </span><span class="pun">*</span><span class="pln">unparsed</span><span class="pun">*</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">list </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> word-list</span><span class="clo">)</span><span class="pln"> found-word</span><span class="clo">)))</span></pre></div>
+
+<p>要开始解析，我们只需将 <code>*unparsed*</code> 设为整个输入，尝试解析一个句子，并检查没有剩余内容：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="pun">*</span><span class="pln">unparsed</span><span class="pun">*</span><span class="pln"> </span><span class="lit">'</span><span class="opn">(</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">parse input</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">set</span><span class="pun">!</span><span class="pln"> </span><span class="pun">*</span><span class="pln">unparsed</span><span class="pun">*</span><span class="pln"> input</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">sent </span><span class="opn">(</span><span class="pln">parse-sentence</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">null? </span><span class="pun">*</span><span class="pln">unparsed</span><span class="pun">*</span><span class="clo">))</span><span class="pln">
+    sent</span><span class="clo">))</span></pre></div>
+
+<p>现在我们可以试用这个解析器，并验证它对我们简单的测试句子有效：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><i><span class="com">;;; Amb-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">parse </span><span class="lit">'</span><span class="opn">(</span><span class="pln">the cat eats</span><span class="clo">))</span><span class="pln">
+
+</span><i><span class="com">;;; Starting a new problem</span></i><span class="pln">
+</span><i><span class="com">;;; Amb-Eval value:</span></i><span class="pln">
+</span><i><span class="opn">(</span><span class="pln">sentence 
+ </span><span class="opn">(</span><span class="pln">noun-phrase </span><span class="opn">(</span><span class="pln">article the</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">noun cat</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">verb eats</span><span class="clo">))</span></i>
+</pre></div>
+
+<p><code>amb</code> 求值器在这里很有用，因为借助 <code>require</code> 来表达解析约束很方便。然而，当我们考虑更复杂的文法，其中单元如何分解存在多种选择时，自动搜索和回溯才真正体现出价值。</p>
+<p>让我们向文法中添加一个介词表：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> prepositions 
+  </span><span class="lit">'</span><span class="opn">(</span><span class="pln">prep for to in by with</span><span class="clo">))</span></pre></div>
+
+<p>并定义一个介词短语（例如“for the cat”）为一个介词后接一个名词短语：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">parse-prepositional-phrase</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'prep-phrase</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">parse-word prepositions</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">parse-noun-phrase</span><span class="clo">)))</span></pre></div>
+
+<p>现在我们可以把句子定义为名词短语后跟动词短语，其中动词短语可以是一个动词，或者是一个动词短语扩展一个介词短语：<a class="footnote_link" id="DOCF256" href="#FOOT256"><sup>256</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">parse-sentence</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'sentence</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">parse-noun-phrase</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">parse-verb-phrase</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">parse-verb-phrase</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">maybe-extend verb-phrase</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">amb 
+     verb-phrase
+     </span><span class="opn">(</span><span class="pln">maybe-extend 
+      </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'verb-phrase</span><span class="pln">
+            verb-phrase
+            </span><span class="opn">(</span><span class="pln">parse-prepositional-phrase</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">maybe-extend </span><span class="opn">(</span><span class="pln">parse-word verbs</span><span class="clo">)))</span></pre></div>
+
+<p>顺便，我们还可以细化名词短语的定义，以允许诸如“a cat in the class”这样的东西。我们过去称为名词短语的，现在称为简单名词短语，而名词短语现在要么是一个简单名词短语，要么是一个名词短语扩展一个介词短语：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">parse-simple-noun-phrase</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'simple-noun-phrase</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">parse-word articles</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">parse-word nouns</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">parse-noun-phrase</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">maybe-extend noun-phrase</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">amb 
+     noun-phrase
+     </span><span class="opn">(</span><span class="pln">maybe-extend 
+      </span><span class="opn">(</span><span class="pln">list </span><span class="lit">'noun-phrase</span><span class="pln">
+            noun-phrase
+            </span><span class="opn">(</span><span class="pln">parse-prepositional-phrase</span><span class="clo">)))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">maybe-extend </span><span class="opn">(</span><span class="pln">parse-simple-noun-phrase</span><span class="clo">)))</span></pre></div>
+
+<p>我们的新文法让我们能分析更复杂的句子。例如</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">parse </span><span class="lit">'</span><span class="opn">(</span><span class="pln">the student with the cat 
+         sleeps in the class</span><span class="clo">))</span></pre></div>
+
+<p>产生</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">sentence
+ </span><span class="opn">(</span><span class="pln">noun-phrase
+  </span><span class="opn">(</span><span class="pln">simple-noun-phrase </span><span class="opn">(</span><span class="pln">article the</span><span class="clo">)</span><span class="pln"> 
+                      </span><span class="opn">(</span><span class="pln">noun student</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">prep-phrase </span><span class="opn">(</span><span class="pln">prep with</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">simple-noun-phrase
+                </span><span class="opn">(</span><span class="pln">article the</span><span class="clo">)</span><span class="pln">
+                </span><span class="opn">(</span><span class="pln">noun cat</span><span class="clo">))))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">verb-phrase
+  </span><span class="opn">(</span><span class="pln">verb sleeps</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">prep-phrase </span><span class="opn">(</span><span class="pln">prep in</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">simple-noun-phrase
+                </span><span class="opn">(</span><span class="pln">article the</span><span class="clo">)</span><span class="pln">
+                </span><span class="opn">(</span><span class="pln">noun class</span><span class="clo">)))))</span></pre></div>
+
+<p>注意，一个给定的输入可能有不止一种合法的分析。在句子“The professor lectures to the student with the cat”中，可能是教授带着猫讲课，也可能是学生有猫。我们的非确定性程序找到了这两种可能性：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">parse </span><span class="lit">'</span><span class="opn">(</span><span class="pln">the professor lectures to 
+         the student with the cat</span><span class="clo">))</span></pre></div>
+
+<p>产生</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">sentence
+ </span><span class="opn">(</span><span class="pln">simple-noun-phrase </span><span class="opn">(</span><span class="pln">article the</span><span class="clo">)</span><span class="pln"> 
+                     </span><span class="opn">(</span><span class="pln">noun professor</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">verb-phrase
+  </span><span class="opn">(</span><span class="pln">verb-phrase
+   </span><span class="opn">(</span><span class="pln">verb lectures</span><span class="clo">)</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">prep-phrase </span><span class="opn">(</span><span class="pln">prep to</span><span class="clo">)</span><span class="pln">
+                </span><span class="opn">(</span><span class="pln">simple-noun-phrase
+                 </span><span class="opn">(</span><span class="pln">article the</span><span class="clo">)</span><span class="pln"> 
+                 </span><span class="opn">(</span><span class="pln">noun student</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">prep-phrase </span><span class="opn">(</span><span class="pln">prep with</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">simple-noun-phrase
+                </span><span class="opn">(</span><span class="pln">article the</span><span class="clo">)</span><span class="pln"> 
+                </span><span class="opn">(</span><span class="pln">noun cat</span><span class="clo">)))))</span></pre></div>
+
+<p>要求求值器再试一次会得到</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">sentence
+ </span><span class="opn">(</span><span class="pln">simple-noun-phrase </span><span class="opn">(</span><span class="pln">article the</span><span class="clo">)</span><span class="pln"> 
+                     </span><span class="opn">(</span><span class="pln">noun professor</span><span class="clo">))</span><span class="pln">
+ </span><span class="opn">(</span><span class="pln">verb-phrase </span><span class="opn">(</span><span class="pln">verb lectures</span><span class="clo">)</span><span class="pln">
+              </span><span class="opn">(</span><span class="pln">prep-phrase 
+               </span><span class="opn">(</span><span class="pln">prep to</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">noun-phrase
+                </span><span class="opn">(</span><span class="pln">simple-noun-phrase
+                 </span><span class="opn">(</span><span class="pln">article the</span><span class="clo">)</span><span class="pln"> 
+                 </span><span class="opn">(</span><span class="pln">noun student</span><span class="clo">))</span><span class="pln">
+                </span><span class="opn">(</span><span class="pln">prep-phrase 
+                 </span><span class="opn">(</span><span class="pln">prep with</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">simple-noun-phrase
+                  </span><span class="opn">(</span><span class="pln">article the</span><span class="clo">)</span><span class="pln"> 
+                  </span><span class="opn">(</span><span class="pln">noun cat</span><span class="clo">)))))))</span></pre></div>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e45"></a>习题 4.45：</strong> 使用上面给出的文法，下面的句子可以用五种不同的方式分析：“The professor lectures to the student in the class with the cat.” 给出这五种分析，并解释它们之间在意义细微差别上的不同。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e46"></a>习题 4.46：</strong> <a href="4_002e1_zh.xhtml#g_t4_002e1">4.1</a> 和 <a href="4_002e2_zh.xhtml#g_t4_002e2">4.2</a> 中的求值器没有确定运算对象的求值顺序。我们将看到 <code>amb</code> 求值器从左到右对它们求值。解释为什么如果运算对象以某种其他顺序求值，我们的分析程序就不能工作。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e47"></a>习题 4.47：</strong> Louis Reasoner 建议，既然动词短语要么是一个动词，要么是一个动词短语后跟一个介词短语，那么把过程 <code>parse-verb-phrase</code> 定义如下会直接得多（名词短语也类似）：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">parse-verb-phrase</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">amb </span><span class="opn">(</span><span class="pln">parse-word verbs</span><span class="clo">)</span><span class="pln">
+       </span><span class="opn">(</span><span class="pln">list 
+        </span><span class="lit">'verb-phrase</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">parse-verb-phrase</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">parse-prepositional-phrase</span><span class="clo">))))</span></pre></div>
+
+<p>这样能行吗？如果我们交换 <code>amb</code> 中表达式的顺序，程序的行为会改变吗？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e48"></a>习题 4.48：</strong> 扩展上面给出的文法以处理更复杂的句子。例如，你可以扩展名词短语和动词短语以包括形容词和副词，或者你可以处理复合句。<a class="footnote_link" id="DOCF257" href="#FOOT257"><sup>257</sup></a></p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e49"></a>习题 4.49：</strong> Alyssa P. Hacker 对生成有趣的句子比分析它们更感兴趣。她推理说，只要简单地改变过程 <code>parse-word</code>，使它忽略“输入句子”，而是总是成功并生成一个适当的词，我们就可以用为分析而构建的程序来进行生成。实现 Alyssa 的想法，并展示生成的前六个左右的句子。<a class="footnote_link" id="DOCF258" href="#FOOT258"><sup>258</sup></a></p></blockquote>
+
+<a id="g_t4_002e3_002e3"></a>
+<a id="Implementing-the-Amb-Evaluator"></a>
+<h4 class="subsection"><span class="secnum">4.3.3</span><span class="sectitle">实现 <code>Amb</code> 求值器</span></h4>
+
+<p>对普通 Scheme 表达式的求值可能返回一个值，可能永不终止，或者可能发出错误信号。在非确定性 Scheme 中，表达式的求值还可能发现死胡同，在这种情况下求值必须回溯到先前的选择点。非确定性 Scheme 的解释因这个额外情况而变得复杂。</p>
+<p>我们将通过修改 <a href="4_002e1_zh.xhtml#g_t4_002e1_002e7">4.1.7</a> 的分析求值器来构造非确定性 Scheme 的 <code>amb</code> 求值器。<a class="footnote_link" id="DOCF259" href="#FOOT259"><sup>259</sup></a> 与分析求值器中一样，表达式的求值通过调用由该表达式的分析产生的执行过程来完成。普通 Scheme 的解释与非确定性 Scheme 的解释之间的区别将完全在于执行过程。</p>
+<a id="Execution-procedures-and-continuations"></a>
+<h5 class="subsubheading">执行过程和继续过程</h5>
+
+<p>回想一下，普通求值器的执行过程接受一个参数：执行的环境。相比之下，<code>amb</code> 求值器中的执行过程接受三个参数：环境，以及两个称为<a id="index-continuation-procedures"></a> <em>继续过程</em>的过程。表达式的求值将通过调用这两个继续过程之一来完成：如果求值得到一个值，则用该值调用<a id="index-success-continuation"></a> <em>成功继续过程</em>；如果求值发现死胡同，则调用<a id="index-failure-continuation"></a> <em>失败继续过程</em>。构造并调用适当的继续过程是非确定性求值器实现回溯的机制。</p>
+<p>成功继续过程的任务是接收一个值并继续计算。除了那个值之外，成功继续过程还会被传递另一个失败继续过程，如果使用那个值导致死胡同，随后就要调用这个失败继续过程。</p>
+<p>失败继续过程的任务是尝试非确定性过程的另一个分支。非确定性语言的本质在于，表达式可以表示在备选项之间的选择。对这种表达式的求值必须用所指示的备选选择之一继续进行，即使事先并不知道哪些选择会导致可接受的结果。为了处理这一点，求值器选择其中一个备选项，并将这个值传递给成功继续过程。连同这个值，求值器构造并传递一个失败继续过程，以后可以调用它来选择不同的备选项。</p>
+<p>当用户程序显式地拒绝当前的求解路径时（例如，对 <code>require</code> 的调用可能导致执行 <code>(amb)</code>，这是一个总是失败的表达式——见 <a href="#g_t4_002e3_002e1">4.3.1</a>），在求值过程中就会触发一次失败（也就是说，调用一个失败继续过程）。此时手头的失败继续过程将导致最近的选择点选择另一个备选方案。如果该选择点没有更多备选方案可供考虑，就会触发更早的选择点上的失败，依此类推。驱动循环在响应 <code>try-again</code> 请求时也会调用失败继续过程，以寻找该表达式的另一个值。</p>
+<p>此外，如果副作用操作（例如对变量赋值）出现在由某个选择产生的计算过程的分支上，那么当该计算过程遇到死胡同时，可能需要在做出新选择之前撤销该副作用。这是通过让副作用操作产生一个失败继续过程来实现的，该继续过程撤销副作用并传播失败。</p>
+<p>总之，失败继续过程由以下方式构造：</p>
+<ul>
+<li><code>amb</code> 表达式——提供一种机制，使得如果 <code>amb</code> 表达式当前所做的选择导致死胡同，可以做出备选选择；</li><li>顶层驱动程序——提供一种机制，在选项耗尽时报告失败；</li><li>赋值——拦截失败并在回溯期间撤销赋值。</li></ul>
+
+<p>只有在遇到死胡同时才会引发失败。这发生在</p>
+<ul>
+<li>用户程序执行 <code>(amb)</code> 时；</li><li>用户在顶层驱动程序输入 <code>try-again</code> 时。</li></ul>
+
+<p>在处理失败的过程中也会调用失败继续过程：</p>
+<ul>
+<li>当由赋值创建的失败继续过程完成撤销副作用时，它会调用它所拦截的失败继续过程，以便将失败传播回导致此赋值的选择点或传播到顶层。</li><li>当 <code>amb</code> 的失败继续过程用尽选择时，它会调用最初给予 <code>amb</code> 的失败继续过程，以便将失败传播回前一个选择点或传播到顶层。</li></ul>
+
+<a id="Structure-of-the-evaluator"></a>
+<h5 class="subsubheading">求值器的结构</h5>
+
+<p><code>amb</code> 求值器的语法和数据表示过程，以及基本的 <code>analyze</code> 过程，都与 <a href="4_002e1_zh.xhtml#g_t4_002e1_002e7">4.1.7</a> 中的求值器相同，不同之处在于我们需要额外的语法过程来识别 <code>amb</code> 特殊形式：<a class="footnote_link" id="DOCF260" href="#FOOT260"><sup>260</sup></a></p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">amb? exp</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">tagged-list? exp </span><span class="lit">'amb</span><span class="clo">))</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">amb-choices exp</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> exp</span><span class="clo">))</span></pre></div>
+
+<p>我们还必须在 <code>analyze</code> 的分派中添加一个子句，以识别这个特殊形式并生成适当的执行过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="pln">amb? exp</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-amb exp</span><span class="clo">))</span></pre></div>
+
+<p>顶层过程 <code>ambeval</code>（类似于 <a href="4_002e1_zh.xhtml#g_t4_002e1_002e7">4.1.7</a> 中给出的 <code>eval</code> 版本）分析给定的表达式，并将得到的执行过程应用于给定的环境，同时传入两个给定的继续过程：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">ambeval exp env succeed fail</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">((</span><span class="pln">analyze exp</span><span class="clo">)</span><span class="pln"> env succeed fail</span><span class="clo">))</span></pre></div>
+
+<p>成功继续过程是一个接受两个参数的过程：刚刚获得的值，以及如果该值导致后续失败时要使用的另一个失败继续过程。失败继续过程是一个不接受参数的过程。因此，执行过程的一般形式是</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+  </span><span class="roman"><span class="com">;; </span><code><span class="com">succeed</span></code><span class="com"> is </span><code><span class="com">(lambda (value fail) </span><span class="roman"><span class="com">…</span></span><span class="com">)</span></code></span><span class="pln">
+  </span><span class="roman"><span class="com">;; </span><code><span class="com">fail</span></code><span class="com"> is </span><code><span class="com">(lambda () </span><span class="roman"><span class="com">…</span></span><span class="com">)</span></code></span><span class="pln">
+  </span><span class="roman"><span class="pun">…</span></span><span class="clo">)</span></pre></div>
+
+<p>例如，执行</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="pln">ambeval ⟨</span><var><span class="pln">exp</span></var><span class="pln">⟩
+         the-global-environment
+         </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">value fail</span><span class="clo">)</span><span class="pln"> value</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln"> </span><span class="lit">'failed</span><span class="clo">))</span></pre></div>
+
+<p>将尝试对给定表达式求值，并返回该表达式的值（如果求值成功）或符号 <code>failed</code>（如果求值失败）。下面显示的驱动循环中对 <code>ambeval</code> 的调用使用了复杂得多的继续过程，这些继续过程继续循环并支持 <code>try-again</code> 请求。</p>
+<p><code>amb</code> 求值器的大部分复杂性源于执行过程相互调用时传递继续过程的机制。在阅读以下代码时，你应该将每个执行过程与 <a href="4_002e1_zh.xhtml#g_t4_002e1_002e7">4.1.7</a> 中给出的普通求值器的对应过程进行比较。</p>
+<a id="Simple-expressions"></a>
+<h5 class="subsubheading">简单表达式</h5>
+
+<p>最简单类型表达式的执行过程与普通求值器的执行过程基本相同，只是需要管理继续过程。执行过程只是以表达式的值成功，并传递传给它们的失败继续过程。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-self-evaluating exp</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">succeed exp fail</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-quoted exp</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">qval </span><span class="opn">(</span><span class="pln">text-of-quotation exp</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">succeed qval fail</span><span class="clo">))))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-variable exp</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">succeed </span><span class="opn">(</span><span class="pln">lookup-variable-value exp env</span><span class="clo">)</span><span class="pln">
+             fail</span><span class="clo">)))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-lambda exp</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">vars </span><span class="opn">(</span><span class="pln">lambda-parameters exp</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">bproc </span><span class="opn">(</span><span class="pln">analyze-sequence 
+                </span><span class="opn">(</span><span class="pln">lambda-body exp</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">succeed </span><span class="opn">(</span><span class="pln">make-procedure vars bproc env</span><span class="clo">)</span><span class="pln">
+               fail</span><span class="clo">))))</span></pre></div>
+
+<p>注意，查找变量总是“成功”的。如果 <code>lookup-variable-value</code> 找不到该变量，它会像往常一样发出错误信号。这种“失败”表明程序有错误——引用了未绑定的变量；它并不表示我们应该尝试另一个非确定性选择，而不是当前正在尝试的选择。</p>
+<a id="Conditionals-and-sequences"></a>
+<h5 class="subsubheading">条件式和序列</h5>
+
+<p>条件式的处理方式也与普通求值器类似。由 <code>analyze-if</code> 生成的执行过程调用谓词执行过程 <code>pproc</code>，并传入一个成功继续过程，该继续过程检查谓词值是否为真，并继续执行结果表达式或替代表达式。如果 <code>pproc</code> 的执行失败，则调用 <code>if</code> 表达式原来的失败继续过程。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-if exp</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">pproc </span><span class="opn">(</span><span class="pln">analyze </span><span class="opn">(</span><span class="pln">if-predicate exp</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">cproc </span><span class="opn">(</span><span class="pln">analyze </span><span class="opn">(</span><span class="pln">if-consequent exp</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">aproc </span><span class="opn">(</span><span class="pln">analyze </span><span class="opn">(</span><span class="pln">if-alternative exp</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">pproc env
+             </span><span class="roman"><span class="com">;; success continuation for evaluating</span></span><span class="pln">
+             </span><span class="roman"><span class="com">;; the predicate to obtain </span><code><span class="com">pred-value</span></code></span><span class="pln">
+             </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pred-value fail2</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">true? pred-value</span><span class="clo">)</span><span class="pln">
+                   </span><span class="opn">(</span><span class="pln">cproc env succeed fail2</span><span class="clo">)</span><span class="pln">
+                   </span><span class="opn">(</span><span class="pln">aproc env succeed fail2</span><span class="clo">)))</span><span class="pln">
+             </span><span class="roman"><span class="com">;; failure continuation for</span></span><span class="pln">
+             </span><span class="roman"><span class="com">;; evaluating the predicate</span></span><span class="pln">
+             fail</span><span class="clo">))))</span></pre></div>
+
+<p>序列的处理方式也与之前的求值器相同，除了子过程 <code>sequentially</code> 中传递继续过程所需的机制。也就是说，为了顺序执行 <code>a</code> 然后 <code>b</code>，我们调用 <code>a</code> 并传入一个成功继续过程，该继续过程调用 <code>b</code>。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-sequence exps</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">sequentially a b</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">a env
+         </span><span class="roman"><span class="com">;; success continuation for calling </span><code><span class="com">a</span></code></span><span class="pln">
+         </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">a-value fail2</span><span class="clo">)</span><span class="pln">
+           </span><span class="opn">(</span><span class="pln">b env succeed fail2</span><span class="clo">))</span><span class="pln">
+         </span><span class="roman"><span class="com">;; failure continuation for calling </span><code><span class="com">a</span></code></span><span class="pln">
+         fail</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">loop first-proc rest-procs</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? rest-procs</span><span class="clo">)</span><span class="pln">
+        first-proc
+        </span><span class="opn">(</span><span class="pln">loop </span><span class="opn">(</span><span class="pln">sequentially first-proc 
+                            </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> rest-procs</span><span class="clo">))</span><span class="pln">
+              </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> rest-procs</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">procs </span><span class="opn">(</span><span class="pln">map analyze exps</span><span class="clo">)))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? procs</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Empty sequence: ANALYZE"</span><span class="clo">))</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">loop </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> procs</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> procs</span><span class="clo">))))</span></pre></div>
+
+<a id="Definitions-and-assignments"></a>
+<h5 class="subsubheading">定义和赋值</h5>
+
+<p>定义是另一种我们必须费些周折来管理继续过程的情况，因为在真正定义新变量之前，必须先对定义值表达式求值。为了做到这一点，定义值执行过程 <code>vproc</code> 被调用，并传入环境、成功继续过程和失败继续过程。如果 <code>vproc</code> 的执行成功，得到被定义变量的值 <code>val</code>，那么就定义该变量并传播成功：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-definition exp</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">var </span><span class="opn">(</span><span class="pln">definition-variable exp</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">vproc </span><span class="opn">(</span><span class="pln">analyze 
+                </span><span class="opn">(</span><span class="pln">definition-value exp</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">vproc env
+             </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">val fail2</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">define-variable! var val env</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">succeed </span><span class="lit">'ok</span><span class="pln"> fail2</span><span class="clo">))</span><span class="pln">
+             fail</span><span class="clo">))))</span></pre></div>
+
+<p>赋值更有意思。这是我们第一次真正使用继续过程，而不仅仅是传递它们。赋值的执行过程开始时与定义类似。它首先尝试获得要赋给变量的新值。如果对 <code>vproc</code> 的这次求值失败，则赋值失败。</p>
+<p>然而，如果 <code>vproc</code> 成功，并且我们继续执行赋值，那么我们必须考虑这种计算分支以后可能失败的可能性，这将要求我们从赋值中回溯出来。因此，我们必须安排好在回溯过程中撤销该赋值。<a class="footnote_link" id="DOCF261" href="#FOOT261"><sup>261</sup></a></p>
+<p>这是通过给 <code>vproc</code> 一个成功继续过程（在下面用注释“*1*”标记）来实现的，该继续过程在将新值赋给变量并从赋值继续之前保存变量的旧值。随赋值的值一起传递的失败继续过程（在下面用注释“*2*”标记）在继续失败之前恢复变量的旧值。也就是说，一次成功的赋值提供了一个失败继续过程，它将拦截随后的失败；本来会调用 <code>fail2</code> 的任何失败现在改为调用这个过程，以便在真正调用 <code>fail2</code> 之前撤销该赋值。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-assignment exp</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">var </span><span class="opn">(</span><span class="pln">assignment-variable exp</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">vproc </span><span class="opn">(</span><span class="pln">analyze 
+                </span><span class="opn">(</span><span class="pln">assignment-value exp</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">vproc env
+             </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">val fail2</span><span class="clo">)</span><span class="pln">    </span><span class="roman"><span class="com">; *1*</span></span><span class="pln">
+               </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">old-value
+                      </span><span class="opn">(</span><span class="pln">lookup-variable-value 
+                       var 
+                       env</span><span class="clo">)))</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">set-variable-value!
+                  var 
+                  val 
+                  env</span><span class="clo">)</span><span class="pln">
+                 </span><span class="opn">(</span><span class="pln">succeed 
+                  </span><span class="lit">'ok</span><span class="pln">
+                  </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln">    </span><span class="roman"><span class="com">; *2*</span></span><span class="pln">
+                    </span><span class="opn">(</span><span class="pln">set-variable-value! 
+                     var
+                     old-value
+                     env</span><span class="clo">)</span><span class="pln">
+                    </span><span class="opn">(</span><span class="pln">fail2</span><span class="clo">)))))</span><span class="pln">
+               fail</span><span class="clo">))))</span></pre></div>
+
+<a id="Procedure-applications"></a>
+<h5 class="subsubheading">过程应用</h5>
+
+<p>应用的执行过程除了管理继续过程的技术复杂性之外，不包含任何新思想。这种复杂性出现在 <code>analyze-application</code> 中，因为在求值运算对象时需要跟踪成功继续过程和失败继续过程。我们使用过程 <code>get-args</code> 来求值运算对象表，而不是像普通求值器中那样使用简单的 <code>map</code>。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-application exp</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">fproc </span><span class="opn">(</span><span class="pln">analyze </span><span class="opn">(</span><span class="pln">operator exp</span><span class="clo">)))</span><span class="pln">
+        </span><span class="opn">(</span><span class="pln">aprocs </span><span class="opn">(</span><span class="pln">map analyze </span><span class="opn">(</span><span class="pln">operands exp</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">fproc env
+             </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">proc fail2</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">get-args 
+                aprocs
+                env
+                </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">args fail3</span><span class="clo">)</span><span class="pln">
+                  </span><span class="opn">(</span><span class="pln">execute-application
+                   proc args succeed fail3</span><span class="clo">))</span><span class="pln">
+                fail2</span><span class="clo">))</span><span class="pln">
+             fail</span><span class="clo">))))</span></pre></div>
+
+<p>在 <code>get-args</code> 中，请注意，沿着 <code>aproc</code> 执行过程表向下 <code>cdr</code> 并向上 <code>cons</code> 得到的 <code>args</code> 表，是通过用成功继续过程调用表中的每个 <code>aproc</code> 来完成的，该成功继续过程递归地调用 <code>get-args</code>。这些对 <code>get-args</code> 的递归调用中的每一个都有一个成功继续过程，其值是将新获得的实参 <code>cons</code> 到累积实参表上：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">get-args aprocs env succeed fail</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? aprocs</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">succeed </span><span class="lit">'</span><span class="opn">(</span><span class="clo">)</span><span class="pln"> fail</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">((</span><span class="kwd">car</span><span class="pln"> aprocs</span><span class="clo">)</span><span class="pln"> 
+       env
+       </span><span class="com">;; </span><span class="roman"><span class="com">success continuation for this </span><code><span class="com">aproc</span></code></span><span class="pln">
+       </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">arg fail2</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">get-args 
+          </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> aprocs</span><span class="clo">)</span><span class="pln">
+          env
+          </span><span class="com">;; </span><span class="roman"><span class="com">success continuation for</span></span><span class="pln">
+          </span><span class="com">;; </span><span class="roman"><span class="com">recursive call to </span><code><span class="com">get-args</span></code></span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">args fail3</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">succeed </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> arg args</span><span class="clo">)</span><span class="pln">
+                     fail3</span><span class="clo">))</span><span class="pln">
+          fail2</span><span class="clo">))</span><span class="pln">
+       fail</span><span class="clo">)))</span></pre></div>
+
+<p>实际的过程应用由 <code>execute-application</code> 执行，其完成方式与普通求值器相同，只是需要管理继续过程。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">execute-application 
+         proc args succeed fail</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">primitive-procedure? proc</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">(</span><span class="pln">succeed 
+          </span><span class="opn">(</span><span class="pln">apply-primitive-procedure 
+           proc args</span><span class="clo">)</span><span class="pln">
+          fail</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">compound-procedure? proc</span><span class="clo">)</span><span class="pln">
+         </span><span class="opn">((</span><span class="pln">procedure-body proc</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">extend-environment 
+           </span><span class="opn">(</span><span class="pln">procedure-parameters proc</span><span class="clo">)</span><span class="pln">
+           args
+           </span><span class="opn">(</span><span class="pln">procedure-environment proc</span><span class="clo">))</span><span class="pln">
+          succeed
+          fail</span><span class="clo">))</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="err">error</span><span class="pln"> </span><span class="str">"Unknown procedure type: 
+                      EXECUTE-APPLICATION"</span><span class="pln">
+                     proc</span><span class="clo">))))</span></pre></div>
+
+<a id="Evaluating-amb-expressions"></a>
+<h5 class="subsubheading">求值 <code>amb</code> 表达式</h5>
+
+<p><code>amb</code> 特殊形式是非确定性语言中的关键元素。在这里我们看到了解释过程的本质以及跟踪继续过程的原因。<code>amb</code> 的执行过程定义了一个循环 <code>try-next</code>，它遍历 <code>amb</code> 表达式的所有可能值的执行过程。每个执行过程都被调用，并传入一个将尝试下一个的失败继续过程。当没有更多可尝试的备选时，整个 <code>amb</code> 表达式失败。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-amb exp</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">cprocs
+         </span><span class="opn">(</span><span class="pln">map analyze </span><span class="opn">(</span><span class="pln">amb-choices exp</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">try-next choices</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="pln">null? choices</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">fail</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">((</span><span class="kwd">car</span><span class="pln"> choices</span><span class="clo">)</span><span class="pln"> 
+             env
+             succeed
+             </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">try-next </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> choices</span><span class="clo">))))))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">try-next cprocs</span><span class="clo">))))</span></pre></div>
+
+<a id="Driver-loop-1"></a>
+<h5 class="subsubheading">驱动循环</h5>
+
+<p><code>amb</code> 求值器的驱动循环很复杂，因为有一种机制允许用户在求值表达式时重试。驱动使用一个称为 <code>internal-loop</code> 的过程，它接受一个过程 <code>try-again</code> 作为参数。其意图是，调用 <code>try-again</code> 应该继续到非确定性求值中下一个未尝试的备选。<code>Internal-loop</code> 要么在用户在驱动循环中键入 <code>try-again</code> 时调用 <code>try-again</code>，要么通过调用 <code>ambeval</code> 开始新的求值。</p>
+<p>这次对 <code>ambeval</code> 的调用的失败继续过程告知用户没有更多值，并重新调用驱动循环。</p>
+<p>对 <code>ambeval</code> 的调用的成功继续过程更为微妙。我们打印获得的值，然后用一个能够尝试下一个备选的 <code>try-again</code> 过程再次调用内部循环。这个 <code>next-alternative</code> 过程是传递给成功继续过程的第二个参数。通常，我们将这第二个参数视为在当前求值分支以后失败时要使用的失败继续过程。然而，在这种情况下，我们已经完成了一次成功的求值，因此我们可以调用“失败”备选分支，以便搜索额外的成功求值。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> input-prompt  </span><span class="str">";;; Amb-Eval input:"</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> output-prompt </span><span class="str">";;; Amb-Eval value:"</span><span class="clo">)</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">driver-loop</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">internal-loop try-again</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="pln">prompt-for-input input-prompt</span><span class="clo">)</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">input </span><span class="opn">(</span><span class="pln">read</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> input </span><span class="lit">'try-again</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="pln">try-again</span><span class="clo">)</span><span class="pln">
+          </span><span class="opn">(</span><span class="kwd">begin</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">newline</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">display 
+             </span><span class="str">";;; Starting a new problem "</span><span class="clo">)</span><span class="pln">
+            </span><span class="opn">(</span><span class="pln">ambeval 
+             input
+             the-global-environment
+             </span><span class="roman"><span class="com">;; </span><code><span class="com">ambeval</span></code><span class="com"> success</span></span><span class="pln">
+             </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">val next-alternative</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">announce-output 
+                output-prompt</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">user-print val</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">internal-loop 
+                next-alternative</span><span class="clo">))</span><span class="pln">
+             </span><span class="roman"><span class="com">;; </span><code><span class="com">ambeval</span></code><span class="com"> failure</span></span><span class="pln">
+             </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">announce-output
+                </span><span class="str">";;; There are no 
+                 more values of"</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">user-print input</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="pln">driver-loop</span><span class="clo">)))))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">internal-loop
+   </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">newline</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">display 
+      </span><span class="str">";;; There is no current problem"</span><span class="clo">)</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">driver-loop</span><span class="clo">))))</span></pre></div>
+
+<p>对 <code>internal-loop</code> 的初始调用使用一个 <code>try-again</code> 过程，它报告当前没有待求解的问题并重新启动驱动循环。如果用户在没有进行中的求值时键入 <code>try-again</code>，就会发生这种行为。</p>
+<blockquote>
+<p><strong><a id="Exercise-4_002e50"></a>习题 4.50：</strong> 实现一个新的特殊形式 <code>ramb</code>，它类似于 <code>amb</code>，只是它以随机顺序搜索备选，而不是从左到右。说明这如何有助于解决 <a href="#Exercise-4_002e49">习题 4.49</a> 中 Alyssa 的问题。</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e51"></a>习题 4.51：</strong> 实现一种新的赋值，称为 <code>permanent-set!</code>，它在失败时不会被撤销。例如，我们可以从表中选择两个不同的元素，并如下计算做出成功选择所需的尝试次数：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> count </span><span class="lit">0</span><span class="clo">)</span><span class="pln">
+</span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">x </span><span class="opn">(</span><span class="pln">an-element-of </span><span class="lit">'</span><span class="opn">(</span><span class="pln">a b c</span><span class="clo">)))</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">y </span><span class="opn">(</span><span class="pln">an-element-of </span><span class="lit">'</span><span class="opn">(</span><span class="pln">a b c</span><span class="clo">))))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">permanent-set! count </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> count </span><span class="lit">1</span><span class="clo">))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">not </span><span class="opn">(</span><span class="kwd">eq</span><span class="pun">?</span><span class="pln"> x y</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">list x y count</span><span class="clo">))</span><span class="pln">
+
+</span><i><span class="com">;;; Starting a new problem</span></i><span class="pln">
+</span><i><span class="com">;;; Amb-Eval value:</span></i><span class="pln">
+</span><i><span class="opn">(</span><span class="pln">a b </span><span class="lit">2</span><span class="clo">)</span></i><span class="pln">
+
+</span><i><span class="com">;;; Amb-Eval input:</span></i><span class="pln">
+try-again
+
+</span><i><span class="com">;;; Amb-Eval value:</span></i><span class="pln">
+</span><i><span class="opn">(</span><span class="pln">a c </span><span class="lit">3</span><span class="clo">)</span></i>
+</pre></div>
+
+<p>如果这里我们使用 <code>set!</code> 而不是 <code>permanent-set!</code>，会显示什么值？</p></blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e52"></a>习题4.52：</strong>实现一个新的构造，称为<code>if-fail</code>，它允许用户捕获表达式的失败。<code>If-fail</code>接受两个表达式。它照常求值第一个表达式，如果求值成功则照常返回。然而，如果求值失败，则返回第二个表达式的值，如下例所示：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><i><span class="com">;;; Amb-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">if-fail 
+ </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">x </span><span class="opn">(</span><span class="pln">an-element-of </span><span class="lit">'</span><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="clo">))))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">even? x</span><span class="clo">))</span><span class="pln">
+   x</span><span class="clo">)</span><span class="pln">
+ </span><span class="lit">'all-odd</span><span class="clo">)</span><span class="pln">
+
+</span><i><span class="com">;;; Starting a new problem</span></i><span class="pln">
+</span><i><span class="com">;;; Amb-Eval value:</span></i><span class="pln">
+</span><i><span class="pln">all-odd</span></i><span class="pln">
+
+</span><i><span class="com">;;; Amb-Eval input:</span></i><span class="pln">
+</span><span class="opn">(</span><span class="pln">if-fail
+ </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">x </span><span class="opn">(</span><span class="pln">an-element-of </span><span class="lit">'</span><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">8</span><span class="clo">))))</span><span class="pln">
+   </span><span class="opn">(</span><span class="pln">require </span><span class="opn">(</span><span class="pln">even? x</span><span class="clo">))</span><span class="pln">
+   x</span><span class="clo">)</span><span class="pln">
+ </span><span class="lit">'all-odd</span><span class="clo">)</span><span class="pln">
+
+</span><i><span class="com">;;; Starting a new problem</span></i><span class="pln">
+</span><i><span class="com">;;; Amb-Eval value:</span></i><span class="pln">
+</span><i><span class="lit">8</span></i>
+</pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e53"></a>习题4.53：</strong>使用<a href="#Exercise-4_002e51">习题4.51</a>中描述的<code>permanent-set!</code>，以及<a href="#Exercise-4_002e52">习题4.52</a>中的<code>if-fail</code>，求值以下表达式的结果会是什么：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">pairs </span><span class="lit">'</span><span class="opn">(</span><span class="clo">)))</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">if-fail 
+   </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">p </span><span class="opn">(</span><span class="pln">prime-sum-pair 
+             </span><span class="lit">'</span><span class="opn">(</span><span class="lit">1</span><span class="pln"> </span><span class="lit">3</span><span class="pln"> </span><span class="lit">5</span><span class="pln"> </span><span class="lit">8</span><span class="clo">)</span><span class="pln"> 
+             </span><span class="lit">'</span><span class="opn">(</span><span class="lit">20</span><span class="pln"> </span><span class="lit">35</span><span class="pln"> </span><span class="lit">110</span><span class="clo">))))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">permanent-set! pairs 
+                     </span><span class="opn">(</span><span class="kwd">cons</span><span class="pln"> p pairs</span><span class="clo">))</span><span class="pln">
+     </span><span class="opn">(</span><span class="pln">amb</span><span class="clo">))</span><span class="pln">
+   pairs</span><span class="clo">))</span></pre></div>
+</blockquote>
+
+<blockquote>
+<p><strong><a id="Exercise-4_002e54"></a>习题4.54：</strong>如果我们没有意识到<code>require</code>可以实现为一个使用<code>amb</code>的普通过程，由用户作为非确定性程序的一部分来定义，我们就不得不把它实现为一个特殊形式。这将需要语法过程</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">require? exp</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="pln">tagged-list? exp </span><span class="lit">'require</span><span class="clo">))</span><span class="pln">
+
+</span><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">require-predicate exp</span><span class="clo">)</span><span class="pln"> 
+  </span><span class="opn">(</span><span class="kwd">cadr</span><span class="pln"> exp</span><span class="clo">))</span></pre></div>
+
+<p>以及在<code>analyze</code>中的分派里增加一个新子句</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">((</span><span class="pln">require? exp</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-require exp</span><span class="clo">))</span></pre></div>
+
+<p>以及处理<code>require</code>表达式的过程<code>analyze-require</code>。完成以下<code>analyze-require</code>的定义。</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">analyze-require exp</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">let</span><span class="pln"> </span><span class="opn">((</span><span class="pln">pproc </span><span class="opn">(</span><span class="pln">analyze 
+                </span><span class="opn">(</span><span class="pln">require-predicate exp</span><span class="clo">))))</span><span class="pln">
+    </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">env succeed fail</span><span class="clo">)</span><span class="pln">
+      </span><span class="opn">(</span><span class="pln">pproc env
+             </span><span class="opn">(</span><span class="kwd">lambda</span><span class="pln"> </span><span class="opn">(</span><span class="pln">pred-value fail2</span><span class="clo">)</span><span class="pln">
+               </span><span class="opn">(</span><span class="kwd">if</span><span class="pln"> ⟨</span><span class="pun">??</span><span class="pln">⟩
+                   ⟨</span><span class="pun">??</span><span class="pln">⟩
+                   </span><span class="opn">(</span><span class="pln">succeed </span><span class="lit">'ok</span><span class="pln"> fail2</span><span class="clo">)))</span><span class="pln">
+             fail</span><span class="clo">))))</span></pre></div>
+</blockquote>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT246"><p><a class="footnote_backlink" href="#DOCF246"><sup>246</sup></a>我们假设之前已经定义了一个过程<code>prime?</code>，用于测试数字是否为素数。即使定义了<code>prime?</code>，<code>prime-sum-pair</code>过程可能看起来可疑地像我们在<a href="1_002e1_zh.xhtml#g_t1_002e1_002e7">1.1.7</a>开头描述过的那个无用的“伪Lisp”尝试定义平方根函数。事实上，沿着这些思路的平方根过程确实可以表述为一个非确定性程序。通过将搜索机制纳入求值器，我们正在侵蚀纯粹声明式描述与如何计算答案的命令式规范之间的区别。我们将在<a href="4_002e4_zh.xhtml#g_t4_002e4">4.4</a>中朝这个方向走得更远。</p>
+</div>
+<div id="FOOT247"><p><a class="footnote_backlink" href="#DOCF247"><sup>247</sup></a>用于非确定性编程的<code>amb</code>的想法最早由John McCarthy在1961年描述（见<a href="References_zh.xhtml#McCarthy-1963">McCarthy 1963</a>）。</p>
+</div>
+<div id="FOOT248"><p><a class="footnote_backlink" href="#DOCF248"><sup>248</sup></a>实际上，非确定性地返回单个选择与返回所有选择之间的区别在某种程度上取决于我们的视角。从使用该值的代码的角度来看，非确定性选择返回单个值。从设计代码的程序员的角度来看，非确定性选择潜在地返回所有可能的值，并且计算会分支，以便每个值被单独考察。</p>
+</div>
+<div id="FOOT249"><p><a class="footnote_backlink" href="#DOCF249"><sup>249</sup></a>有人可能会反对说，这是一种无可救药的低效机制。以这种方式解决某个容易陈述的问题可能需要数百万个处理器，而且大多数时候这些处理器中的大多数都会空闲。这种反对意见应该放在历史的背景下来看。内存曾经也被认为是这样一种昂贵的商品。在1964年，一兆字节的<abbr>RAM</abbr>大约花费400,000美元。现在每台个人计算机都有许多兆字节的<abbr>RAM</abbr>，而且大多数时候这些<abbr>RAM</abbr>中的大部分都未被使用。大规模生产的电子产品成本之低，几乎怎么估计都不为过。</p>
+</div>
+<div id="FOOT250"><p><a class="footnote_backlink" href="#DOCF250"><sup>250</sup></a> <a id="Footnote-250"></a>Automagically：“自动地，但以某种方式，出于某种原因（通常是因为它太复杂、太丑陋，或者甚至可能太琐碎），说话者不想解释。”（<a href="References_zh.xhtml#Steele-et-al_002e-1983">Steele et al. 1983</a>，<a href="References_zh.xhtml#Raymond-1993">Raymond 1993</a>）</p>
+</div>
+<div id="FOOT251"><p><a class="footnote_backlink" href="#DOCF251"><sup>251</sup></a>将自动搜索策略集成到编程语言中有着漫长而曲折的历史。最早提出非确定性算法可以优雅地编码在具有搜索和自动回溯的编程语言中的建议来自Robert <a href="References_zh.xhtml#Floyd-_00281967_0029">Floyd（1967）</a>。Carl <a href="References_zh.xhtml#Hewitt-_00281969_0029">Hewitt（1969）</a>发明了一种称为Planner的编程语言，它显式支持自动时序回溯，提供了内置的深度优先搜索策略。<a href="References_zh.xhtml#Sussman-et-al_002e-_00281971_0029">Sussman等人（1971）</a>实现了该语言的一个子集，称为MicroPlanner，用于支持问题求解和机器人规划方面的工作。来自逻辑和定理证明的类似想法导致了优雅的语言Prolog在爱丁堡和马赛的诞生（我们将在<a href="4_002e4_zh.xhtml#g_t4_002e4">4.4</a>中讨论）。在对自动搜索感到足够沮丧之后，<a href="References_zh.xhtml#McDermott-and-Sussman-_00281972_0029">McDermott和Sussman（1972）</a>开发了一种称为Conniver的语言，其中包含将搜索策略置于程序员控制之下的机制。然而，这被证明是笨拙的，而<a href="References_zh.xhtml#Sussman-and-Stallman-1975">Sussman和Stallman 1975</a>在研究电路符号分析方法时找到了一种更易处理的方法。他们开发了一种非时序回溯方案，该方案基于追踪连接事实的逻辑依赖关系，这种技术后来被称为<a id="index-dependency_002ddirected-backtracking"></a> <em>依赖导向回溯</em>。尽管他们的方法很复杂，但它产生了相当高效的程序，因为它几乎没有冗余搜索。<a href="References_zh.xhtml#Doyle-_00281979_0029">Doyle（1979）</a>和<a href="References_zh.xhtml#McAllester-_00281978_003b-1980_0029">McAllester（1978；1980）</a>推广并澄清了Stallman和Sussman的方法，发展出一种用于表述搜索的新范式，现在称为<a id="index-truth-maintenance"></a> <em>真值维护</em>。现代问题求解系统都使用某种形式的真值维护系统作为基础。关于构建真值维护系统的优雅方法以及使用真值维护的应用的讨论，见<a href="References_zh.xhtml#Forbus-and-deKleer-1993">Forbus和deKleer 1993</a>。<a href="References_zh.xhtml#Zabih-et-al_002e-1987">Zabih等人1987</a>描述了一种基于<code>amb</code>的Scheme非确定性扩展；它类似于本节描述的解释器，但更复杂，因为它使用依赖导向回溯而不是时序回溯。<a href="References_zh.xhtml#Winston-1992">Winston 1992</a>介绍了这两种回溯。</p>
+</div>
+<div id="FOOT252"><p><a class="footnote_backlink" href="#DOCF252"><sup>252</sup></a>我们的程序使用以下过程来确定表中的元素是否互不相同：</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">distinct? items</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="kwd">cond</span><span class="pln"> </span><span class="opn">((</span><span class="pln">null? items</span><span class="clo">)</span><span class="pln"> true</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">null? </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">))</span><span class="pln"> true</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">((</span><span class="pln">member </span><span class="opn">(</span><span class="kwd">car</span><span class="pln"> items</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">))</span><span class="pln"> false</span><span class="clo">)</span><span class="pln">
+        </span><span class="opn">(</span><span class="kwd">else</span><span class="pln"> </span><span class="opn">(</span><span class="pln">distinct? </span><span class="opn">(</span><span class="kwd">cdr</span><span class="pln"> items</span><span class="clo">)))))</span></pre></div>
+
+<p><code>Member</code>类似于<code>memq</code>，只是它使用<code>equal?</code>而不是<code>eq?</code>来测试相等性。</p>
+</div>
+<div id="FOOT253"><p><a class="footnote_backlink" href="#DOCF253"><sup>253</sup></a> 这摘自一本名为“Problematical Recreations”的小册子，由 Litton Industries 于 1960 年代出版，其中将其归功于 <cite>Kansas State Engineer</cite>。</p>
+</div>
+<div id="FOOT254"><p><a class="footnote_backlink" href="#DOCF254"><sup>254</sup></a> 这里我们采用这样的约定：每个表的第一个元素指定了该表中其余单词的词性。</p>
+</div>
+<div id="FOOT255"><p><a class="footnote_backlink" href="#DOCF255"><sup>255</sup></a> 注意，<code>parse-word</code> 使用 <code>set!</code> 来修改未解析的输入表。为了使其工作，我们的 <code>amb</code> 求值器在回溯时必须撤销 <code>set!</code> 操作的效果。</p>
+</div>
+<div id="FOOT256"><p><a class="footnote_backlink" href="#DOCF256"><sup>256</sup></a> 观察这个定义是递归的——一个动词后面可以跟任意数量的介词短语。</p>
+</div>
+<div id="FOOT257"><p><a class="footnote_backlink" href="#DOCF257"><sup>257</sup></a> 这种文法可以变得任意复杂，但就真正的语言理解而言，它只是一个玩具。计算机对真实自然语言的理解需要句法分析和意义解释的精细混合。另一方面，即使是玩具解析器，在支持诸如信息检索系统等程序的灵活命令语言方面也可能有用。<a href="References_zh.xhtml#Winston-1992">Winston 1992</a> 讨论了真实语言理解的计算方法，以及简单文法在命令语言中的应用。</p>
+</div>
+<div id="FOOT258"><p><a class="footnote_backlink" href="#DOCF258"><sup>258</sup></a> 尽管 Alyssa 的想法工作得很好（而且出奇地简单），但它生成的句子有点无聊——它们并没有以非常有趣的方式采样这种语言的可能句子。事实上，该文法在许多地方高度递归，而 Alyssa 的技术“落入”了其中一种递归并卡住了。参见 <a href="#Exercise-4_002e50">习题 4.50</a> 了解处理此问题的方法。</p>
+</div>
+<div id="FOOT259"><p><a class="footnote_backlink" href="#DOCF259"><sup>259</sup></a> 我们选择在 <a href="4_002e2_zh.xhtml#g_t4_002e2">4.2</a> 中实现惰性求值器，作为对 <a href="4_002e1_zh.xhtml#g_t4_002e1_002e1">4.1.1</a> 的普通元循环求值器的修改。相比之下，我们将把 <code>amb</code> 求值器建立在 <a href="4_002e1_zh.xhtml#g_t4_002e1_002e7">4.1.7</a> 的分析求值器之上，因为该求值器中的执行过程为实现回溯提供了方便的框架。</p>
+</div>
+<div id="FOOT260"><p><a class="footnote_backlink" href="#DOCF260"><sup>260</sup></a> 我们假设求值器支持 <code>let</code>（见 <a href="4_002e1_zh.xhtml#Exercise-4_002e22">习题 4.22</a>），我们在非确定性程序中使用了它。</p>
+</div>
+<div id="FOOT261"><p><a class="footnote_backlink" href="#DOCF261"><sup>261</sup></a> 我们不必担心撤销定义，因为我们可以假设内部定义已被扫描出去（<a href="4_002e1_zh.xhtml#g_t4_002e1_002e6">4.1.6</a>）。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="4_002e4_zh.xhtml#g_t4_002e4" accesskey="n" rel="next">4.4</a>, 上一节： <a href="4_002e2_zh.xhtml#g_t4_002e2" accesskey="p" rel="prev">4.2</a>, 上一级： <a href="#g_t4_002e3" accesskey="u" rel="prev">4.3</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>

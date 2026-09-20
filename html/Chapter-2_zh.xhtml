@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="zh" lang="zh">
+<!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
+<head>
+<title>计算机程序的构造和解释，第2版：第2章</title>
+
+<meta name="description" content="Structure and Interpretation of Computer Programs, 2e: Chapter 2" />
+<meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: Chapter 2" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="Generator" content="texi2any" />
+<meta charset="utf-8" />
+<link href="index_zh.xhtml#Top" rel="start" title="Top" />
+<link href="Term-Index_zh.xhtml#Term-Index" rel="index" title="Term Index" />
+<link href="index_zh.xhtml#SEC_Contents" rel="contents" title="Table of Contents" />
+<link href="index_zh.xhtml#Top" rel="prev" title="Top" />
+<link href="2_002e1_zh.xhtml#g_t2_002e1" rel="next" title="2.1" />
+<link href="1_002e3_zh.xhtml#g_t1_002e3_002e4" rel="prev" title="1.3.4" />
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link href="css/prettify.css" rel="stylesheet" type="text/css" />
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/footnotes.js" type="text/javascript"></script>
+<script src="js/browsertest.js" type="text/javascript"></script>
+</head>
+
+<body>
+<section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="Chapter-2"></a>
+<nav class="header">
+<p>下一节： <a href="2_002e1_zh.xhtml#g_t2_002e1" accesskey="n" rel="next">2.1</a>, 上一节： <a href="1_002e3_zh.xhtml#g_t1_002e3" accesskey="p" rel="prev">1.3</a>, 上一级： <a href="index_zh.xhtml#Top" accesskey="u" rel="prev">首页</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+<a id="Building-Abstractions-with-Data"></a>
+<h2 class="chapter"><span class="chapnum">2</span><span class="chaptitle">用数据构建抽象</span></h2>
+
+<blockquote>
+<p>我们现在来到数学抽象的决定性一步：我们忘记符号代表什么。……[数学家]不必闲着；他可以用这些符号进行许多操作，而无需查看它们所代表的事物。</p>
+<p>——Hermann Weyl，<cite>The Mathematical Way of Thinking</cite></p></blockquote>
+
+
+<p>我们在<a href="Chapter-1_zh.xhtml#Chapter-1">第1章</a>中集中讨论了计算过程和过程在程序设计中的作用。我们看到了如何使用基本数据（数）和基本操作（算术运算），如何通过组合、条件和使用参数将过程组合成复合过程，以及如何通过使用<code>define</code>来抽象过程。我们看到过程可以被视为计算过程局部演化的模式，并且我们对体现在过程中的一些常见计算过程模式进行了分类、推理和简单的算法分析。我们还看到，高阶过程通过使我们能够操作并因此根据一般计算方法进行推理，增强了我们语言的能力。这就是编程的许多精髓。</p>
+<p>在本章中，我们将研究更复杂的数据。第1章中的所有过程都操作简单的数值数据，而简单数据不足以解决我们希望使用计算解决的许多问题。程序通常设计为对复杂现象建模，而且往往必须构造具有多个部分的计算对象，以便对具有多个方面的现实世界现象建模。因此，虽然我们在第1章的重点是通过组合过程以形成复合过程来构建抽象，但在本章中我们转向任何编程语言的另一个关键方面：它提供的通过组合数据对象以形成<a id="index-compound-data"></a> <em>复合数据</em>来构建抽象的手段。</p>
+<p>为什么我们希望在编程语言中使用复合数据？原因与我们希望使用复合过程相同：提升我们可以设计程序的概念层次，增加设计的模块性，并增强我们语言的表现力。正如定义过程的能力使我们能够在比语言的基本操作更高的概念层次上处理计算过程一样，构造复合数据对象的能力使我们能够在比语言的基本数据对象更高的概念层次上处理数据。</p>
+<p>考虑设计一个系统来对有理数进行算术运算的任务。我们可以设想一个操作<code>add-rat</code>，它接受两个有理数并产生它们的和。就简单数据而言，有理数可以被看作两个整数：一个分子和一个分母。因此，我们可以设计一个程序，其中每个有理数由两个整数（一个分子和一个分母）表示，并且<code>add-rat</code>由两个过程实现（一个产生和的分子，一个产生分母）。但这会很笨拙，因为那样我们就需要显式地跟踪哪些分子对应哪些分母。在一个打算对许多有理数执行许多操作的系统中，这种簿记细节会极大地扰乱程序，更不用说它们会对我们的头脑造成什么影响了。如果我们能把分子和分母“粘合在一起”形成一个序对——一个<a id="index-compound-data-object"></a><em>复合数据对象</em>——而我们的程序能以与将有理数视为单一概念单元相一致的方式来操作它，那就好得多了。</p>
+<p>复合数据的使用还使我们能够提高程序的模块性。如果我们能直接将有理数作为其自身的对象来操作，那么我们就可以将程序中处理有理数本身的部分与有理数如何表示为整数对的细节分离开来。将程序中处理数据对象如何表示的部分与处理数据对象如何使用的部分隔离开来的一般技术，是一种强大的设计方法，称为<a id="index-data-abstraction"></a><em>数据抽象</em>。我们将看到数据抽象如何使程序更易于设计、维护和修改。</p>
+<p>复合数据的使用真正增强了我们编程语言的表现力。考虑形成“线性组合”<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mi>b</mi>
+    <mi>y</mi>
+  </mrow>
+</math>的想法。我们可能想写一个过程，它接受<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>a</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>b</mi>
+</math>、<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>x</mi>
+</math>和<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>y</mi>
+</math>作为参数，并返回<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi>a</mi>
+    <mi>x</mi>
+    <mo>+</mo>
+    <mi>b</mi>
+    <mi>y</mi>
+  </mrow>
+</math>的值。如果参数是数，这没有困难，因为我们可以很容易地定义这个过程</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">linear-combination a b x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pun">+</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> a x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pun">*</span><span class="pln"> b y</span><span class="clo">)))</span></pre></div>
+
+<p>但假设我们不仅仅关心数。假设我们想用过程术语表达这样的想法：只要定义了加法和乘法，就可以形成线性组合——对于有理数、复数、多项式，或者任何东西。我们可以将其表达为如下形式的过程</p>
+<div class="lisp">
+<pre class="lisp prettyprinted" style=""><span class="opn">(</span><span class="kwd">define</span><span class="pln"> </span><span class="opn">(</span><span class="pln">linear-combination a b x y</span><span class="clo">)</span><span class="pln">
+  </span><span class="opn">(</span><span class="pln">add </span><span class="opn">(</span><span class="pln">mul a x</span><span class="clo">)</span><span class="pln"> </span><span class="opn">(</span><span class="pln">mul b y</span><span class="clo">)))</span></pre></div>
+
+<p>其中<code>add</code>和<code>mul</code>不是基本过程<code>+</code>和<code>*</code>，而是更复杂的东西，它们将对我们作为参数<code>a</code>、<code>b</code>、<code>x</code>和<code>y</code>传入的任何类型的数据执行适当的操作。关键在于，<code>linear-combination</code>需要知道的关于<code>a</code>、<code>b</code>、<code>x</code>和<code>y</code>的唯一事情是，过程<code>add</code>和<code>mul</code>将执行适当的操作。从过程<code>linear-combination</code>的角度来看，<code>a</code>、<code>b</code>、<code>x</code>和<code>y</code>是什么无关紧要，而它们碰巧如何用更基本的数据表示则更加无关紧要。这同一个例子说明了为什么我们的编程语言提供直接操作复合对象的能力很重要：没有这一点，像<code>linear-combination</code>这样的过程就无法在不了解其详细结构的情况下将其参数传递给<code>add</code>和<code>mul</code>。<a class="footnote_link" id="DOCF67" href="#FOOT67"><sup>67</sup></a></p>
+<p>我们通过实现上面提到的有理数算术系统来开始本章。这将为我们讨论复合数据和数据抽象提供背景。与复合过程一样，要解决的主要问题是抽象作为一种应对复杂性的技术，我们将看到数据抽象如何使我们能够在程序的不同部分之间建立合适的<a id="index-abstraction-barriers"></a><em>抽象屏障</em>。</p>
+<p>我们将看到，形成复合数据的关键在于编程语言应提供某种“粘合剂”，以便数据对象可以组合成更复杂的数据对象。有许多可能的粘合剂。事实上，我们将发现如何完全不使用特殊的“数据”操作，而仅使用过程来形成复合数据。这将进一步模糊“过程”和“数据”之间的区别，这种区别在第1章末尾已经变得很微弱了。我们还将探索一些表示序列和树的常规技术。处理复合数据的一个关键思想是<a id="index-closure"></a><em>闭合性</em>的概念——我们用来组合数据对象的粘合剂应允许我们不仅组合基本数据对象，还能组合复合数据对象。另一个关键思想是，复合数据对象可以作为<a id="index-conventional-interfaces"></a><em>约定接口</em>，以混搭的方式组合程序模块。我们通过展示一个利用闭合性的简单图形语言来说明其中一些思想。</p>
+<p>然后，我们将通过引入<a id="index-symbolic-expressions"></a><em>符号表达式</em>——其基本部分可以是任意符号而不仅仅是数的数据——来增强我们语言的表示能力。我们探索表示对象集合的各种替代方案。我们将发现，正如一个给定的数值函数可以由许多不同的计算过程来计算一样，一个给定的数据结构也可以有许多方式用更简单的对象来表示，而表示方式的选择可能对操作这些数据的计算过程的时间和空间需求产生重大影响。我们将在符号求导、集合的表示和信息编码的背景下研究这些思想。</p>
+<p>接下来，我们将处理程序的不同部分可能以不同方式表示的数据的问题。这导致需要实现<a id="index-generic-operations"></a><em>通用操作</em>，它必须处理许多不同类型的数据。在存在通用操作的情况下保持模块化，需要比仅用简单数据抽象所能建立的更强大的抽象屏障。特别地，我们引入<a id="index-data_002ddirected-programming"></a><em>数据导向编程</em>作为一种技术，它允许各个数据表示被孤立地设计，然后<a id="index-additively"></a><em>可加地</em>组合（即，无需修改）。为了说明这种系统设计方法的能力，我们通过将所学应用于实现一个对多项式进行符号算术运算的包来结束本章，其中多项式的系数可以是整数、有理数、复数，甚至其他多项式。</p>
+
+<div class="footnote">
+<h4 class="footnotes-heading">脚注</h4>
+
+<div id="FOOT67"><p><a class="footnote_backlink" href="#DOCF67"><sup>67</sup></a>直接操作过程的能力为编程语言的表达能力带来了类似的提升。例如，在<a href="1_002e3_zh.xhtml#g_t1_002e3_002e1">1.3.1</a>中，我们引入了<code>sum</code>过程，它接受一个过程<code>term</code>作为参数，并计算<code>term</code>在某个指定区间上的值之和。为了定义<code>sum</code>，至关重要的是我们能够将诸如<code>term</code>这样的过程作为一个实体本身来谈论，而不考虑<code>term</code>可能如何用更基本的操作来表达。事实上，如果我们没有“过程”这个概念，我们甚至不太可能想到定义诸如<code>sum</code>这样的操作的可能性。此外，就执行求和而言，<code>term</code>如何从更基本的操作构造出来的细节是无关紧要的。</p>
+</div>
+</div>
+<nav class="header">
+<p>下一节： <a href="2_002e1_zh.xhtml#g_t2_002e1" accesskey="n" rel="next">2.1</a>, 上一节： <a href="1_002e3_zh.xhtml#g_t1_002e3" accesskey="p" rel="prev">1.3</a>, 上一级： <a href="index_zh.xhtml#Top" accesskey="u" rel="prev">首页</a> [<a href="index_zh.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">目录</a>]</p>
+</nav>
+
+
+</section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+</body>
+</html>
