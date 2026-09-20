@@ -88,3 +88,9 @@ python -B -m unittest test_translate_v3 -v
 ```
 
 结构校验能发现标签、代码、公式和编号的损坏，不能证明每句话的语义绝对正确。旧版 `translate.py`、`translate_v2.py` 会按碎片翻译并覆盖中文页面。维护当前译文应优先使用上述逐句校订流程；`translate_v3.py --write` 可用于从完整缓存和持久化修订重新生成页面。
+
+## 阅读界面
+
+中英文切换入口直接保存在各 XHTML 页面的工具栏中，禁用 JavaScript 时仍可切换章节；JavaScript 负责保留锚点和整理旧版章节导航。工具栏不参与正文翻译，中文化内部链接时也不会改写其中的英文入口。
+
+如果使用 `make` 从 Texinfo 重建原始 HTML，请随后运行 `python prepare_reader_ui.py` 恢复阅读界面。此命令可重复运行，不改写正文。现有带工具栏的英文页面通过 `translate_v3.py` 重新生成中文时会保留这些控件。

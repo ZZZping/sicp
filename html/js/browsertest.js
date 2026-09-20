@@ -1,14 +1,6 @@
 // Adapted from http://stackoverflow.com/questions/1895727/how-can-i-detect-the-browser-with-php-or-javascript?rq=1
 // and http://docs.mathjax.org/en/latest/dynamic.html
 
-// Load the shared reading control without changing generated book pages.
-(function () {
-  var script = document.createElementNS("http://www.w3.org/1999/xhtml", "script");
-  script.src = new URL("language-switch.js", document.currentScript.src).href;
-  script.type = "text/javascript";
-  document.head.appendChild(script);
-}());
-
 // If browser is not Firefox, call MathJax
 (function () {
   var userAgent = navigator.userAgent.toLowerCase();

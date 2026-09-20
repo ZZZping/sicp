@@ -465,37 +465,6 @@ a#References ~ p {
   }
 }
 
-a.language-switch[href] {
-  position: fixed;
-  top: 0.6rem;
-  right: 2.5rem;
-  z-index: 20;
-  box-sizing: border-box;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0.35rem 0.65rem;
-  border: 1px solid #9090b0;
-  border-radius: 0.3rem;
-  background: #f8f8f8;
-  color: #383868;
-  font: 600 16px/1.6 sans-serif;
-  text-decoration: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-a.language-switch[href]:hover {
-  background: #eaeaf2;
-}
-
-.language-switch:focus-visible {
-  outline: 3px solid #505090;
-  outline-offset: 3px;
-}
-
-@media print {
-  .language-switch { display: none; }
-}
-
 .jump {
   font-family: "DejaVu-Arrows";
   font-size: 2rem;

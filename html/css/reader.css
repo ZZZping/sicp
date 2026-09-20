@@ -1,0 +1,100 @@
+/* Screen reading interface, independent of the book's typesetting. */
+html { font-size: 20px; line-height: 1.7; scroll-padding-top: 90px; }
+body { background: #faf9f6; padding-top: 68px; }
+body > section { width: 42rem; max-width: calc(100% - 48px); margin: 2.5rem auto 4rem; }
+h1.titlefont { margin-top: 2rem; margin-bottom: 1.5rem; line-height: 1.3; }
+h1, h2.chapter { margin-top: 2.5rem; }
+p { line-height: 1.75; }
+.subtitle { margin-bottom: 1.5rem; }
+.shortcontents li, .contents li { margin-top: 0.2rem; }
+
+.reader-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: #faf9f6;
+  border-bottom: 1px solid #e1dfd8;
+  font: 14px/1.4 system-ui, sans-serif;
+}
+.reader-toolbar-inner {
+  max-width: 1040px;
+  min-height: 68px;
+  margin: auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.reader-brand { font-size: 20px; font-weight: 700; letter-spacing: 0.08em; color: #383868; }
+.reader-languages { display: flex; align-items: center; gap: 4px; }
+.reader-language-label { color: #66645f; margin-right: 12px; }
+.reader-toolbar a[href] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 64px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #c6c4d1;
+  border-radius: 6px;
+  color: #383868;
+  text-decoration: none;
+}
+html[lang="zh"] .reader-toolbar a[hreflang="zh"],
+html[lang="en"] .reader-toolbar a[hreflang="en"] {
+  background: #383868;
+  border-color: #383868;
+  color: #fff;
+  font-weight: 600;
+}
+.reader-toolbar a[href]:hover { box-shadow: 0 0 0 2px #c6c4d1; }
+.reader-toolbar a:focus-visible, .reader-navigation a:focus-visible {
+  outline: 3px solid #7067a3;
+  outline-offset: 3px;
+}
+/* Texinfo uses id, not the obsolete name attribute used by the old rule. */
+a[id="Top"] + nav.header { display: none; }
+.reader-navigation { border-top: 1px solid #dedbd3; padding-top: 1rem; }
+nav.header.reader-navigation p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0;
+  background: transparent;
+  font: 15px/1.5 system-ui, sans-serif;
+}
+nav.header.reader-navigation a[href] {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid #dedbd3;
+  border-radius: 6px;
+  color: #534b70;
+  background: #fff;
+  text-decoration: none;
+}
+nav.header.reader-navigation a[href]:hover { background: #eeecf4; }
+nav.header.reader-navigation a[hidden] { display: none; }
+.jump { z-index: 10; font-size: 1.4rem; }
+.top { top: 84px; }
+.jump a[href] { color: #99969f; margin: 0; padding: 8px; }
+@media (max-width: 600px) {
+  html { font-size: 18px; }
+  body { padding-top: 64px; }
+  body > section { max-width: calc(100% - 40px); margin-top: 1.5rem; }
+  h1.titlefont { margin-top: 1.5rem; font-size: 1.7rem; }
+  .reader-toolbar-inner { padding: 0 16px; min-height: 64px; }
+  .reader-language-label { display: none; }
+  .reader-toolbar a[href] { min-width: 60px; padding: 8px 10px; }
+  .contents ul { padding-left: 1em; }
+  .jump { font-size: 1rem; }
+  .jump a[href] { padding: 4px; }
+}
+@media print {
+  .reader-toolbar, .jump { display: none; }
+  body { padding-top: 0; }
+  body > section { max-width: 100%; margin: 0 auto; }
+}

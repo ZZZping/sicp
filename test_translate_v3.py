@@ -5,9 +5,20 @@ from pathlib import Path
 from translate_v3 import (ROOT, localize_links, restore, units,
                           validate_page, validate_translation)
 from review_sentences import reviewed_values
+from prepare_reader_ui import add_reader_ui
 
 
 class TranslationIntegrityTests(unittest.TestCase):
+    def test_reader_controls_preserve_both_languages_and_prose_units(self):
+        source = '<html><head></head><body>\n<p>Read <code>(+ 1 2)</code>.</p></body></html>'
+        with_controls = add_reader_ui(source, '1_002e1.xhtml')
+        self.assertEqual(add_reader_ui(with_controls, '1_002e1.xhtml'), with_controls)
+        self.assertEqual([u.key for u in units(source)], [u.key for u in units(with_controls)])
+        localized = localize_links(with_controls, {'1_002e1.xhtml'})
+        self.assertIn('href="1_002e1.xhtml" hreflang="en"', localized)
+        self.assertIn('href="1_002e1_zh.xhtml" hreflang="zh"', localized)
+        validate_page(with_controls, localized, {'1_002e1.xhtml'})
+
     def test_inline_phrase_is_one_unit_and_protected_content_is_exact(self):
         source = '<html><body><p>The <abbr>MIT</abbr> Press uses <code>(+ 1 2)</code>.<a id="x"/><math><mi>x</mi></math></p></body></html>'
         blocks = units(source)

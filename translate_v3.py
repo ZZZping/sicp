@@ -32,7 +32,7 @@ ATTR = re.compile(r'([\w:.-]+)\s*=\s*([\"\'])(.*?)\2', re.S)
 MARK = re.compile(r'⟦(\d+)⟧')
 BLOCK = set('html head body section nav article header footer div p ul ol li dl dt dd table thead tbody tfoot tr td th blockquote figure figcaption caption h1 h2 h3 h4 h5 h6 title pre'.split())
 PROTECTED = set('script style pre code math var samp kbd object svg'.split())
-PROTECTED_CLASSES = {'lisp', 'prettyprinted', 'footnote_link', 'footnote_backlink', 'secnum', 'jump'}
+PROTECTED_CLASSES = {'lisp', 'prettyprinted', 'footnote_link', 'footnote_backlink', 'secnum', 'jump', 'reader-toolbar'}
 PROMPT = '''你是《计算机程序的构造和解释》（SICP）第二版的专业中文译者。
 逐条忠实翻译输入 JSON 中 text 字段的完整语义块，仅输出相同键的 JSON 对象，值为译文字符串。tokens 字段说明各占位符的含义，帮助理解上下文，不能把该说明复制进译文。
 必须完整保留原文的每一个事实、条件、否定、限定、例子、引用和语气。不得概括、扩写、解释、评价、添加小标题或删减重复内容。不得增加原文没有的中英文对照括注。
@@ -285,7 +285,11 @@ def localize_links(output: str, english_names: set[str]) -> str:
         if filename in english_names:
             target = filename[:-6] + '_zh.xhtml' + (sep + anchor if sep else '')
         return prefix + target + suffix
-    return re.sub(r'(\bhref=[\"\'])([^\"\']+)([\"\'])', replace, output)
+    def localize_part(part):
+        return re.sub(r'(\bhref=[\"\'])([^\"\']+)([\"\'])', replace, part)
+    # Keep both language destinations in the protected reading toolbar.
+    parts = re.split(r'(<nav class="reader-toolbar"[^>]*>.*?</nav>)', output, flags=re.S)
+    return ''.join(part if i % 2 else localize_part(part) for i, part in enumerate(parts))
 
 
 def validate_page(source: str, output: str, english_names: set[str]):
